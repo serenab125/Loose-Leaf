@@ -1,9 +1,9 @@
 LooseLeaf
-----
+-----
 ### A Capstone/Senior Design Project
-We are a team of college students who wants to create a reading app that would appeal to anyone.
+We are a team of college students who wants to create a reading app appeals to anyone, whether if you are an avid reader or if you are just starting to dip your toes in. 
 
-## Features
+Features
 ----
 - Quiz
 - Toggle Reviews
