@@ -1,13 +1,13 @@
 LooseLeaf
 -----
 ### A Capstone/Senior Design Project
-We are a team of college students who wants to create a reading app appeals to anyone, whether if you are an avid reader or if you are just starting to dip your toes in. 
+We are a team of college students who want to create a reading app that appeals to anyone, whether you are an avid reader or are just starting to dip your toes in. 
 
 Features
 ----
-- Quiz
-- Toggle Reviews
-- Modern UI/UX
+- New Reader & User Friendly Quiz
+- Analytical vs. Casual Review Toggle
+- Modern, Easy To Use UI/UX
 
 Technologies Used:
 ----
