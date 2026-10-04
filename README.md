@@ -25,8 +25,8 @@ LooseLeaf is currently beginning development. Our planned technology stack is:
 * JavaScript
 * HTML/CSS
 
-### Backend
-* Supabase
+### Backend & Database
+* Supabase (Authentication & PostgreSQL Database)
 
 ### APIs
 * Open Library API
