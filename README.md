@@ -39,13 +39,13 @@ LooseLeaf is currently beginning development. Our planned technology stack is:
 
 Authors
 ----
-**Serena Banuelos - Project Lead **
+Serena Banuelos - Project Lead 
 
-**Michaela Perez - Frontend Developer & UI Implementation **
+Michaela Perez - Frontend Developer & UI Implementation 
 
-**Joshua Trinh - Full Stack Developer **
+Joshua Trinh - Full Stack Developer 
 
-**Austin Menh - Backend & Database Developer **
+Austin Menh - Backend & Database Developer 
 
-**Angela Martin - Frontend & Authentication Developer **
+Angela Martin - Frontend & Authentication Developer 
 
