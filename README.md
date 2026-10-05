@@ -28,16 +28,15 @@ Technologies:
 LooseLeaf is currently beginning development. Our planned technology stack is:
 
 ### Frontend
-* React
-* Vite
-* JavaScript
-* HTML/CSS
+* React + Vite - Web application frontend, straightforward for building our interface.
+* JavaScript - Handles the application logic and functionality.
+* HTML/CSS - Styles the application to match our Figma designs.
 
 ### Backend & Database
-* Supabase (Authentication & PostgreSQL Database)
+* Supabase (Authentication & PostgreSQL Database) - Backend that provides authentication and a PostgreSQL database, so we don't have to build and host a separate backend server.
 
 ### APIs
-* Open Library API
+* Open Library API - Retrieves book information for LooseLeaf.
 
 ### Development & Design Tools
 * GitHub
