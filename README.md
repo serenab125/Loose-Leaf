@@ -15,6 +15,14 @@ Features
 * **User Profiles:** Manage reading activity, favorites, shelves, and account settings.
 * **Modern UI/UX:** A simple and approachable interface designed for both experienced and new readers.
 
+
+Digital Information Architecture (DIA):
+----
+<p align="center">
+  <img src="LooseLeaf-DIA.png" alt="LooseLeaf Digital Information Architecture" width="900">
+</p>
+
+
 Technologies Used:
 ----
 LooseLeaf is currently beginning development. Our planned technology stack is:
