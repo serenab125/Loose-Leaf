@@ -23,7 +23,7 @@ Digital Information Architecture (DIA):
 </p>
 
 
-Technologies Used:
+Technologies:
 ----
 LooseLeaf is currently beginning development. Our planned technology stack is:
 
