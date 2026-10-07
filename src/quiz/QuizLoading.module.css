@@ -1,0 +1,140 @@
+// src/quiz/QuizLoading.module.css
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 2rem;
+  background-color: #faf6f0;
+  color: #3d2b1f;
+  text-align: center;
+}
+
+.iconCircle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #a8c6a0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+  flex-shrink: 0;
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+  color: #3d2b1f;
+}
+
+.headline {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 1.75rem;
+  color: #3d2b1f;
+  margin: 0 0 0.75rem 0;
+}
+
+.bodyText {
+  font-size: 0.95rem;
+  color: #7a6a5c;
+  margin: 0 0 2rem 0;
+}
+
+.loadingDots {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #9a8a7c;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 1;
+  }
+}
+
+.progressBar {
+  width: 160px;
+  height: 6px;
+  background-color: #d9cbb8;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: #a8c6a0;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progressText {
+  font-size: 0.8rem;
+  color: #9a8a7c;
+  margin: 0 0 2rem 0;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 24rem;
+}
+
+.primaryButton {
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #3d2b1f;
+  background-color: #3d2b1f;
+  border: none;
+  border-radius: 999px;
+  padding: 0.875rem 2rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+}
+
+.primaryButton:hover {
+  background-color: #5c4a3a;
+}
+
+.secondaryButton {
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
+  font-size: 0.85rem;
+  color: #9a8a7c;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  width: 100%;
+}
+
+.secondaryButton:hover {
+  color: #7a6a5c;
+}
