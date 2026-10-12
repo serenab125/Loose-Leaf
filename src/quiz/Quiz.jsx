@@ -1,7 +1,7 @@
 // src/quiz/Quiz.jsx
 // Main quiz orchestrator — ties together intro, questions, and loading
 
-import { useState } from 'react';
+import { QUIZ_SECTIONS } from './quizData';
 import { useQuiz } from './useQuiz';
 import { QuizIntroduction } from './QuizIntroduction';
 import { QuizQuestion } from './QuizQuestion';
@@ -10,14 +10,12 @@ import { QuizLoading } from './QuizLoading';
 export function Quiz() {
   const {
     currentStep,
-    answers,
-    answerQuestion,
-    goToNext,
-    goToPrevious,
     isIntro,
     isComplete,
-    currentSection,
-    progress,
+    answers,
+    goToNext,
+    goToPrevious,
+    answerQuestion,
     goToIntro,
   } = useQuiz();
 
@@ -46,20 +44,18 @@ export function Quiz() {
   return (
     <div className="quiz-container">
       {isIntro ? (
-        <QuizIntroduction
-          onGetStarted={handleGetStarted}
-        />
+        <QuizIntroduction onGetStarted={handleGetStarted} />
       ) : isComplete ? (
-        <QuizLoading
-          onComplete={handleComplete}
-          onRetake={handleRetake}
-        />
+        <QuizLoading onComplete={handleComplete} onRetake={handleRetake} />
       ) : (
         <QuizQuestion
           section={currentSection}
           answer={answers[currentSection.id]}
           onAnswer={handleAnswer}
           onBack={handleBack}
+          onNext={goToNext}
+          currentStep={currentStep}
+          totalSteps={QUIZ_SECTIONS.length}
         />
       )}
     </div>

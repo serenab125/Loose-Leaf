@@ -1,26 +1,79 @@
 // src/quiz/QuizQuestion.jsx
-// Quiz question screen with radio input, Back/Next navigation (Screen 2)
+// Quiz question screen with radio/checkbox input, Back/Next navigation (Screen 2)
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './QuizQuestion.module.css';
 
-export function QuizQuestion({ section, answer, onAnswer, onBack }) {
-  const [localSelection, setLocalSelection] = useState(null);
+// Answer-type contract (defined in quizData.js):
+//   - single-select sections: localSelection is a string (option id) or null
+//   - multi-select sections:  localSelection is an array of option ids
+export function QuizQuestion({
+  section,
+  answer,
+  onAnswer,
+  onBack,
+  onNext,
+  currentStep,
+  totalSteps,
+}) {
+  const isMulti = section.type === 'multi-select';
+  const current = currentStep + 1; // 1-based step number
 
-  // Sync local selection with props when it changes from outside
-  if (answer[section.id] !== undefined) {
-    setLocalSelection(answer[section.id]);
-  }
+  // Draft selection local to this screen (not persisted until the user moves).
+  const [localSelection, setLocalSelection] = useState(() => {
+    if (!section) return null;
+    const persisted = answer?.[section.id];
+    if (isMulti) return Array.isArray(persisted) ? [...persisted] : [];
+    return persisted ?? null;
+  });
 
-  const handleSelect = (optionId) => {
-    setLocalSelection((prev) => (prev === optionId ? null : optionId));
-    onAnswer(section.id, optionId);
+  // Restore a previously saved answer when moving between sections
+  // (e.g. Back / Next / Retake). Constrained to section.id so it never
+  // loops: the parent's answer updates on every click are *not* reflected
+  // here, avoiding the stale-setState-in-render and infinite-loop bugs
+  // present in the original code.
+  useEffect(() => {
+    if (!section) return;
+    const persisted = answer?.[section.id];
+    setLocalSelection((prev) => {
+      const next = isMulti
+        ? Array.isArray(persisted)
+          ? [...persisted]
+          : []
+        : persisted ?? null;
+      return Object.is(prev, next) ? prev : next;
+    });
+  }, [section?.id]);
+
+  const handleChange = (e) => {
+    const optionId = e.target.value;
+    const isChecked = e.target.checked;
+    const next =
+      isMulti && isChecked
+        ? [...localSelection, optionId]
+        : isMulti
+        ? localSelection.filter((id) => id !== optionId)
+        : isChecked
+        ? optionId
+        : null;
+    setLocalSelection(next);
+  };
+
+  const handleSubmit = () => {
+    // Persist the draft, then advance. Radio inputs cannot be cleared, so a
+    // user who wants "none of the above" must use Skip or the Escape key.
+    onAnswer(section.id, localSelection);
+    onNext();
+  };
+
+  const handleSkip = () => {
+    onAnswer(section.id, isMulti ? [] : null);
+    onNext();
   };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') {
-      setLocalSelection(null);
-      onAnswer(section.id, null);
+      onAnswer(section.id, isMulti ? [] : null);
     }
   };
 
@@ -37,17 +90,18 @@ export function QuizQuestion({ section, answer, onAnswer, onBack }) {
       <p className={styles.subheader}>Progress: {section?.title}</p>
 
       <div className={styles.progressCircles}>
-        {section ? (
-          <>
-            <StepCircle active={localSelection !== null} completed={!!answer[section.id]} label="1" />
-            <StepCircle active={false} completed={false} label="2" />
-          </>
-        ) : (
-          <>
-            <StepCircle active={false} completed={false} label="1" />
-            <StepCircle active={false} completed={false} label="2" />
-          </>
-        )}
+        {Array.from({ length: totalSteps }, (_, i) => i + 1).map((stepNumber) => {
+          const isActive = stepNumber === current;
+          const isCompleted = stepNumber < current;
+          return (
+            <StepCircle
+              key={stepNumber}
+              active={isActive}
+              completed={isCompleted}
+              label={String(stepNumber)}
+            />
+          );
+        })}
       </div>
 
       <h3 className={styles.questionText}>{section.question}</h3>
@@ -55,41 +109,41 @@ export function QuizQuestion({ section, answer, onAnswer, onBack }) {
       <p className={styles.instructions}>{section.instructions}</p>
 
       <div className={styles.optionsGrid}>
-        {section.options.map((option) => (
-          <label
-            key={option.id}
-            className={styles.optionRow}
-            style={{ borderColor: localSelection === option.id ? '#a8c6a0' : undefined }}
-          >
-            <input
-              type="radio"
-              name={`quiz-${section.id}`}
-              value={option.id}
-              checked={localSelection === option.id}
-              onChange={() => handleSelect(option.id)}
-              className={styles.radioInput}
-            />
-            <span className={styles.optionCheck} />
-            <span className={styles.optionTitle}>{option.label}</span>
-            <span className={styles.optionSubtitle}>{option.subtitle}</span>
-          </label>
-        ))}
+        {section.options.map((option) => {
+          const isSelected =
+            isMulti && Array.isArray(localSelection)
+              ? localSelection.includes(option.id)
+              : localSelection === option.id;
+          return (
+            <label
+              key={option.id}
+              className={styles.optionRow}
+              style={{ borderColor: isSelected ? '#a8c6a0' : undefined }}
+            >
+              <input
+                type={isMulti ? 'checkbox' : 'radio'}
+                name={`quiz-${section.id}`}
+                value={option.id}
+                checked={isSelected}
+                onChange={handleChange}
+                className={styles.radioInput}
+              />
+              <span className={styles.optionCheck} />
+              <span className={styles.optionTitle}>{option.label}</span>
+              <span className={styles.optionSubtitle}>{option.subtitle}</span>
+            </label>
+          );
+        })}
       </div>
 
       <div className={styles.footer}>
-        <button className={styles.skipButton} onClick={() => onAnswer(section.id, undefined)}>
+        <button className={styles.skipButton} onClick={handleSkip}>
           Skip
         </button>
         <button
           className={styles.nextButton}
-          onClick={() => {
-            if (localSelection === null && section.type === 'single-select') {
-              return;
-            }
-            onAnswer(section.id, localSelection);
-            onBack();
-          }}
-          disabled={!localSelection && section.type === 'single-select'}
+          onClick={handleSubmit}
+          disabled={isMulti ? localSelection.length === 0 : localSelection === null}
         >
           Next
         </button>
