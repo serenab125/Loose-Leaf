@@ -17,6 +17,7 @@ export function Quiz() {
     goToPrevious,
     answerQuestion,
     goToIntro,
+    currentSection,
   } = useQuiz();
 
   const handleGetStarted = () => {
