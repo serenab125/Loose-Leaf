@@ -1,3 +1,4 @@
+
 // src/quiz/QuizLoading.jsx
 // Loading / transition screen (Screen 3)
 
@@ -26,9 +27,18 @@ export function QuizLoading({ onComplete, onRetake }) {
   return (
     <div className={styles.container}>
       <div className={styles.iconCircle}>
-        <svg viewBox="0 0 48 48" className={styles.icon} fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M4 12 a8 8 0 0 1 16 0 v8 a8 8 0 0 1 -16 0 z" />
-          <path d="M4 20 a12 12 0 0 1 16 0 v0 a12 12 0 0 1 -16 0 z" />
+        <svg
+          viewBox="0 0 48 48"
+          className={styles.icon}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M39 9C21 9 10 17 10 30c0 6 4 9 9 9 13 0 20-12 20-30Z" />
+          <path d="M9 39c7-10 15-16 25-22" />
         </svg>
       </div>
 
@@ -50,22 +60,37 @@ export function QuizLoading({ onComplete, onRetake }) {
         ))}
       </div>
 
-      <div className={styles.progressBar}>
-        <div
-          className={styles.progressFill}
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+      {!isFinished && (
+        <>
+          <div className={styles.progressBar}>
+            <div
+              className={styles.progressFill}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
 
-      <p className={styles.progressText}>{progress}% complete</p>
+          <p className={styles.progressText}>
+            {progress}% complete
+          </p>
+        </>
+      )}
 
       <div className={styles.actions}>
-        {isFinished ? (
-          <button className={styles.primaryButton} onClick={onComplete}>
+        {isFinished && (
+          <button
+            type="button"
+            className={styles.primaryButton}
+            onClick={onComplete}
+          >
             Take me to my shelf
           </button>
-        ) : null}
-        <button className={styles.secondaryButton} onClick={onRetake}>
+        )}
+
+        <button
+          type="button"
+          className={styles.secondaryButton}
+          onClick={onRetake}
+        >
           Retake the quiz
         </button>
       </div>
