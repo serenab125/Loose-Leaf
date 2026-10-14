@@ -1,19 +1,13 @@
-// src/App.jsx
-//
-// LooseLeaf application root.
-// ATH-01 "Create Account" is the first screen. After the user creates an
-// account, we redirect them to the reading-preference quiz (see Quiz.jsx).
-
 import { useState } from 'react';
-import { Quiz } from './quiz/Quiz';
+import { Login } from './account/Login';
 import { CreateAccount } from './account/CreateAccount';
 
 export function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showCreateAccount, setShowCreateAccount] = useState(false);
 
-  if (isAuthenticated) {
-    return <Quiz />;
+  if (showCreateAccount) {
+    return <CreateAccount onNavigateToLogin={() => setShowCreateAccount(false)} />;
   }
 
-  return <CreateAccount onAccountCreated={() => setIsAuthenticated(true)} />;
+  return <Login onNavigateToCreateAccount={() => setShowCreateAccount(true)} />;
 }

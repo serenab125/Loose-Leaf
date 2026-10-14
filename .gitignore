@@ -1,19 +1,4 @@
-# LooseLeaf — .gitignore
-# ---------------------------------------------------------------------------
-# Dependencies
 node_modules/
-
-# Local Supabase credentials. See src/account/supabase-config.js.example.
-# NEVER commit real URL/anon key — add it here so they're not committed.
-src/account/supabase-config.js
-
-# OS / editor junk
-.DS_Store
-*.log
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Build output (regenerate with `npm run build`)
 dist/
+.vite/
+src/account/supabase-config.js

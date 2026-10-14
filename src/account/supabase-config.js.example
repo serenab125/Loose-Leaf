@@ -1,8 +1,8 @@
-// src/account/supabase-config.js.example
-// TEMPLATE for your Supabase config.
-// 1. https://app.supabase.com/ → Project Settings → API.
-// 2. Copy "Project URL" and "Anon (public) key".
-// 3. Paste and save as src/account/supabase-config.js (NOT the .example file).
-// 4. Add this file to .gitignore so real credentials are never committed.
+// Template for src/account/supabase-config.js
+// 1. Open https://supabase.com/dashboard
+// 2. Go to your project -> Project Settings -> API
+// 3. Copy "Project URL" and "anon (public) key"
+// 4. Replace the placeholders below.
+
 export const supabaseUrl = 'https://YOUR_PROJECT_REF.supabase.co';
-export const supabaseAnonKey = 'YOUR_ANON_PUBLIC_KEY';
+export const supabaseAnonKey = 'YOUR_ANON_KEY';

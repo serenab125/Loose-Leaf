@@ -1,0 +1,131 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #faf6f0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  padding: 1.5rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 8px 32px rgba(120, 80, 50, 0.10);
+}
+
+.heading {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #4a3226;
+  margin: 0 0 0.4rem;
+  text-align: center;
+}
+
+.tagline {
+  color: #8a7a6a;
+  font-size: 0.95rem;
+  text-align: center;
+  margin: 0 0 2rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a3226;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input {
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #d9c9b8;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #2a2a2a;
+  background: #fcfaf7;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #b8860b;
+  box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.18);
+}
+
+.buttonPrimary {
+  padding: 0.85rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  background: #4a2a1a;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
+}
+
+.buttonPrimary:hover:not(:disabled) {
+  background: #6b3f2a;
+}
+
+.buttonPrimary:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.5rem 0;
+  color: #8a7a6a;
+  font-size: 0.85rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #d9c9b8;
+}
+
+.buttonSecondary {
+  padding: 0.85rem 1.25rem;
+  border: 2px solid #c99a8a;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #c99a8a;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.buttonSecondary:hover {
+  background: #f5efe9;
+  color: #a87a6a;
+  border-color: #b8860b;
+}
+
+.error {
+  color: #b3261e;
+  font-size: 0.85rem;
+  text-align: center;
+}
