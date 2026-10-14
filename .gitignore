@@ -1,8 +1,1 @@
-node_modules/
-dist/
-.vite/
-src/account/supabase-config.js
 
-.env
-keys.env
-src/account/supabase-config.js
