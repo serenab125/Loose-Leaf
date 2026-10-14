@@ -11,7 +11,7 @@ import { QuizLoading } from './QuizLoading';
 import './quiz.css';
 import { useState } from 'react';
 
-export function Quiz() {
+export function Quiz({onSkip}) {
 
   //setting the pop up for skip quiz as false
   const [showSkipPopup, setShowSkipPopup] = useState(false);
@@ -200,7 +200,7 @@ export function Quiz() {
                 className="skip-confirm-button"
                 onClick={() => {
                   setShowSkipPopup(false);
-                  console.log('User confirmed skipping the quiz');
+                  onSkip?.({ status: 'skipped' });
                 }}
               >
                 Yes, Skip Quiz

@@ -3,8 +3,12 @@ import { Quiz } from './quiz/Quiz'
 
 function App() {
   return (
-    <Quiz />
-  )
+  <Quiz
+    onSkip={(result) => {
+      console.log('Onboarding result:', result)
+    }}
+  />
+)
 }
 
 export default App
