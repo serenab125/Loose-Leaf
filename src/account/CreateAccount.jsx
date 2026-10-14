@@ -39,7 +39,7 @@ export function CreateAccount({ onNavigateToLogin }) {
     <div className={styles.container}>
       <div className={styles.card}>
         <h1 className={styles.heading}>Join LooseLeaf</h1>
-        <p className={styles.tagline}>Find your next chapter.</p>
+        <p className={styles.tagline}>Build your personal shelf.</p>
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.fieldGroup}>

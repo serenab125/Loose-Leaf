@@ -24,7 +24,7 @@ export function useAuth() {
       });
       if (authError) throw authError;
       if (data.user) {
-        await saveProfile(fullName, email);
+        await saveProfile(fullName, email, data.user.id);
       }
       return data;
     } catch (err) {
@@ -35,11 +35,11 @@ export function useAuth() {
     }
   };
 
-  const saveProfile = async (fullName, email) => {
+  const saveProfile = async (fullName, email, userId) => {
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
-        id: supabase.auth.user()?.id,
+        id: userId,
         full_name: fullName,
         email,
         updated_at: new Date().toISOString(),

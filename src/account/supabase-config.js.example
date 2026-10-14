@@ -1,8 +1,0 @@
-// Template for src/account/supabase-config.js
-// 1. Open https://supabase.com/dashboard
-// 2. Go to your project -> Project Settings -> API
-// 3. Copy "Project URL" and "anon (public) key"
-// 4. Replace the placeholders below.
-
-export const supabaseUrl = 'https://YOUR_PROJECT_REF.supabase.co';
-export const supabaseAnonKey = 'YOUR_ANON_KEY';
