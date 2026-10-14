@@ -1,0 +1,171 @@
+
+import {
+  TASTE_SECTIONS,
+  GOAL_SECTIONS,
+  MIN_TASTE_ANSWERS,
+} from './quizData';
+import { useQuiz } from './useQuiz';
+import { QuizIntroduction } from './QuizIntroduction';
+import { QuizQuestion } from './QuizQuestion';
+import { QuizLoading } from './QuizLoading';
+import './quiz.css';
+
+export function Quiz() {
+  const {
+    answers,
+    answerQuestion,
+    isIntro,
+    isTaste,
+    isGoals,
+    isComplete,
+    goToNext,
+    goToIntro,
+    goToGoals,
+    goBackToTaste,
+    completeQuiz,
+    canContinue,
+    tasteAnsweredCount,
+  } = useQuiz();
+
+  const handleComplete = () => {
+    console.log('Quiz complete! Answers:', answers);
+    // TODO: Navigate to recommendations or user's shelf.
+  };
+
+  const remainingAnswers = Math.max(
+    0,
+    MIN_TASTE_ANSWERS - tasteAnsweredCount
+  );
+
+  return (
+    <div className="quiz-container">
+      {isIntro ? (
+        <QuizIntroduction onGetStarted={goToNext} />
+      ) : isComplete ? (
+        <QuizLoading
+          onComplete={handleComplete}
+          onRetake={goToIntro}
+        />
+      ) : (
+        <main className="quiz-scroll-page">
+          <div className="quiz-content">
+            <button
+              type="button"
+              className="quiz-back"
+              onClick={isGoals ? goBackToTaste : goToIntro}
+            >
+              ← Back
+            </button>
+
+            <div
+              className="quiz-progress-track"
+              role="progressbar"
+              aria-label="Quiz completion"
+              aria-valuenow={isTaste ? 50 : 100}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div
+                className="quiz-progress-fill"
+                style={{ width: isTaste ? '50%' : '100%' }}
+              />
+            </div>
+
+            {isTaste && (
+              <>
+                <header className="quiz-page-header">
+                  <p className="quiz-eyebrow">
+                    YOUR READING QUIZ · STEP 1 OF 2
+                  </p>
+
+                  <h1>Tell us a little about you</h1>
+
+                  <p className="quiz-description">
+                    Scroll through and tap whatever feels right.
+                    Answer at least 3 questions to continue.
+                  </p>
+                </header>
+
+                {TASTE_SECTIONS.map((section, index) => (
+                  <QuizQuestion
+                    key={section.id}
+                    section={section}
+                    number={index + 1}
+                    answer={answers}
+                    onAnswer={answerQuestion}
+                  />
+                ))}
+
+                <div className="quiz-finish">
+                  <p className="quiz-answer-count" aria-live="polite">
+                    {canContinue
+                      ? `${tasteAnsweredCount} questions answered — you're ready!`
+                      : `Answer ${remainingAnswers} more ${remainingAnswers === 1
+                        ? 'question'
+                        : 'questions'
+                      } to continue.`}
+                  </p>
+
+                  <button
+                    type="button"
+                    className="quiz-finish-button"
+                    onClick={goToGoals}
+                    disabled={!canContinue}
+                  >
+                    Continue →
+                  </button>
+                </div>
+              </>
+            )}
+
+            {isGoals && (
+              <>
+                <header className="quiz-page-header">
+                  <p className="quiz-eyebrow">
+                    YOUR READING GOALS · STEP 2 OF 2
+                  </p>
+
+                  <h1>Let's make reading fit your life</h1>
+
+                  <p className="quiz-description">
+                    LooseLeaf's reading timer helps you build a reading
+                    habit at your own pace. Answer two quick questions
+                    to personalize your goal, or skip for now.
+                  </p>
+                </header>
+
+                {GOAL_SECTIONS.map((section, index) => (
+                  <QuizQuestion
+                    key={section.id}
+                    section={section}
+                    number={TASTE_SECTIONS.length + index + 1}
+                    answer={answers}
+                    onAnswer={answerQuestion}
+                  />
+                ))}
+
+                <div className="quiz-finish">
+                  <button
+                    type="button"
+                    className="quiz-finish-button"
+                    onClick={completeQuiz}
+                  >
+                    Find My Books
+                  </button>
+
+                  <button
+                    type="button"
+                    className="quiz-skip-button"
+                    onClick={completeQuiz}
+                  >
+                    Skip goal setting for now
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </main>
+      )}
+    </div>
+  );
+}
