@@ -9,8 +9,13 @@ import { QuizIntroduction } from './QuizIntroduction';
 import { QuizQuestion } from './QuizQuestion';
 import { QuizLoading } from './QuizLoading';
 import './quiz.css';
+import { useState } from 'react';
 
 export function Quiz() {
+
+  //setting the pop up for skip quiz as false
+  const [showSkipPopup, setShowSkipPopup] = useState(false);
+
   const {
     answers,
     answerQuestion,
@@ -40,7 +45,10 @@ export function Quiz() {
   return (
     <div className="quiz-container">
       {isIntro ? (
-        <QuizIntroduction onGetStarted={goToNext} />
+        //introduction page to take quiz or skip quiz
+        <QuizIntroduction 
+        onGetStarted={goToNext} 
+        onSkipQuiz={() => setShowSkipPopup(true)} />
       ) : isComplete ? (
         <QuizLoading
           onComplete={handleComplete}
@@ -165,6 +173,49 @@ export function Quiz() {
             )}
           </div>
         </main>
+      )}
+
+// Pop-up for skipping the quiz
+      {showSkipPopup && (
+        <div className="skip-popup-overlay">
+          <div
+            className="skip-popup"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="skip-popup-title"
+          >
+            <h2 id="skip-popup-title">Skip the Quiz?</h2>
+
+            <p>
+              Skipping the quiz means your book recommendations
+              will be more general instead of personalized to
+              your interests.
+            </p>
+
+            <p>Would you like to continue?</p>
+
+            <div className="skip-popup-buttons">
+              <button
+                type="button"
+                className="skip-confirm-button"
+                onClick={() => {
+                  setShowSkipPopup(false);
+                  console.log('User confirmed skipping the quiz');
+                }}
+              >
+                Yes, Skip Quiz
+              </button>
+
+              <button
+                type="button"
+                className="skip-cancel-button"
+                onClick={() => setShowSkipPopup(false)}
+              >
+                No, Continue Quiz
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
