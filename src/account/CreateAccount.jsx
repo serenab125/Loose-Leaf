@@ -11,15 +11,6 @@ export function CreateAccount({ onNavigateToLogin }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [formError, setFormError] = useState('');
 
-  const validate = () => {
-    if (!fullName.trim()) return 'Full Name is required.';
-    if (!email.trim()) return 'Email Address is required.';
-    if (!password) return 'Password is required.';
-    if (password.length < 6) return 'Password must be at least 6 characters.';
-    if (password !== confirmPassword) return 'Passwords do not match.';
-    return '';
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const validationError = validate();
@@ -35,6 +26,15 @@ export function CreateAccount({ onNavigateToLogin }) {
     }
   };
 
+  const validate = () => {
+    if (!fullName.trim()) return 'Full Name is required.';
+    if (!email.trim()) return 'Email Address is required.';
+    if (!password) return 'Password is required.';
+    if (password.length < 6) return 'Password must be at least 6 characters.';
+    if (password !== confirmPassword) return 'Passwords do not match.';
+    return '';
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.card}>
@@ -43,50 +43,58 @@ export function CreateAccount({ onNavigateToLogin }) {
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.fieldGroup}>
-            <label className={styles.label} htmlFor="fullName">Full Name</label>
+            <label className={styles.label} htmlFor="fullName">
+              FULL NAME
+            </label>
             <input
               id="fullName"
               className={styles.input}
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="e.g. Sarah Johnson"
+              placeholder="Enter your full name"
             />
           </div>
 
           <div className={styles.fieldGroup}>
-            <label className={styles.label} htmlFor="email">Email Address</label>
+            <label className={styles.label} htmlFor="email">
+              EMAIL ADDRESS
+            </label>
             <input
               id="email"
               className={styles.input}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="Enter your email"
             />
           </div>
 
           <div className={styles.fieldGroup}>
-            <label className={styles.label} htmlFor="password">Password</label>
+            <label className={styles.label} htmlFor="password">
+              PASSWORD
+            </label>
             <input
               id="password"
               className={styles.input}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 6 characters"
+              placeholder="Enter your password"
             />
           </div>
 
           <div className={styles.fieldGroup}>
-            <label className={styles.label} htmlFor="confirmPassword">Confirm Password</label>
+            <label className={styles.label} htmlFor="confirmPassword">
+              CONFIRM PASSWORD
+            </label>
             <input
               id="confirmPassword"
               className={styles.input}
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Repeat your password"
+              placeholder="Confirm your password"
             />
           </div>
 
@@ -94,20 +102,20 @@ export function CreateAccount({ onNavigateToLogin }) {
 
           <button
             type="submit"
-            className={styles.button}
+            className={styles.buttonPrimary}
             disabled={loading}
           >
-            {loading ? 'Creating account...' : 'Create Account'}
+            {loading ? 'Creating Account...' : 'Create Account'}
           </button>
         </form>
 
-        {error && <p className={styles.serverError}>{error}</p>}
-
-        {onNavigateToLogin && (
-          <button type="button" className={styles.buttonSecondary} onClick={onNavigateToLogin}>
-            Back to Login
-          </button>
-        )}
+        <button
+          type="button"
+          className={styles.buttonSecondary}
+          onClick={() => onNavigateToLogin()}
+        >
+          Back to Login
+        </button>
       </div>
     </div>
   );
