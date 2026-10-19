@@ -1,0 +1,280 @@
+/* Individual quiz section */
+.section {
+  width: 100%;
+  margin-bottom: 40px;
+  color: #5b3113;
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
+}
+
+/* Number and section heading */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.sectionLabel {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.greenNumber {
+  background: #eaeed8;
+  color: #706c3e;
+}
+
+.pinkNumber {
+  background: #ffdddd;
+  color: #a7626b;
+}
+
+.sectionTitle {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #969732;
+}
+
+.multiBadge {
+  background: #f9dfdf;
+  color: #a7626b;
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Question typography */
+.questionText {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.3;
+  color: #5b3113;
+  margin: 0 0 10px;
+}
+
+.instructions {
+  color: #9a8a80;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 22px;
+}
+
+/* Single-select answer cards */
+.optionsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 65px;
+  padding: 14px 18px;
+  border: 1px solid #c9ce91;
+  border-radius: 22px;
+  background: #f6fdf3;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.optionRow:hover {
+  background: #edf5e7;
+  border-color: #969732;
+}
+
+/* Visually hidden native inputs */
+.radioInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+/* Custom radio circle */
+.optionCheck {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: 2px solid #d9d2c7;
+  border-radius: 50%;
+  position: relative;
+}
+
+.optionRow:has(input:checked) .optionCheck {
+  border-color: #969732;
+  background: #969732;
+}
+
+.optionRow:has(input:checked) .optionCheck::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+/* Text inside cards */
+.optionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.optionTitle {
+  color: #5b3113;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.optionSubtitle {
+  color: #9a9489;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+
+/* Multi-select pill layout */
+.pillGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 7px;
+  margin-top: 4px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 9px 11px;
+  border: 1px solid #f0d7d2;
+  border-radius: 999px;
+  background: #fdf8f3;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.pill .optionTitle {
+  color: #6d6057;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+
+.pill:hover {
+  background: #fbe8e5;
+}
+
+/* Selected pink pills */
+.pill.selectedPink {
+  background: #efd3d0;
+  border-color: #e8c2bf;
+}
+
+/* Selected olive pills */
+.pill.selectedOlive {
+  background: #eaeed8;
+  border-color: #969732;
+}
+
+/* Selected single-select cards */
+.optionRow.selectedPink,
+.optionRow.selectedOlive {
+  background: #f6fdf3;
+  border-color: #a99b77;
+}
+
+/* Keyboard accessibility */
+.optionRow:has(input:focus-visible),
+.pill:has(input:focus-visible) {
+  outline: 2px solid #5b3113;
+  outline-offset: 3px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .section {
+    margin-bottom: 40px;
+  }
+
+  .questionText {
+    font-size: 23px;
+  }
+
+
+  .pillGrid {
+    gap: 8px 7px;
+  }
+
+  .pill {
+    min-height: 40px;
+    padding: 9px 11px;
+  }
+
+
+  .optionRow {
+    padding: 14px 16px;
+  }
+}
+
+.section,
+.sectionHeader,
+.questionText,
+.instructions,
+.optionsGrid,
+.pillGrid,
+.optionRow,
+.optionContent {
+  text-align: left;
+}
+
+
+.showMoreButton {
+  display: block;
+  margin: 16px auto 0;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: #5B3113;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.showMoreButton:hover {
+  color: #969732;
+}
+
+.showMoreButton:focus-visible {
+  outline: 2px solid #969732;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
