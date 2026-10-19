@@ -60,6 +60,43 @@ export function useAuth() {
     }
   };
 
+  const resetPassword = async (email) => {
+    setLoading(true)
+    setError('')
+
+    try{
+      const {error: authError} =
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'http://localhost:5173/reset-password',
+      })
+
+      if (authError) throw authError
+    } catch (err) {
+      setError(err.message || 'Password reset failed')
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updatePassword = async (password) => {
+    setLoading(true)
+    setError('')
+
+    try {
+      const {error: authError}  =
+      await supabase.auth.updateUser({ 
+        password,
+      })
+
+      if (authError) throw authError
+    } catch (err) {
+      setError(err.message || "Password update failed")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const logout = async () => {
     setLoading(true);
     setError('');
@@ -78,6 +115,8 @@ export function useAuth() {
     login,
     signIn: login,
     logout,
+    resetPassword,
+    updatePassword,
     loading,
     error,
     clearError: () => setError(''),
