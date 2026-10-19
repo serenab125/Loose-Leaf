@@ -72,12 +72,40 @@ export function useAuth() {
     }
   };
 
+  const savePreferences = async (preferences) => {
+  if (!user) return;
+  setLoading(true);
+  setError('');
+
+  try {
+    const { data, error: dbError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: user.id,
+        email: user.email,
+        full_name: user.user_metadata?.full_name || '',
+        reading_preferences: preferences,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' });
+
+    if (dbError) throw dbError;
+    return data;
+  } catch (err) {
+    console.error('Error saving preferences:', err);
+    setError(err.message || 'Failed to save reading preferences');
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
+
   return {
     user,
     createAccount,
     login,
     signIn: login,
     logout,
+    savePreferences,
     loading,
     error,
     clearError: () => setError(''),

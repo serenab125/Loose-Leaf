@@ -1,4 +1,3 @@
-
 import {
   TASTE_SECTIONS,
   GOAL_SECTIONS,
@@ -11,7 +10,7 @@ import { QuizLoading } from './QuizLoading';
 import './quiz.css';
 import { useState } from 'react';
 
-export function Quiz({onSkip}) {
+export function Quiz({ onSkip, onComplete }) {
 
   //setting the pop up for skip quiz as false
   const [showSkipPopup, setShowSkipPopup] = useState(false);
@@ -32,9 +31,11 @@ export function Quiz({onSkip}) {
     tasteAnsweredCount,
   } = useQuiz();
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     console.log('Quiz complete! Answers:', answers);
-    // TODO: Navigate to recommendations or user's shelf.
+    if (onComplete) {
+      await onComplete(answers);
+    }
   };
 
   const remainingAnswers = Math.max(
@@ -175,7 +176,7 @@ export function Quiz({onSkip}) {
         </main>
       )}
 
-// Pop-up for skipping the quiz
+      {/* Pop-up for skipping the quiz */}
       {showSkipPopup && (
         <div className="skip-popup-overlay">
           <div

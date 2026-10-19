@@ -6,7 +6,7 @@ import { Login } from './account/Login'
 import { Quiz } from './quiz/Quiz'
 
 function App() {
-  const { user, logout, loading } = useAuth()
+  const { user, logout, loading, savePreferences } = useAuth()
   const [view, setView] = useState('login')
 
   if (loading) {
@@ -27,6 +27,20 @@ function App() {
         )}
       </main>
     )
+  }
+
+  const handleQuizComplete = async (quizAnswers) => {
+    try {
+      if (savePreferences) {
+        await savePreferences(quizAnswers)
+        console.log('Successfully saved reading preferences to Supabase!')
+      } else {
+        console.log('Quiz completed with answers:', quizAnswers)
+      }
+      // TODO: Redirect to book recommendations or bookshelf view here
+    } catch (err) {
+      console.error('Error saving quiz results:', err)
+    }
   }
 
   return (
@@ -59,7 +73,10 @@ function App() {
         </button>
       </header>
 
-      <Quiz onSkip={() => console.log('Quiz skipped')} />
+      <Quiz 
+        onSkip={() => console.log('Quiz skipped')} 
+        onComplete={handleQuizComplete} 
+      />
     </main>
   )
 }
