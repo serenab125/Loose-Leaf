@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAuth } from './useAuth'
 
 export default function ResetPassword() {
-    const { updatePassword } = useAuth()
+    const { updatePassword, loading } = useAuth()
 
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -26,7 +26,7 @@ export default function ResetPassword() {
         }
 
         try {
-            await updatePassword(password)
+            await updatePassword(password, confirmPassword)
 
             setSuccess(
                 'Password updated successfully. You can now log in with your new password.'
@@ -59,8 +59,8 @@ export default function ResetPassword() {
                     setConfirmPassword(e.target.value)
                 }
                 />
-                <button type="submit">
-                    Update Password
+                <button type="submit" disabled={loading}>
+                    {loading ? 'Updating Password...' : 'Update Password'}
                     </button>
             </form>
 

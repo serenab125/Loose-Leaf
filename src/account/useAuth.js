@@ -60,42 +60,56 @@ export function useAuth() {
     }
   };
 
-  const resetPassword = async (email) => {
-    setLoading(true)
-    setError('')
+const resetPassword = async (email) => {
+  setLoading(true)
+  setError('')
 
-    try{
-      const {error: authError} =
+  try {
+    const { error: authError } =
       await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'http://localhost:5173/reset-password',
+        redirectTo: new URL('/reset-password', window.location.origin).toString(),
       })
 
-      if (authError) throw authError
-    } catch (err) {
-      setError(err.message || 'Password reset failed')
-      throw err
-    } finally {
-      setLoading(false)
-    }
+    if (authError) throw authError
+  } catch (err) {
+    setError(err.message || 'Password reset failed')
+    throw err
+  } finally {
+    setLoading(false)
+  }
+}
+
+const updatePassword = async (password, confirmPassword) => {
+  setError('')
+
+  if (typeof password !== 'string' || password.length < 6) {
+    const validationError = new Error(
+      'Password must be at least 6 characters long.'
+    )
+    setError(validationError.message)
+    throw validationError
   }
 
-  const updatePassword = async (password) => {
-    setLoading(true)
-    setError('')
-
-    try {
-      const {error: authError}  =
-      await supabase.auth.updateUser({ 
-        password,
-      })
-
-      if (authError) throw authError
-    } catch (err) {
-      setError(err.message || "Password update failed")
-    } finally {
-      setLoading(false)
-    }
+  if (password !== confirmPassword) {
+    const validationError = new Error('Passwords do not match.')
+    setError(validationError.message)
+    throw validationError
   }
+
+  setLoading(true)
+  try {
+    const { data, error: authError } =
+      await supabase.auth.updateUser({ password })
+
+    if (authError) throw authError
+    return data
+  } catch (err) {
+    setError(err.message || 'Password update failed')
+    throw err
+  } finally {
+    setLoading(false)
+  }
+}
 
   const logout = async () => {
     setLoading(true);

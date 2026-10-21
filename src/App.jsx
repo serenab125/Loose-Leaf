@@ -3,17 +3,27 @@ import { useState } from 'react'
 import { useAuth } from './account/useAuth'
 import { CreateAccount } from './account/CreateAccount'
 import ForgotPassword from './account/ForgotPassword'
+import ResetPassword from './account/ResetPassword'
 import { Login } from './account/Login'
 import { Quiz } from './quiz/Quiz'
 
 function App() {
   const { user, logout, loading } = useAuth()
-  const [view, setView] = useState('login')
+  const [view, setView] = useState(() =>
+     window.location.pathname === '/reset-password' ? 'reset' : 'login') // Possible views: 'login', 'create', 'forgot', 'reset'
 
   if (loading) {
     return (
       <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#fdf8f3' }}>
         <p style={{ color: '#5b3113', fontFamily: 'Georgia, serif' }}>Loading LooseLeaf...</p>
+      </main>
+    )
+  }
+
+  if (view === 'reset') {
+    return (
+      <main>
+        <ResetPassword />
       </main>
     )
   }
