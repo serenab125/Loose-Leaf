@@ -82,3 +82,32 @@
   margin: 0.5rem 0 0 0;
   text-align: center;
 }
+
+.skipButton {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 8px 12px;
+  margin-top: 12px;
+
+  color: #b99c8d;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+
+  transition: color 0.2s ease;
+}
+
+.skipButton:hover {
+  color: #603417;
+}
+
+.skipButton:focus-visible {
+  outline: 2px solid #603417;
+  outline-offset: 3px;
+  border-radius: 4px;
+}

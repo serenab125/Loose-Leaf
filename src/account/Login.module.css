@@ -1,0 +1,306 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #faf6f0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  padding: 1.5rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 8px 32px rgba(120, 80, 50, 0.10);
+}
+
+.heading {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #4a3226;
+  margin: 0 0 0.4rem;
+  text-align: center;
+}
+
+.tagline {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: rgba(58, 42, 30, 0.6);
+  text-align: center;
+  margin: 8px 0 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a3226;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input {
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #d9c9b8;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #2a2a2a;
+  background: #fcfaf7;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #b8860b;
+  box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.18);
+}
+
+.buttonPrimary {
+  padding: 0.85rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  background: #4a2a1a;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
+}
+
+.buttonPrimary:hover:not(:disabled) {
+  background: #6b3f2a;
+}
+
+.buttonPrimary:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.5rem 0;
+  color: #8a7a6a;
+  font-size: 0.85rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #d9c9b8;
+}
+
+.buttonSecondary {
+  padding: 0.85rem 1.25rem;
+  border: 2px solid #c99a8a;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #c99a8a;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.buttonSecondary:hover {
+  background: #f5efe9;
+  color: #a87a6a;
+  border-color: #b8860b;
+}
+
+.error {
+  color: #b3261e;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* LooseLeaf Figma-inspired mobile styling */
+
+.container {
+  min-height: 100dvh;
+  padding: 24px;
+  background: #fdf8f3;
+}
+
+.card {
+  width: 100%;
+  max-width: 340px;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.heading {
+  font-family: 'Lobster', cursive;
+  font-size: 46px;
+  font-weight: 400;
+  color: #542d18;
+  margin-bottom: 0;
+}
+
+.tagline {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 13px;
+  color: #ad9384;
+  margin-bottom: 64px;
+}
+
+.form {
+  gap: 22px;
+}
+
+.fieldGroup {
+  gap: 8px;
+}
+
+.label {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  color: #b39382;
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 46px;
+  background: #f8f5ed;
+  border: 1px solid #e8dfd2;
+  border-radius: 13px;
+  font-size: 13px;
+}
+
+.input:focus {
+  border-color: #9b9874;
+  box-shadow: 0 0 0 2px rgba(155, 152, 116, 0.15);
+}
+
+.buttonPrimary {
+  min-height: 48px;
+  margin-top: 4px;
+  border-radius: 13px;
+  background: #542d18;
+  box-shadow: 0 5px 10px rgba(84, 45, 24, 0.18);
+  font-size: 13px;
+}
+
+.divider {
+  margin: 30px 0 22px;
+  font-size: 12px;
+  color: #b9a294;
+}
+
+.buttonSecondary {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  background: #ffdddd;
+  border: 1px solid #ffd2d2;
+  border-radius: 13px;
+  color: #542d18;
+  font-size: 13px;
+}
+
+.buttonSecondary:hover {
+  background: #f9cccc;
+  border-color: #f9cccc;
+  color: #542d18;
+}
+
+.forgotPassword {
+  display: block;
+  margin: 18px auto 0;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  color: #ad9384;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Figma typography and sizing corrections */
+
+.container {
+  font-family: 'Inter', sans-serif;
+}
+
+.card {
+  max-width: 280px;
+}
+
+.heading {
+  font-family: 'Lobster', cursive;
+  font-size: 60px;
+  line-height: 1;
+  font-weight: 400;
+  color: #5b3113;
+}
+
+.tagline {
+  font-family: 'Lora', serif;
+  font-size: 14px;
+  line-height: 20px;
+  font-style: italic;
+  color: rgba(58, 42, 30, 0.6);
+}
+
+.label {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 15px;
+  color: rgba(91, 49, 19, 0.5);
+}
+
+.input {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+}
+
+.input::placeholder {
+  color: rgba(91, 49, 19, 0.3);
+}
+
+.buttonPrimary {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fdf8f3;
+}
+
+.divider {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: rgba(91, 49, 19, 0.4);
+}
+
+.heading {
+  margin-bottom: 0;
+}
+
+.tagline+.form {
+  margin-top: 64px;
+}

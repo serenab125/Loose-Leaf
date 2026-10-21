@@ -166,3 +166,77 @@
 .quiz-finish-button:disabled:hover {
   transform: none;
 }
+
+/* Skip quiz popup */
+
+.skip-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(49, 30, 18, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+.skip-popup {
+  width: 100%;
+  max-width: 350px;
+  background: #fbf6f1;
+  border-radius: 22px;
+  padding: 30px 24px;
+  text-align: center;
+  box-shadow: 0 12px 35px rgba(49, 30, 18, 0.18);
+}
+
+.skip-popup h2 {
+  color: #603417;
+  font-family: Georgia, serif;
+  font-size: 27px;
+  margin-bottom: 16px;
+}
+
+.skip-popup p {
+  color: #8a7c70;
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+.skip-popup-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.skip-confirm-button {
+  background: #603417;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 15px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.skip-cancel-button {
+  background: #f9dddd;
+  color: #603417;
+  border: none;
+  border-radius: 14px;
+  padding: 15px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.skip-confirm-button:hover {
+  background: #7a4523;
+}
+
+.skip-cancel-button:hover {
+  background: #f3caca;
+}

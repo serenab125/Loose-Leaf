@@ -1,7 +1,7 @@
 
 import styles from './QuizIntroduction.module.css';
 
-export function QuizIntroduction({ onGetStarted }) {
+export function QuizIntroduction({ onGetStarted, onSkipQuiz }) {
   return (
     <div className={styles.container}>
       <div className={styles.iconCircle}>
@@ -35,9 +35,14 @@ export function QuizIntroduction({ onGetStarted }) {
         Get Started
       </button>
 
-      <p className={styles.secondaryText}>
-        You can skip any question.
-      </p>
+      <button
+        type="button"
+        className={styles.skipButton}
+        onClick={onSkipQuiz}
+      >
+        Skip Quiz
+      </button>
+
     </div>
   );
 }
