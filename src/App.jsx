@@ -2,6 +2,7 @@ import './App.css'
 import { useState } from 'react'
 import { useAuth } from './account/useAuth'
 import { CreateAccount } from './account/CreateAccount'
+import ForgotPassword from './account/ForgotPassword'
 import { Login } from './account/Login'
 import { Quiz } from './quiz/Quiz'
 
@@ -22,8 +23,12 @@ function App() {
       <main>
         {view === 'create' ? (
           <CreateAccount onNavigateToLogin={() => setView('login')} />
+        ) : view === 'forgot' ? ( //Forgot password fucntion
+          <ForgotPassword onNavigateToLogin={() => setView('login')} />
         ) : (
-          <Login onNavigateToCreateAccount={() => setView('create')} />
+          <Login 
+          onNavigateToCreateAccount={() => setView('create')} 
+          onNavigateToForgotPassword={() => setView('forgot')} />
         )}
       </main>
     )
