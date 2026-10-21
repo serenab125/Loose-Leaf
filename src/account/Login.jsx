@@ -83,6 +83,12 @@ export function Login({ onNavigateToCreateAccount }) {
         >
           Create Account
         </button>
+        <button
+          type="button"
+          onClick={() => setCurrentPage('forgot')}
+        >
+          Forgot Password?
+        </button>
       </div>
     </div>
   );
