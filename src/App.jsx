@@ -83,7 +83,10 @@ function App() {
       </div>
 
 
-      <Quiz onSkip={() => console.log('Quiz skipped')} />
+      <Quiz
+        user={user}
+        onSkip={() => console.log('Quiz skipped')}
+      />
     </main>
   )
 }
