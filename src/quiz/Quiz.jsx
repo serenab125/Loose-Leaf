@@ -11,14 +11,11 @@ import './quiz.css';
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 
-<<<<<<< HEAD
-export function Quiz({ onSkip, onComplete }) {
-=======
-export function Quiz({ onSkip, user }) {
->>>>>>> origin/austin_branch
-
-  //setting the pop up for skip quiz as false
+export function Quiz({ onSkip, onComplete, user }) {
+  // Setting the pop-up for skipping the quiz
   const [showSkipPopup, setShowSkipPopup] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const {
     answers,
@@ -36,15 +33,6 @@ export function Quiz({ onSkip, user }) {
     tasteAnsweredCount,
   } = useQuiz();
 
-<<<<<<< HEAD
-  const handleComplete = async () => {
-    console.log('Quiz complete! Answers:', answers);
-    if (onComplete) {
-      await onComplete(answers);
-=======
-  const [saveError, setSaveError] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-
   const handleComplete = async () => {
     if (isSaving) return;
 
@@ -52,33 +40,35 @@ export function Quiz({ onSkip, user }) {
     setSaveError('');
 
     try {
-      if (!user?.id) {
-        throw new Error('You must be signed in to save your quiz.');
+      console.log('Quiz complete! Answers:', answers);
+
+      // 1. Trigger parent onComplete callback if provided (e.g. from App.jsx)
+      if (onComplete) {
+        await onComplete(answers);
+      } 
+      // 2. Fallback direct upsert if user prop is passed directly to Quiz
+      else if (user?.id) {
+        const { error } = await supabase
+          .from('profiles')
+          .upsert(
+            {
+              id: user.id,
+              full_name: user.user_metadata?.full_name || '',
+              email: user.email,
+              reading_preferences: answers,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'id' }
+          );
+
+        if (error) throw error;
+        console.log('Quiz answers saved successfully!', answers);
       }
-
-      const { error } = await supabase
-        .from('profiles')
-        .upsert(
-          {
-            id: user.id,
-            full_name: user.user_metadata?.full_name || '',
-            email: user.email,
-            reading_preferences: answers,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'id' }
-        );
-
-      if (error) throw error;
-
-      console.log('Quiz answers saved successfully!', answers);
-      // TODO: Navigate to recommendations or user's shelf.
     } catch (error) {
       console.error('Error saving quiz answers:', error);
       setSaveError(error.message || 'Unable to save quiz answers.');
     } finally {
       setIsSaving(false);
->>>>>>> origin/austin_branch
     }
   };
 
@@ -90,15 +80,16 @@ export function Quiz({ onSkip, user }) {
   return (
     <div className="quiz-container">
       {saveError && (
-        <p role="alert" style={{ color: '#b91c1c', padding: '12px' }}>
+        <p role="alert" style={{ color: '#b91c1c', padding: '12px', textAlign: 'center' }}>
           {saveError}
         </p>
       )}
       {isIntro ? (
-        //introduction page to take quiz or skip quiz
+        // Introduction page to take quiz or skip quiz
         <QuizIntroduction
           onGetStarted={goToNext}
-          onSkipQuiz={() => setShowSkipPopup(true)} />
+          onSkipQuiz={() => setShowSkipPopup(true)} 
+        />
       ) : isComplete ? (
         <QuizLoading
           onComplete={handleComplete}
