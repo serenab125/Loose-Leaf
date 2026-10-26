@@ -9,10 +9,9 @@ import { Quiz } from './quiz/Quiz'
 
 function App() {
   const { user, logout, loading, savePreferences } = useAuth()
-  const [view, setView] = useState('login')
-  const { user, logout, loading } = useAuth()
   const [view, setView] = useState(() =>
-    window.location.pathname === '/reset-password' ? 'reset' : 'login') // Possible views: 'login', 'create', 'forgot', 'reset'
+    window.location.pathname === '/reset-password' ? 'reset' : 'login'
+  )
 
   if (loading) {
     return (
@@ -35,12 +34,13 @@ function App() {
       <main>
         {view === 'create' ? (
           <CreateAccount onNavigateToLogin={() => setView('login')} />
-        ) : view === 'forgot' ? ( //Forgot password fucntion
+        ) : view === 'forgot' ? (
           <ForgotPassword onNavigateToLogin={() => setView('login')} />
         ) : (
           <Login
             onNavigateToCreateAccount={() => setView('create')}
-            onNavigateToForgotPassword={() => setView('forgot')} />
+            onNavigateToForgotPassword={() => setView('forgot')} 
+          />
         )}
       </main>
     )
@@ -62,7 +62,6 @@ function App() {
 
   return (
     <main>
-
       <div
         style={{
           display: 'flex',
@@ -98,13 +97,10 @@ function App() {
         </button>
       </div>
 
-      <Quiz 
-        onSkip={() => console.log('Quiz skipped')} 
-        onComplete={handleQuizComplete} 
-
       <Quiz
         user={user}
         onSkip={() => console.log('Quiz skipped')}
+        onComplete={handleQuizComplete}
       />
     </main>
   )
