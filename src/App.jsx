@@ -8,14 +8,11 @@ import { Login } from './account/Login'
 import { Quiz } from './quiz/Quiz'
 
 function App() {
-<<<<<<< HEAD
   const { user, logout, loading, savePreferences } = useAuth()
   const [view, setView] = useState('login')
-=======
   const { user, logout, loading } = useAuth()
   const [view, setView] = useState(() =>
     window.location.pathname === '/reset-password' ? 'reset' : 'login') // Possible views: 'login', 'create', 'forgot', 'reset'
->>>>>>> origin/austin_branch
 
   if (loading) {
     return (
@@ -101,16 +98,13 @@ function App() {
         </button>
       </div>
 
-<<<<<<< HEAD
       <Quiz 
         onSkip={() => console.log('Quiz skipped')} 
         onComplete={handleQuizComplete} 
-=======
 
       <Quiz
         user={user}
         onSkip={() => console.log('Quiz skipped')}
->>>>>>> origin/austin_branch
       />
     </main>
   )
