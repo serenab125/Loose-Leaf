@@ -3,7 +3,8 @@ import styles from './Login.module.css';
 import { useAuth } from './useAuth';
 
 export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword }) {
-  const { signIn, loading, error, clearError } = useAuth();
+  const [rememberMe, setRememberMe] = useState(false);
+  const { signIn, loading, error, clearError } = useAuth(rememberMe);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -62,10 +63,22 @@ export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword })
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-            />
-          </div>
+              />
+              </div>
 
-          {formError && <p className={styles.error}>{formError}</p>}
+              <div className={styles.fieldGroup}>
+              <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                className={styles.checkbox}
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              <span>Remember me</span>
+              </label>
+              </div>
+
+              {formError && <p className={styles.error}>{formError}</p>}
 
           <button type="submit" className={styles.buttonPrimary} disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}

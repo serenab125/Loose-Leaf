@@ -1,10 +1,14 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import { useState, useEffect, useMemo } from 'react';
+import { supabaseFor } from '../supabaseClient';
 
-export function useAuth() {
+export function useAuth(persistSession = true) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Memoize the auth client so its session subscription stays stable and the session is
+  // read from / written to the storage that matches persistSession.
+  const supabase = useMemo(() => supabaseFor(persistSession), [persistSession]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -18,7 +22,7 @@ export function useAuth() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase]);
 
   const createAccount = async (email, password, fullName) => {
     setLoading(true);
