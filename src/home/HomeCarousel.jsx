@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import RetakeQuizCard from './RetakeQuizCard'
+import CurrentReadCard from './CurrentReadCard'
 import './home.css'
 
 function HomeCarousel({ onRetakeQuiz }) {
   const [activeSlide, setActiveSlide] = useState(2)
 
   const slides = [
-    <div className="home-placeholder" key="current">
-      Current Read — Coming Soon
-    </div>,
+    <CurrentReadCard
+      key="current"
+      book={null}
+      onPickBook={() => alert('Pick a book clicked!')}
+    />,
     <div className="home-placeholder" key="recommendation">
       Top Recommendation — Coming Soon
     </div>,

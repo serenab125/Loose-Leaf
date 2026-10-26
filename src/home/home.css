@@ -125,3 +125,103 @@
   height: auto;
   min-height: 240px;
 }
+
+/* ========================================
+   HS-02: Current Read Card
+   ======================================== */
+
+.current-read-card {
+  background-color: #fff1ee;
+  border: 1px solid #f5d1cf;
+  border-radius: 26px;
+  padding: 24px;
+  min-height: 260px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  text-align: left;
+  align-items: stretch;
+}
+
+.current-read-label {
+  color: #ce858d;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin: 0;
+  text-align: left;
+}
+
+.current-read-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.current-read-placeholder {
+  width: 80px;
+  height: 120px;
+  flex-shrink: 0;
+  border: 1px dashed #dfaeb1;
+  border-radius: 16px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  color: #ce858d;
+  font-size: 30px;
+}
+
+.current-read-cover {
+  width: 80px;
+  height: 120px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.current-read-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.current-read-info h2 {
+  color: #603417;
+  font-family: Georgia, serif;
+  font-size: 23px;
+  font-weight: 400;
+  line-height: 1.3;
+  margin: 0 0 8px;
+}
+
+.current-read-info p {
+  color: #95867d;
+  font-size: 15px;
+  line-height: 1.4;
+  margin: 0 0 4px;
+}
+
+.current-read-button {
+  background-color: #603417;
+  color: white;
+  border: none;
+  border-radius: 15px;
+  padding: 15px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: auto;
+  width: 100%;
+}
+
+.current-read-button:hover {
+  background-color: #7a4523;
+}
+
+.current-read-button:focus-visible {
+  outline: 3px solid #929b32;
+  outline-offset: 3px;
+}
