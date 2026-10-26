@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from './supabase-config';
+import { supabase } from '../supabaseClient';
 
 export function useAuth() {
   const [user, setUser] = useState(null);
@@ -10,7 +10,14 @@ export function useAuth() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
+    }).catch(() => setLoading(false));
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
     });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const createAccount = async (email, password, fullName) => {
@@ -20,12 +27,12 @@ export function useAuth() {
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: fullName } },
+        options: {
+          data: { full_name: fullName },
+          emailRedirectTo: window.location.origin,
+        },
       });
       if (authError) throw authError;
-      if (data.user) {
-        await saveProfile(fullName, email, data.user.id);
-      }
       return data;
     } catch (err) {
       setError(err.message || 'Sign-up failed');
@@ -35,19 +42,7 @@ export function useAuth() {
     }
   };
 
-  const saveProfile = async (fullName, email, userId) => {
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userId,
-        full_name: fullName,
-        email,
-        updated_at: new Date().toISOString(),
-      });
-    if (profileError) throw profileError;
-  };
-
-  const signIn = async (email, password) => {
+  const login = async (email, password) => {
     setLoading(true);
     setError('');
     try {
@@ -65,6 +60,57 @@ export function useAuth() {
     }
   };
 
+const resetPassword = async (email) => {
+  setLoading(true)
+  setError('')
+
+  try {
+    const { error: authError } =
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: new URL('/reset-password', window.location.origin).toString(),
+      })
+
+    if (authError) throw authError
+  } catch (err) {
+    setError(err.message || 'Password reset failed')
+    throw err
+  } finally {
+    setLoading(false)
+  }
+}
+
+const updatePassword = async (password, confirmPassword) => {
+  setError('')
+
+  if (typeof password !== 'string' || password.length < 6) {
+    const validationError = new Error(
+      'Password must be at least 6 characters long.'
+    )
+    setError(validationError.message)
+    throw validationError
+  }
+
+  if (password !== confirmPassword) {
+    const validationError = new Error('Passwords do not match.')
+    setError(validationError.message)
+    throw validationError
+  }
+
+  setLoading(true)
+  try {
+    const { data, error: authError } =
+      await supabase.auth.updateUser({ password })
+
+    if (authError) throw authError
+    return data
+  } catch (err) {
+    setError(err.message || 'Password update failed')
+    throw err
+  } finally {
+    setLoading(false)
+  }
+}
+
   const logout = async () => {
     setLoading(true);
     setError('');
@@ -72,7 +118,6 @@ export function useAuth() {
       await supabase.auth.signOut();
     } catch (err) {
       setError(err.message || 'Sign-out failed');
-      throw err;
     } finally {
       setLoading(false);
     }
@@ -81,8 +126,11 @@ export function useAuth() {
   return {
     user,
     createAccount,
-    signIn,
+    login,
+    signIn: login,
     logout,
+    resetPassword,
+    updatePassword,
     loading,
     error,
     clearError: () => setError(''),

@@ -1,0 +1,28 @@
+/* LooseLeaf desktop and mobile layout */
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  background: #eae6e1;
+}
+
+/* Center the app at iPhone width on desktop */
+#root>main {
+  width: 100%;
+  max-width: 393px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: #fdf8f3;
+  box-sizing: border-box;
+}
+
+/* Keep mobile screens full width */
+@media (max-width: 393px) {
+  #root>main {
+    max-width: 100%;
+  }
+}
