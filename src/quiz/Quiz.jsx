@@ -9,8 +9,13 @@ import { QuizQuestion } from './QuizQuestion';
 import { QuizLoading } from './QuizLoading';
 import './quiz.css';
 import { useState } from 'react';
+import { supabase } from '../supabaseClient';
 
+<<<<<<< HEAD
 export function Quiz({ onSkip, onComplete }) {
+=======
+export function Quiz({ onSkip, user }) {
+>>>>>>> origin/austin_branch
 
   //setting the pop up for skip quiz as false
   const [showSkipPopup, setShowSkipPopup] = useState(false);
@@ -31,10 +36,49 @@ export function Quiz({ onSkip, onComplete }) {
     tasteAnsweredCount,
   } = useQuiz();
 
+<<<<<<< HEAD
   const handleComplete = async () => {
     console.log('Quiz complete! Answers:', answers);
     if (onComplete) {
       await onComplete(answers);
+=======
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleComplete = async () => {
+    if (isSaving) return;
+
+    setIsSaving(true);
+    setSaveError('');
+
+    try {
+      if (!user?.id) {
+        throw new Error('You must be signed in to save your quiz.');
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(
+          {
+            id: user.id,
+            full_name: user.user_metadata?.full_name || '',
+            email: user.email,
+            reading_preferences: answers,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'id' }
+        );
+
+      if (error) throw error;
+
+      console.log('Quiz answers saved successfully!', answers);
+      // TODO: Navigate to recommendations or user's shelf.
+    } catch (error) {
+      console.error('Error saving quiz answers:', error);
+      setSaveError(error.message || 'Unable to save quiz answers.');
+    } finally {
+      setIsSaving(false);
+>>>>>>> origin/austin_branch
     }
   };
 
@@ -45,11 +89,16 @@ export function Quiz({ onSkip, onComplete }) {
 
   return (
     <div className="quiz-container">
+      {saveError && (
+        <p role="alert" style={{ color: '#b91c1c', padding: '12px' }}>
+          {saveError}
+        </p>
+      )}
       {isIntro ? (
         //introduction page to take quiz or skip quiz
-        <QuizIntroduction 
-        onGetStarted={goToNext} 
-        onSkipQuiz={() => setShowSkipPopup(true)} />
+        <QuizIntroduction
+          onGetStarted={goToNext}
+          onSkipQuiz={() => setShowSkipPopup(true)} />
       ) : isComplete ? (
         <QuizLoading
           onComplete={handleComplete}

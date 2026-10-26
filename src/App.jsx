@@ -2,12 +2,20 @@ import './App.css'
 import { useState } from 'react'
 import { useAuth } from './account/useAuth'
 import { CreateAccount } from './account/CreateAccount'
+import ForgotPassword from './account/ForgotPassword'
+import ResetPassword from './account/ResetPassword'
 import { Login } from './account/Login'
 import { Quiz } from './quiz/Quiz'
 
 function App() {
+<<<<<<< HEAD
   const { user, logout, loading, savePreferences } = useAuth()
   const [view, setView] = useState('login')
+=======
+  const { user, logout, loading } = useAuth()
+  const [view, setView] = useState(() =>
+    window.location.pathname === '/reset-password' ? 'reset' : 'login') // Possible views: 'login', 'create', 'forgot', 'reset'
+>>>>>>> origin/austin_branch
 
   if (loading) {
     return (
@@ -17,13 +25,25 @@ function App() {
     )
   }
 
+  if (view === 'reset') {
+    return (
+      <main>
+        <ResetPassword />
+      </main>
+    )
+  }
+
   if (!user) {
     return (
       <main>
         {view === 'create' ? (
           <CreateAccount onNavigateToLogin={() => setView('login')} />
+        ) : view === 'forgot' ? ( //Forgot password fucntion
+          <ForgotPassword onNavigateToLogin={() => setView('login')} />
         ) : (
-          <Login onNavigateToCreateAccount={() => setView('create')} />
+          <Login
+            onNavigateToCreateAccount={() => setView('create')}
+            onNavigateToForgotPassword={() => setView('forgot')} />
         )}
       </main>
     )
@@ -45,37 +65,52 @@ function App() {
 
   return (
     <main>
-      <header style={{ 
-        padding: '1rem 2rem', 
-        display: 'flex', 
-        justify: 'space-between', 
-        alignItems: 'center',
-        background: '#fdf8f3',
-        borderBottom: '1px solid #eaeed8'
-      }}>
-        <span style={{ color: '#5b3113', fontWeight: '600' }}>
-          Welcome, {user.user_metadata?.full_name || user.email}!
+
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '12px 20px',
+          background: '#fdf8f3',
+          fontSize: '12px',
+          fontWeight: '400',
+          color: '#b69b8d'
+        }}
+      >
+        <span>
+          Welcome, {user.user_metadata?.full_name?.split(' ')[0] || user.email}!
         </span>
-        <button 
-          type="button" 
-          onClick={logout} 
-          style={{ 
-            padding: '0.5rem 1rem', 
-            borderRadius: '12px', 
+
+        <button
+          type="button"
+          onClick={logout}
+          style={{
+            padding: 0,
             border: 'none',
-            background: '#5b3113',
-            color: '#ffffff',
-            cursor: 'pointer',
-            fontWeight: '600'
+            background: 'transparent',
+            color: '#b69b8d',
+            fontSize: '12px',
+            fontWeight: '400',
+            textDecoration: 'underline',
+            cursor: 'pointer'
           }}
         >
-          Sign Out
+          Sign out
         </button>
-      </header>
+      </div>
 
+<<<<<<< HEAD
       <Quiz 
         onSkip={() => console.log('Quiz skipped')} 
         onComplete={handleQuizComplete} 
+=======
+
+      <Quiz
+        user={user}
+        onSkip={() => console.log('Quiz skipped')}
+>>>>>>> origin/austin_branch
       />
     </main>
   )

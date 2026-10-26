@@ -2,7 +2,7 @@ import { useState } from 'react';
 import styles from './Login.module.css';
 import { useAuth } from './useAuth';
 
-export function Login({ onNavigateToCreateAccount }) {
+export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword }) {
   const { signIn, loading, error, clearError } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -85,7 +85,8 @@ export function Login({ onNavigateToCreateAccount }) {
         </button>
         <button
           type="button"
-          onClick={() => setCurrentPage('forgot')}
+          className={styles.forgotPassword}
+          onClick={() => onNavigateToForgotPassword()}
         >
           Forgot Password?
         </button>

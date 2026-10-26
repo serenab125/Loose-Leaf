@@ -10,6 +10,7 @@ export function CreateAccount({ onNavigateToLogin }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [formError, setFormError] = useState('');
+  const [verificationEmail, setVerificationEmail] = useState('');
 
   const validate = () => {
     if (!fullName.trim()) return 'Full Name is required.';
@@ -29,11 +30,38 @@ export function CreateAccount({ onNavigateToLogin }) {
     }
     setFormError('');
     try {
-      await createAccount(email.trim(), password, fullName.trim());
+      const result = await createAccount(email.trim(), password, fullName.trim());
+
+      if (result?.user && !result?.session) {
+        setVerificationEmail(email.trim());
+      }
     } catch (err) {
       setFormError(err.message || 'Failed to create account. Please try again.');
     }
   };
+
+  if (verificationEmail) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.card} style={{ textAlign: 'center' }}>
+          <h1 className={styles.heading}>Check your email!</h1>
+
+          <p className={styles.tagline}>
+            We sent a verification link to {verificationEmail}.
+            Please confirm your email address before signing in.
+          </p>
+
+          <button
+            type="button"
+            className={styles.button}
+            onClick={onNavigateToLogin}
+          >
+            Back to Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -101,11 +129,16 @@ export function CreateAccount({ onNavigateToLogin }) {
           </button>
         </form>
 
-        {error && <p className={styles.serverError}>{error}</p>}
+
 
         {onNavigateToLogin && (
-          <button type="button" className={styles.buttonSecondary} onClick={onNavigateToLogin}>
-            Back to Login
+          <button
+            type="button"
+            className={styles.buttonSecondary}
+            onClick={onNavigateToLogin}
+          >
+            <span>Already have an account? </span>
+            <strong>Sign in</strong>
           </button>
         )}
       </div>
