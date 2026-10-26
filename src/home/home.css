@@ -1,0 +1,127 @@
+/* ========================================
+   LOOSELEAF HOMEPAGE
+   Shared styles for homepage carousel
+   ======================================== */
+
+/* HS-04: Retake Quiz Card */
+
+.retake-quiz-card {
+  background-color: #f5e9dd;
+  border: 1px solid #e8d5c5;
+  border-radius: 20px;
+  padding: 24px;
+  min-height: 260px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  text-align: left;
+  align-items: stretch;
+}
+
+.retake-quiz-label {
+  color: #87923e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  margin: 0;
+}
+
+.retake-quiz-card h2 {
+  color: #603417;
+  font-family: Georgia, serif;
+  font-size: 27px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.retake-quiz-card p:not(.retake-quiz-label) {
+  color: #8a7c70;
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.retake-quiz-card button {
+  background-color: #603417;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: auto;
+}
+
+.retake-quiz-card button:hover {
+  background-color: #7a4523;
+}
+
+.retake-quiz-card button:focus-visible {
+  outline: 3px solid #87923e;
+  outline-offset: 3px;
+}
+
+
+/* Homepage Carousel*/
+
+.home-carousel {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.home-carousel-content {
+  width: 100%;
+}
+
+.home-carousel-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  padding: 22px 0 12px;
+}
+
+.home-carousel-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background-color: #d9cec5;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.home-carousel-dot.active {
+  width: 22px;
+  background-color: #929b32;
+}
+
+.home-placeholder {
+  min-height: 260px;
+  background-color: #fbf6f1;
+  border: 1px dashed #e8d5c5;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8a7c70;
+  text-align: center;
+  padding: 24px;
+}
+
+/* Keep carousel text aligned like Figma */
+
+.home-carousel .retake-quiz-card h2,
+.home-carousel .retake-quiz-card p {
+  text-align: left;
+}
+
+.home-carousel .retake-quiz-card {
+  height: auto;
+  min-height: 240px;
+}

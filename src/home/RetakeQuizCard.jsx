@@ -1,3 +1,5 @@
+import './home.css'
+
 function RetakeQuizCard({ onRetakeQuiz }) {
   return (
     <section className="retake-quiz-card">
@@ -6,8 +8,7 @@ function RetakeQuizCard({ onRetakeQuiz }) {
       <h2>Retake your quiz</h2>
 
       <p>
-        Answer again and we'll refresh your recommendations
-        to match your current interests.
+        Answer again and we'll refresh everything on your shelf.
       </p>
 
       <button
