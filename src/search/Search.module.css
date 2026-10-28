@@ -1,0 +1,221 @@
+.searchPage {
+  width: 100%;
+  max-width: 393px;
+  min-height: 852px;
+  padding: 16px 12px 90px;
+  background-color: #fdf8f3;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #5b3113;
+}
+
+.searchHeader {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.brandTitle {
+  font-family: "Georgia", serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #4a2b10;
+  margin: 8px 0 16px 0;
+}
+
+.searchBarWrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  stroke: #8c7365;
+}
+
+.searchInput {
+  width: 100%;
+  height: 48px;
+  padding: 0 40px 0 42px;
+  background: #f5eee6;
+  border: 1px solid rgba(91, 49, 19, 0.15);
+  border-radius: 24px;
+  font-size: 14px;
+  color: #5b3113;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.searchInput::placeholder {
+  color: #a89488;
+}
+
+.clearBtn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  color: #8c7365;
+  cursor: pointer;
+}
+
+.landingSection,
+.suggestedSection,
+.categoryDetailSection {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sectionTitle {
+  font-family: "Georgia", serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: #4a2b10;
+  margin: 0 0 10px 4px;
+}
+
+.horizontalScroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+}
+
+.horizontalScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.topSearchCover {
+  width: 110px;
+  height: 160px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.categoryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.categoryBtn {
+  height: 64px;
+  background: #f7f0e6;
+  border: none;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #4a2b10;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.categoryBtn:hover {
+  background: #ede2d3;
+}
+
+.suggestedCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fcf8f3;
+  border: 1px solid rgba(91, 49, 19, 0.12);
+  border-radius: 20px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  cursor: pointer;
+}
+
+.miniCover {
+  width: 50px;
+  height: 72px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.bookInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.bookTitle {
+  font-family: "Georgia", serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #4a2b10;
+  margin: 0 0 4px 0;
+}
+
+.bookAuthor {
+  font-size: 13px;
+  color: #8c7365;
+  margin: 0;
+}
+
+.backButton {
+  background: transparent;
+  border: none;
+  color: #8c7365;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 6px;
+}
+
+.categoryHeroTitle {
+  font-family: "Georgia", serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: #4a2b10;
+  margin: 0 0 16px 0;
+}
+
+.categoryRowGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rowTitle {
+  font-family: "Georgia", serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: #4a2b10;
+  margin: 0 0 10px 0;
+}
+
+.categoryCover {
+  width: 100px;
+  height: 148px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.statusText {
+  font-size: 13px;
+  color: #8c7365;
+}
+
+.errorNotice {
+  font-size: 13px;
+  color: #b91c1c;
+}

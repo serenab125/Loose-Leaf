@@ -42,7 +42,7 @@ export function Quiz({ onSkip, onComplete, user }) {
     try {
       console.log('Quiz complete! Answers:', answers);
 
-      // 1. Trigger parent onComplete callback if provided (e.g. from App.jsx)
+      // 1. Trigger parent onComplete callback if provided (e.g., from App.jsx)
       if (onComplete) {
         await onComplete(answers);
       } 

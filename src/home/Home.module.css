@@ -193,43 +193,52 @@
   object-fit: cover;
 }
 
-/* Bottom Navigation locked inside mobile app frame */
+/* Bottom Navigation Bar Container */
 .bottomNav {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   height: 72px;
-  background-color: #fcf8f4;
+  background-color: #fdf8f3;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  border-top: 1px solid #f0e6dd;
+  border-top: 1px solid rgba(91, 49, 19, 0.10);
+  padding: 0 12px;
   z-index: 10;
 }
 
+/* Default / Inactive Tab */
 .navItem {
-  background: none;
+  background: transparent;
   border: none;
   display: flex;
+  padding: 6px 16px;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   color: #a0826d;
   cursor: pointer;
   font-size: 11px;
+  border-radius: 18px;
+  transition: all 0.2s ease;
 }
 
 .navIcon {
   width: 20px;
   height: 20px;
+  stroke: #a0826d;
 }
 
+/* Active / Clicked Tab Pill (Matching Figma Prototype) */
 .activeNavItem {
-  color: #552a0e;
+  border-radius: 18px;
+  background: rgba(202, 205, 125, 0.40);
+  color: #5b3113;
   font-weight: 600;
 }
 
 .activeNavItem .navIcon {
-  stroke: #552a0e;
+  stroke: #5b3113;
 }
