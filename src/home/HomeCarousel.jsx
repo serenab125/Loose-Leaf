@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import RetakeQuizCard from './RetakeQuizCard'
 import CurrentReadCard from './CurrentReadCard'
+import TopRecommendationCard from './TopRecommendationCard'
 import './home.css'
 
 function HomeCarousel({ onRetakeQuiz }) {
@@ -12,9 +13,14 @@ function HomeCarousel({ onRetakeQuiz }) {
       book={null}
       onPickBook={() => alert('Pick a book clicked!')}
     />,
-    <div className="home-placeholder" key="recommendation">
-      Top Recommendation — Coming Soon
-    </div>,
+    <TopRecommendationCard
+      key="recommendation"
+      book={null}
+      onStartReading={(book) => {
+        console.log('Start reading:', book)
+      }}
+    />,
+
     <RetakeQuizCard
       key="retake"
       onRetakeQuiz={onRetakeQuiz}

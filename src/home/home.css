@@ -225,3 +225,109 @@
   outline: 3px solid #929b32;
   outline-offset: 3px;
 }
+
+/* ========================================
+   HS-03: Top Recommendation Card
+   ======================================== */
+
+.top-recommendation-card {
+  background-color: #f0f1df;
+  border: 1px solid #d8d9b5;
+  border-radius: 26px;
+  padding: 24px;
+  min-height: 260px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  text-align: left;
+  align-items: stretch;
+}
+
+.top-recommendation-label {
+  color: #818a3d;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  margin: 0;
+}
+
+.top-recommendation-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.top-recommendation-cover,
+.top-recommendation-placeholder {
+  width: 80px;
+  height: 120px;
+  flex-shrink: 0;
+  border-radius: 12px;
+}
+
+.top-recommendation-cover {
+  object-fit: cover;
+}
+
+.top-recommendation-placeholder {
+  background: #e3e5c9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+}
+
+.top-recommendation-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.top-recommendation-info h2,
+.top-recommendation-empty h2 {
+  color: #603417;
+  font-family: Georgia, serif;
+  font-size: 23px;
+  font-weight: 400;
+  line-height: 1.3;
+  margin: 0 0 8px;
+}
+
+.top-recommendation-info p,
+.top-recommendation-empty p {
+  color: #95867d;
+  font-size: 15px;
+  line-height: 1.4;
+  margin: 0 0 6px;
+}
+
+.top-recommendation-info span {
+  color: #818a3d;
+  font-size: 12px;
+}
+
+.top-recommendation-empty {
+  flex: 1;
+}
+
+.top-recommendation-button {
+  background-color: #603417;
+  color: white;
+  border: none;
+  border-radius: 15px;
+  padding: 15px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: auto;
+  width: 100%;
+}
+
+.top-recommendation-button:hover {
+  background-color: #7a4523;
+}
+
+.top-recommendation-button:focus-visible {
+  outline: 3px solid #929b32;
+  outline-offset: 3px;
+}
