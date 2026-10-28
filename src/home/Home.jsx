@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
 import styles from './Home.module.css';
+import HomeCarousel from './HomeCarousel';
 
 const MOCK_CATEGORIES = [
   {
@@ -29,11 +29,11 @@ const MOCK_CATEGORIES = [
 ];
 
 export function Home({ user, currentBook, onRetakeQuiz, onSelectBook }) {
-  const [activeSlide, setActiveSlide] = useState(0);
-
   return (
     <div className={styles.appViewport}>
       <div className={styles.scrollableContent}>
+
+        {/* Angela's LooseLeaf Homepage Header */}
         <header className={styles.brandHeader}>
           <div className={styles.logoWrapper}>
             <span className={styles.leafIcon}>🍃</span>
@@ -43,73 +43,11 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook }) {
           <div className={styles.headerDivider} />
         </header>
 
+        {/* Serena's Sprint 2 Homepage Carousel */}
         <section className={styles.bannerSection}>
-          {activeSlide === 0 && (
-            <div className={`${styles.card} ${styles.currentReadCard}`}>
-              <p className={styles.eyebrow}>CURRENT READ</p>
-              {currentBook ? (
-                <div className={styles.currentBookInfo}>
-                  <img src={currentBook.cover} alt={currentBook.title} className={styles.miniCover} />
-                  <div>
-                    <h3 className={styles.cardHeader}>{currentBook.title}</h3>
-                    <p className={styles.cardSubtext}>{currentBook.author}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className={styles.emptyState}>
-                  <div className={styles.placeholderBox}>+</div>
-                  <div>
-                    <h3 className={styles.cardHeader}>You haven't picked a book yet</h3>
-                    <p className={styles.cardSubtext}>
-                      Choose your first read and we'll keep it right here.
-                    </p>
-                  </div>
-                </div>
-              )}
-              <button className={styles.primaryBtn}>
-                {currentBook ? 'Continue reading' : 'Pick my first book'}
-              </button>
-            </div>
-          )}
-
-          {activeSlide === 1 && (
-            <div className={`${styles.card} ${styles.topPickCard}`}>
-              <p className={styles.eyebrow}>OUR TOP PICK FOR YOU</p>
-              <div className={styles.topPickContent}>
-                <img 
-                  src="https://covers.openlibrary.org/b/id/8225261-L.jpg" 
-                  alt="World War Z" 
-                  className={styles.topPickCover} 
-                />
-                <div>
-                  <h3 className={styles.cardHeader}>World War Z</h3>
-                  <p className={styles.cardSubtext}>Based on your quiz answers.</p>
-                </div>
-              </div>
-              <button className={styles.primaryBtn}>Start reading</button>
-            </div>
-          )}
-
-          {activeSlide === 2 && (
-            <div className={`${styles.card} ${styles.retakeCard}`}>
-              <p className={styles.eyebrow}>MOOD CHANGED?</p>
-              <h3 className={styles.cardHeader}>Retake your quiz</h3>
-              <p className={styles.cardSubtext}>Answer again and we'll refresh everything on your shelf.</p>
-              <button className={styles.primaryBtn} onClick={onRetakeQuiz}>
-                Retake Quiz
-              </button>
-            </div>
-          )}
-
-          <div className={styles.dotsContainer}>
-            {[0, 1, 2].map((idx) => (
-              <span
-                key={idx}
-                className={`${styles.dot} ${activeSlide === idx ? styles.activeDot : ''}`}
-                onClick={() => setActiveSlide(idx)}
-              />
-            ))}
-          </div>
+          <HomeCarousel
+            onRetakeQuiz={onRetakeQuiz}
+          />
         </section>
 
         <section className={styles.recommendationsSection}>
