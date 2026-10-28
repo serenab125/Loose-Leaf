@@ -5,6 +5,11 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+/**
+ * Search for books using the Open Library API.
+ * Expects a POST request with a JSON body containing a "query" field.
+ * Returns a JSON response with an array of books or an error message.
+ */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
