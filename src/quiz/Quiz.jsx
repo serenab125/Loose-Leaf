@@ -156,6 +156,14 @@ export function Quiz({ onSkip, user }) {
 
                   <button
                     type="button"
+                    className="quiz-skip-button"
+                    onClick={() => setShowSkipPopup(true)}
+                  >
+                    Skip Quiz
+                  </button>
+
+                  <button
+                    type="button"
                     className="quiz-finish-button"
                     onClick={goToGoals}
                     disabled={!canContinue}

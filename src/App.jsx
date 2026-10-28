@@ -6,11 +6,13 @@ import ForgotPassword from './account/ForgotPassword'
 import ResetPassword from './account/ResetPassword'
 import { Login } from './account/Login'
 import { Quiz } from './quiz/Quiz'
+import { HomeScreen } from './pages/HomeScreen'
 
 function App() {
   const { user, logout, loading } = useAuth()
   const [view, setView] = useState(() =>
-    window.location.pathname === '/reset-password' ? 'reset' : 'login') // Possible views: 'login', 'create', 'forgot', 'reset'
+    window.location.pathname === '/reset-password' ? 'reset' : 'login')
+  const [skipQuiz, setSkipQuiz] = useState(false)
 
   if (loading) {
     return (
@@ -46,7 +48,6 @@ function App() {
 
   return (
     <main>
-
       <div
         style={{
           display: 'flex',
@@ -63,10 +64,12 @@ function App() {
         <span>
           Welcome, {user.user_metadata?.full_name?.split(' ')[0] || user.email}!
         </span>
-
         <button
           type="button"
-          onClick={logout}
+          onClick={() => {
+            logout()
+            setView('login')
+          }}
           style={{
             padding: 0,
             border: 'none',
@@ -82,11 +85,15 @@ function App() {
         </button>
       </div>
 
-
-      <Quiz
-        user={user}
-        onSkip={() => console.log('Quiz skipped')}
-      />
+      {skipQuiz ? (
+        // Show the home screen with generalized book recommendations
+        <HomeScreen />
+      ) : (
+        <Quiz
+          user={user}
+          onSkip={() => setSkipQuiz(true)}
+        />
+      )}
     </main>
   )
 }
