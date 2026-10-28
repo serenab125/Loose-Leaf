@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styles from './Home.module.css';
 import Search from '../pages/Search/Search';
+import { Profile } from '../pages/Profile/Profile';
 
 const MOCK_CATEGORIES = [
   {
@@ -29,7 +30,7 @@ const MOCK_CATEGORIES = [
   }
 ];
 
-export function Home({ user, currentBook, onRetakeQuiz, onSelectBook }) {
+export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [activeTab, setActiveTab] = useState('home');
 
@@ -137,6 +138,8 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook }) {
           </>
         ) : activeTab === 'search' ? (
           <Search onSelectBook={onSelectBook} />
+        ) : activeTab === 'profile' ? (
+          <Profile user={user} logout={logout} />
         ) : (
           <div style={{ padding: '20px', textAlign: 'center', color: '#5b3113', fontFamily: 'Georgia, serif' }}>
             <h2>{activeTab.toUpperCase()}</h2>

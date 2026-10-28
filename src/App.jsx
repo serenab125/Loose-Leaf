@@ -55,7 +55,6 @@ function App() {
     try {
       if (savePreferences) {
         await savePreferences(quizAnswers)
-        console.log('Successfully saved reading preferences to Supabase!')
       }
     } catch (err) {
       console.error('Error saving quiz results:', err)
@@ -65,7 +64,6 @@ function App() {
   }
 
   const handleQuizSkip = () => {
-    console.log('Quiz skipped by user')
     setIsQuizCompleted(true)
   }
 
@@ -120,6 +118,7 @@ function App() {
     <main>
       <Home
         user={user}
+        logout={logout}
         onRetakeQuiz={() => setIsQuizCompleted(false)}
       />
     </main>

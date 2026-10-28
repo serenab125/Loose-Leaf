@@ -1,0 +1,293 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Lobster&display=swap');
+
+.profileContainer {
+  width: 100%;
+  max-width: 393px;
+  min-height: 852px;
+  padding: 16px 16px 90px;
+  background-color: #fdf8f3;
+  box-sizing: border-box;
+  margin: 0 auto;
+  font-family: 'Inter', sans-serif;
+  color: #5b3113;
+}
+
+.topHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.profileTitle {
+  color: #5b3113;
+  font-family: 'Lobster', cursive;
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 36px;
+  margin: 0;
+}
+
+.iconBtn {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #5b3113;
+}
+
+.userInfoCard {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.avatarWrapper,
+.avatarWrapperCenter {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 12px;
+}
+
+.avatarCircle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background-color: #e8ecc8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  color: #5b3113;
+}
+
+.editBadge,
+.editBadgeCenter {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #5b3113;
+  color: #ffffff;
+  border: 2px solid #fdf8f3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.userName {
+  font-family: 'Georgia', serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: #5b3113;
+  margin: 0 0 6px 0;
+}
+
+.userBio {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #8c7365;
+  margin: 0 auto;
+  max-width: 310px;
+}
+
+.shelfSection {
+  margin-bottom: 20px;
+}
+
+.pillTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(91, 49, 19, 0.15);
+  background: #fdf8f3;
+  font-size: 13px;
+  font-weight: 600;
+  color: #5b3113;
+  margin-bottom: 10px;
+}
+
+.shelfCard {
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.favoritesBg {
+  background: linear-gradient(180deg, #fff2ed 0%, #edf1dc 100%);
+}
+
+.currentReadsBg {
+  background: #f1f4e6;
+}
+
+.bookRow {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.bookRow::-webkit-scrollbar {
+  display: none;
+}
+
+.bookCover {
+  width: 72px;
+  height: 106px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.subView {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.backBtn {
+  background: transparent;
+  border: none;
+  font-family: 'Georgia', serif;
+  font-size: 20px;
+  color: #5b3113;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+}
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  color: #a0826d;
+}
+
+.fieldInput {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: none;
+  background: #f7f0e6;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #5b3113;
+  box-sizing: border-box;
+}
+
+.textArea {
+  height: 80px;
+  resize: none;
+}
+
+.phoneRow {
+  display: flex;
+  gap: 8px;
+}
+
+.countrySelect {
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: #f7f0e6;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #5b3113;
+}
+
+.saveBtn {
+  background-color: #5b3113;
+  color: #ffffff;
+  border: none;
+  border-radius: 24px;
+  padding: 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  box-shadow: 0 4px 12px rgba(91, 49, 19, 0.2);
+}
+
+.saveFeedback {
+  text-align: center;
+  font-size: 13px;
+  color: #2e7d32;
+  margin: 0;
+}
+
+.settingsGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionHeader {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  color: #a0826d;
+  margin: 0 0 2px 4px;
+}
+
+.settingItem,
+.settingToggleItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 14px 16px;
+  background: #f7f0e6;
+  border: none;
+  border-radius: 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #5b3113;
+  cursor: pointer;
+}
+
+.toggleSwitch {
+  width: 38px;
+  height: 20px;
+  accent-color: #5b3113;
+  cursor: pointer;
+}
+
+.signOutBtn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 14px;
+  background-color: #fde8e8;
+  color: #5b3113;
+  border: none;
+  border-radius: 20px;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: -0.312px;
+  text-align: center;
+  cursor: pointer;
+}

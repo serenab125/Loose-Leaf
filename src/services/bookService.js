@@ -16,7 +16,21 @@ export async function searchBooksByTitle(title) {
     );
 
     if (!response.ok) {
-      throw new Error(`Open Library API error: ${response.statusText}`); }  const data = await response.json();  if (!data.docs \vert{}\vert{} data.docs.length === 0) { return []; }  return data.docs.map((doc) => ({ bookId: doc.key \vert{}\vert{} doc.cover_i \vert{}\vert{} doc.title, title: doc.title, author: doc.author_name ? doc.author_name[0] : 'Unknown Author', coverUrl: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
+      throw new Error(`Open Library API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.docs || data.docs.length === 0) {
+      return [];
+    }
+
+    return data.docs.map((doc) => ({
+      bookId: doc.key || doc.cover_i || doc.title,
+      title: doc.title,
+      author: doc.author_name ? doc.author_name[0] : 'Unknown Author',
+      coverUrl: doc.cover_i
+        ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
         : null,
     }));
   } catch (error) {
