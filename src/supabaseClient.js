@@ -8,25 +8,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 /**
- * Returns a Supabase auth client configured with the requested session persistence.
+ * Single auth client: memory-only storage (persistSession: false).
  *
- * `persistSession = true`  -> the session is saved to localStorage, so a signed-in user
- *                           stays signed in after the browser is closed and reopened.
- *                           ("Remember me" on)
- * `persistSession = false` -> the session lives only in memory and is cleared when the
- *                           tab closes, so the user signs out again on their next visit.
- *                           ("Remember me" off)
+ * "Remember me" is handled at the application level:
+ * - When ON: the session is manually saved to localStorage on sign-in and
+ *   restored from localStorage on app load.
+ * - When OFF: the session lives only in memory and is cleared when the tab
+ *   closes (no localStorage writes).
+ *
+ * This guarantees exactly ONE GoTrueClient instance in the browser context,
+ * avoiding the "multiple instances detected" warning and its undefined
+ * behavior (crossed session writes/reads between two client instances).
  */
-const clients = new Map();
-
-export function supabaseFor(persistSession = true) {
-  if (!clients.has(persistSession)) {
-    clients.set(persistSession, createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { persistSession },
-    }));
-  }
-  return clients.get(persistSession);
-}
-
-// Default client: "Remember me" is on (the session survives browser restarts).
-export const supabase = supabaseFor(true);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
+});

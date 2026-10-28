@@ -1,16 +1,42 @@
-import { useState, useEffect, useMemo } from 'react';
-import { supabaseFor } from '../supabaseClient';
+import { useState, useEffect } from 'react';
+
+import { supabase } from '../supabaseClient';
 
 export function useAuth(persistSession = true) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Memoize the auth client so its session subscription stays stable and the session is
-  // read from / written to the storage that matches persistSession.
-  const supabase = useMemo(() => supabaseFor(persistSession), [persistSession]);
 
   useEffect(() => {
+    // If "Remember me" is ON, try to restore the session from localStorage
+    // (a manually-persisted copy stored on sign-in).
+    if (persistSession) {
+      const saved = localStorage.getItem('looseleaf_session');
+      if (saved) {
+        try {
+          const session = JSON.parse(saved);
+          // Manually set the session so the auth state is restored immediately.
+          // Note: supabase.auth.setSession requires the full session object.
+          if (session.access_token && session.refresh_token) {
+            supabase.auth.setSession({
+              access_token: session.access_token,
+              refresh_token: session.refresh_token,
+            }).then(({ data }) => {
+              setUser(data.session?.user ?? null);
+              setLoading(false);
+            }).catch(() => {
+              setLoading(false);
+            });
+            return; // skip the default getSession() below
+          }
+        } catch {
+          localStorage.removeItem('looseleaf_session');
+        }
+      }
+    }
+
+    // Default: read the session from Supabase's memory storage.
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
@@ -22,7 +48,7 @@ export function useAuth(persistSession = true) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase]);
+  }, [persistSession]);
 
   const createAccount = async (email, password, fullName) => {
     setLoading(true);
@@ -55,6 +81,21 @@ export function useAuth(persistSession = true) {
         password,
       });
       if (authError) throw authError;
+
+      // Persist the session to localStorage only if "Remember me" is ON.
+      if (persistSession) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session) {
+          const sessionJson = JSON.stringify(sessionData.session);
+          localStorage.setItem('looseleaf_session', sessionJson);
+        }
+      }
+
+      // Refresh the session so the auth state is fully committed in memory.
+      const { error: refreshError } = await supabase.auth.getSession();
+      if (refreshError) {
+        console.warn('Failed to refresh session after sign-in:', refreshError.message);
+      }
       return data;
     } catch (err) {
       setError(err.message || 'Sign-in failed');
@@ -120,6 +161,10 @@ const updatePassword = async (password, confirmPassword) => {
     setError('');
     try {
       await supabase.auth.signOut();
+      // Clear the manually-stored session when "Remember me" is ON.
+      if (persistSession) {
+        localStorage.removeItem('looseleaf_session');
+      }
     } catch (err) {
       setError(err.message || 'Sign-out failed');
     } finally {
