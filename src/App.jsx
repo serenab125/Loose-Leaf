@@ -6,13 +6,14 @@ import ForgotPassword from './account/ForgotPassword'
 import ResetPassword from './account/ResetPassword'
 import { Login } from './account/Login'
 import { Quiz } from './quiz/Quiz'
-import { HomeScreen } from './pages/HomeScreen'
+import { Home } from './home/Home'
 
 function App() {
   const { user, logout, loading } = useAuth()
   const [view, setView] = useState(() =>
     window.location.pathname === '/reset-password' ? 'reset' : 'login')
   const [skipQuiz, setSkipQuiz] = useState(false)
+  const [currentBook, setCurrentBook] = useState(null)
 
   if (loading) {
     return (
@@ -87,7 +88,12 @@ function App() {
 
       {skipQuiz ? (
         // Show the home screen with generalized book recommendations
-        <HomeScreen />
+        <Home
+          user={user}
+          currentBook={currentBook}
+          onRetakeQuiz={() => setSkipQuiz(false)}
+          onSelectBook={setCurrentBook}
+        />
       ) : (
         <Quiz
           user={user}
