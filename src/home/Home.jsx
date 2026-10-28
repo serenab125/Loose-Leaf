@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styles from './Home.module.css';
-import { Search } from '../search/Search';
+import Search from '../pages/Search/Search';
 
 const MOCK_CATEGORIES = [
   {
