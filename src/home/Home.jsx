@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './Home.module.css';
 import Search from '../pages/Search/Search';
 import { Profile } from '../pages/Profile/Profile';
+import { fetchPersonalizedRecommendations } from '../services/bookService';
 
 const MOCK_CATEGORIES = [
   {
@@ -33,6 +34,17 @@ const MOCK_CATEGORIES = [
 export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [activeTab, setActiveTab] = useState('home');
+  const [personalizedRecs, setPersonalizedRecs] = useState(null);
+
+  useEffect(() => {
+    async function loadRecs() {
+      if (user?.id) {
+        const recData = await fetchPersonalizedRecommendations(user.id);
+        setPersonalizedRecs(recData);
+      }
+    }
+    loadRecs();
+  }, [user]);
 
   return (
     <div className={styles.appViewport}>
@@ -118,6 +130,27 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
             </section>
 
             <section className={styles.recommendationsSection}>
+              {personalizedRecs && (
+                <div className={styles.categoryRow}>
+                  <h2 className={styles.categoryTitle}>{personalizedRecs.category}</h2>
+                  <div className={styles.bookScrollRow}>
+                    {personalizedRecs.books.map((book, idx) => (
+                      <div 
+                        key={book.bookId || idx} 
+                        className={styles.bookCard}
+                        onClick={() => onSelectBook?.(book)}
+                      >
+                        <img 
+                          src={book.coverUrl || book.cover || 'https://covers.openlibrary.org/b/id/8311267-L.jpg'} 
+                          alt={book.title} 
+                          className={styles.bookCover} 
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {MOCK_CATEGORIES.map((category) => (
                 <div key={category.title} className={styles.categoryRow}>
                   <h2 className={styles.categoryTitle}>{category.title}</h2>

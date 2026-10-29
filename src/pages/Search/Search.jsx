@@ -1,151 +1,158 @@
-import { useEffect, useState } from "react";
-import BookRow from "./BookRow";
-import { categoryData } from "./categoryData";
+import { useState } from "react";
 import { searchBooksByTitle } from "../../services/bookService";
 import "./Search.css";
 
-const categories = [
-    "Movies",
-    "TV Shows",
-    "< 300 Pages",
-    "> 300 Pages",
-    "Series",
-    "Slow Burn",
-    "Romance",
-    "Thriller",
+const TOP_SEARCHES = [
+    {
+        id: 1,
+        title: "A Court of Thorns and Roses",
+        author: "Sarah J. Maas",
+        coverUrl: "https://covers.openlibrary.org/b/id/12818862-L.jpg"
+    },
+    {
+        id: 2,
+        title: "Project Hail Mary",
+        author: "Andy Weir",
+        coverUrl: "https://covers.openlibrary.org/b/id/10521270-L.jpg"
+    },
+    {
+        id: 3,
+        title: "The Calamity Club",
+        author: "Kathryn Stockett",
+        coverUrl: "https://covers.openlibrary.org/b/id/14589201-L.jpg"
+    }
 ];
 
-export default function Search() {
-    const [selectedCategory, setSelectedCategory] = useState(null);
-    const [bookRows, setBookRows] = useState([]);
-    const [loadingBooks, setLoadingBooks] = useState(false);
-    const [booksError, setBooksError] = useState("");
+const CATEGORIES = [
+    "Movies",
+    "TV Shows",
+    "<300 pages",
+    ">300 pages",
+    "Series",
+    "Slow Burn"
+];
 
-    useEffect(() => {
-        const category = categoryData[selectedCategory];
+export default function Search({ onSelectBook }) {
+    const [query, setQuery] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchError, setSearchError] = useState("");
 
-        if (!category) {
-            setBookRows([]);
-            setBooksError("");
-            setLoadingBooks(false);
+    const handleSearchInput = async (e) => {
+        const val = e.target.value;
+        setQuery(val);
+
+        const cleanedQuery = val.replace(/[?/@]/g, "").trim();
+
+        if (!cleanedQuery) {
+            setSearchResults([]);
+            setSearchError("");
             return;
         }
 
-        let cancelled = false;
+        setSearchLoading(true);
+        setSearchError("");
 
-        async function loadBooks() {
-            setLoadingBooks(true);
-            setBooksError("");
-            setBookRows([]);
-
-            try {
-                const rows = [];
-
-                for (const row of category.rows) {
-                    const books = [];
-
-                    for (const bookInfo of row.books) {
-                        const results = await searchBooksByTitle(bookInfo.title);
-
-                        // Prefer an exact title match when available.
-
-                        const normalize = (text) =>
-                            text?.toLowerCase().replace(/[^a-z0-9]/g, "") ?? "";
-
-                        const exactMatches = results.filter(
-                            (book) =>
-                                normalize(book.title) === normalize(bookInfo.title) &&
-                                normalize(book.author).includes(normalize(bookInfo.author))
-                        );
-
-                        const match =
-                            exactMatches.find((book) => book.coverUrl) ??
-                            exactMatches[0];
-
-                        books.push({
-                            bookId: match?.bookId ?? bookInfo.title,
-                            title: bookInfo.title,
-                            author: bookInfo.author,
-                            coverUrl: bookInfo.coverUrl ?? match?.coverUrl ?? null,
-                        });
-
-                    }
-
-                    rows.push({ title: row.title, books });
-                }
-
-                if (!cancelled) setBookRows(rows);
-            } catch {
-                if (!cancelled) {
-                    setBooksError("Could not load recommendations. Please try again.");
-                }
-            } finally {
-                if (!cancelled) setLoadingBooks(false);
+        try {
+            const results = await searchBooksByTitle(cleanedQuery);
+            if (results && results.length > 0) {
+                setSearchResults(results);
+            } else {
+                setSearchResults([]);
+                setSearchError("No book titles found matching your search.");
             }
+        } catch {
+            setSearchError("Unable to retrieve book results. Please try again.");
+        } finally {
+            setSearchLoading(false);
         }
+    };
 
-        loadBooks();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [selectedCategory]);
+    const clearSearch = () => {
+        setQuery("");
+        setSearchResults([]);
+        setSearchError("");
+    };
 
     return (
         <main className="search-page">
-            {selectedCategory ? (
-                <>
-                    <button
-                        type="button"
-                        className="search-back-button"
-                        onClick={() => setSelectedCategory(null)}
-                    >
-                        ← Back
+            <h1 className="search-logo">LooseLeaf</h1>
+
+            <div className="search-bar-container">
+                <span className="search-icon">🔍</span>
+                <input
+                    type="text"
+                    className="search-input"
+                    placeholder="Search for a book title, genre, etc."
+                    value={query}
+                    onChange={handleSearchInput}
+                />
+                {query && (
+                    <button type="button" className="search-clear-btn" onClick={clearSearch}>
+                        ✕
                     </button>
+                )}
+            </div>
 
-                    <h1 className="search-results-title">
-                        {selectedCategory === "Movies"
-                            ? "Books for Movie Lovers"
-                            : `${selectedCategory} Books`}
-                    </h1>
+            {query.trim().length > 0 ? (
+                <section className="suggested-section">
+                    <h2 className="section-title">Suggested Titles</h2>
 
-                    {loadingBooks && <p>Loading recommendations...</p>}
+                    {searchLoading && <p className="search-status-msg">Searching for books...</p>}
+                    {searchError && <p className="search-status-msg">{searchError}</p>}
 
-                    {booksError && (
-                        <p className="search-results-message">{booksError}</p>
-                    )}
-
-                    {!loadingBooks &&
-                        !booksError &&
-                        bookRows.map((row) => (
-                            <BookRow
-                                key={row.title}
-                                title={row.title}
-                                books={row.books}
-                            />
+                    <div className="suggested-list">
+                        {searchResults.map((book, idx) => (
+                            <div
+                                key={book.bookId || idx}
+                                className="suggested-card"
+                                onClick={() => onSelectBook?.(book)}
+                            >
+                                {book.coverUrl ? (
+                                    <img src={book.coverUrl} alt={book.title} className="suggested-cover" />
+                                ) : (
+                                    <div className="suggested-no-cover">{book.title}</div>
+                                )}
+                                <div className="suggested-info">
+                                    <h3 className="suggested-title">{book.title}</h3>
+                                    <p className="suggested-author">by {book.author || "Unknown"}</p>
+                                </div>
+                            </div>
                         ))}
-                </>
+                    </div>
+                </section>
             ) : (
                 <>
-                    <h1 className="search-logo">LooseLeaf</h1>
+                    <section className="top-searches-section">
+                        <h2 className="section-title">Top Searches</h2>
+                        <div className="top-searches-row">
+                            {TOP_SEARCHES.map((book) => (
+                                <div
+                                    key={book.id}
+                                    className="top-search-card"
+                                    onClick={() => onSelectBook?.(book)}
+                                >
+                                    <img src={book.coverUrl} alt={book.title} className="top-search-cover" />
+                                </div>
+                            ))}
+                        </div>
+                    </section>
 
-                    {/* Teammates' search features will go here */}
-                    <div className="search-placeholder">
-                        Search bar and Top Searches coming soon
-                    </div>
-
-                    <div className="search-categories">
-                        {categories.map((category) => (
+                    <section className="categories-grid">
+                        {CATEGORIES.map((cat) => (
                             <button
-                                key={category}
+                                key={cat}
                                 type="button"
-                                className="search-category-button"
-                                onClick={() => setSelectedCategory(category)}
+                                className="category-btn"
+                                onClick={() => {
+                                    setQuery(cat);
+                                    handleSearchInput({ target: { value: cat } });
+                                }}
                             >
-                                {category}
+                                {cat}
                             </button>
                         ))}
-                    </div>
+                    </section>
                 </>
             )}
         </main>

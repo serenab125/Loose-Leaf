@@ -1,143 +1,207 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lobster&display=swap');
+
 .search-page {
     min-height: 100vh;
-    background-color: #fdf8f4;
-    padding: 48px 20px 100px;
+    background-color: #fdf8f3;
+    padding: 32px 20px 100px;
     color: #5a321a;
     box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    max-width: 393px;
+    margin: 0 auto;
 }
 
 .search-logo {
-    font-family: Georgia, serif;
+    font-family: 'Lobster', cursive;
     font-size: 32px;
-    font-style: italic;
-    font-weight: bold;
+    font-weight: 400;
     text-align: center;
-    margin: 0 0 30px;
+    margin: 0 0 24px;
     color: #5a321a;
 }
 
-.search-placeholder {
-    background-color: #f5f3e9;
+/* Search Bar Input */
+.search-bar-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: #f7f3e9;
     border: 1px solid #ebe5d5;
-    border-radius: 18px;
-    padding: 16px;
+    border-radius: 24px;
+    padding: 0 16px;
+    height: 48px;
+    margin-bottom: 28px;
+}
+
+.search-icon {
+    font-size: 16px;
     color: #b59b88;
+    margin-right: 10px;
+}
+
+.search-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
-    margin-bottom: 36px;
-}
-
-.search-categories {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px 14px;
-}
-
-.search-category-button {
-    min-height: 70px;
-    padding: 12px 8px;
-    border: 1px solid #ebe6d7;
-    border-radius: 20px;
-    background-color: #f5f3e9;
     color: #5a321a;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
+    outline: none;
 }
 
-.search-category-button:nth-child(even) {
-    background-color: #fcece9;
-    border-color: #f6dbd6;
+.search-input::placeholder {
+    color: #b59b88;
 }
 
-.search-category-button:hover {
-    filter: brightness(0.97);
-}
-
-.search-category-button:focus-visible {
-    outline: 2px solid #5a321a;
-    outline-offset: 3px;
-}
-
-@media (min-width: 600px) {
-    .search-page {
-        max-width: 430px;
-        margin: 0 auto;
-    }
-}
-
-
-.search-back-button {
-    background: none;
+.search-clear-btn {
+    background: transparent;
     border: none;
     color: #b59b88;
     font-size: 14px;
-    padding: 8px 0;
-    margin-bottom: 18px;
     cursor: pointer;
+    padding: 0 4px;
 }
 
-.search-results-title {
-    font-family: Georgia, serif;
-    font-size: 28px;
-    font-style: italic;
+/* Section Headings */
+.section-title {
+    font-family: 'Georgia', serif;
+    font-size: 20px;
+    font-weight: 400;
     color: #5a321a;
-    margin: 0 0 24px;
+    margin: 0 0 16px;
 }
 
-.search-results-message {
-    color: #a48d7c;
-    font-size: 14px;
+/* Top Searches Horizontal Row */
+.top-searches-section {
+    margin-bottom: 28px;
 }
 
-
-.search-book-section {
-    margin-top: 26px;
-}
-
-.search-book-section-title {
-    font-family: Georgia, serif;
-    font-size: 19px;
-    font-weight: normal;
-    color: #5a321a;
-    margin: 0 0 14px;
-}
-
-.search-book-row {
+.top-searches-row {
     display: flex;
     gap: 12px;
     overflow-x: auto;
-    padding: 2px 0 12px;
+    padding-bottom: 8px;
     scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
 }
 
-.search-book-row::-webkit-scrollbar {
+.top-searches-row::-webkit-scrollbar {
     display: none;
 }
 
-.search-book-item {
-    flex: 0 0 105px;
-    height: 155px;
-    border-radius: 14px;
+.top-search-card {
+    flex: 0 0 100px;
+    height: 150px;
+    border-radius: 12px;
     overflow: hidden;
-    background-color: #f5f3e9;
-    box-shadow: 0 3px 6px rgba(60, 35, 20, 0.12);
+    box-shadow: 0 4px 10px rgba(90, 50, 26, 0.1);
+    cursor: pointer;
 }
 
-.search-book-item img {
+.top-search-cover {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.search-book-no-cover {
-    height: 100%;
+/* Categories Grid */
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 12px;
+}
+
+.category-btn {
+    height: 56px;
+    padding: 12px;
+    border-radius: 18px;
+    border: 1px solid #ebe5d5;
+    background-color: #f7f3e9;
+    color: #5a321a;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
+
+.category-btn:nth-child(even) {
+    background-color: #fcece9;
+    border-color: #f6dbd6;
+}
+
+/* Suggested Titles Cards View */
+.suggested-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.search-status-msg {
+    font-size: 14px;
+    color: #8c7365;
+    margin-bottom: 16px;
+}
+
+.suggested-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.suggested-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: #f7f3e9;
+    border: 1px solid #ebe5d5;
+    border-radius: 20px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.suggested-card:active {
+    transform: scale(0.99);
+}
+
+.suggested-cover {
+    width: 52px;
+    height: 76px;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.suggested-no-cover {
+    width: 52px;
+    height: 76px;
+    border-radius: 8px;
+    background-color: #ebe5d5;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px;
-    box-sizing: border-box;
     text-align: center;
-    font-size: 12px;
+    font-size: 11px;
     color: #5a321a;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.suggested-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.suggested-title {
+    font-family: 'Georgia', serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: #5a321a;
+    margin: 0 0 4px;
+}
+
+.suggested-author {
+    font-size: 13px;
+    color: #8c7365;
+    margin: 0;
 }
