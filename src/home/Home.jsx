@@ -3,6 +3,7 @@ import styles from './Home.module.css';
 import Search from '../pages/Search/Search';
 import { Profile } from '../pages/Profile/Profile';
 import { fetchPersonalizedRecommendations } from '../services/bookService';
+import HomeCarousel from './HomeCarousel';
 
 const RECOMMENDED_FOR_YOU = [
   { id: 'r1', title: 'The Hunger Games', cover: 'https://covers.openlibrary.org/b/id/13254928-L.jpg' },
@@ -25,7 +26,6 @@ const SHORT_EASY_READS = [
 ];
 
 export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) {
-  const [activeSlide, setActiveSlide] = useState(0);
   const [activeTab, setActiveTab] = useState('home');
   const [personalizedRecs, setPersonalizedRecs] = useState(null);
 
@@ -44,6 +44,7 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
       <div className={styles.scrollableContent}>
         {activeTab === 'home' ? (
           <>
+            {/* LooseLeaf Header */}
             <header className={styles.brandHeader}>
               <div className={styles.logoWrapper}>
                 <span className={styles.leafIcon}>🍃</span>
@@ -52,75 +53,15 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
               </div>
             </header>
 
+            {/* Serena's Sprint 2 Homepage Carousel */}
             <section className={styles.bannerSection}>
-              {activeSlide === 0 && (
-                <div className={`${styles.card} ${styles.currentReadCard}`}>
-                  <p className={styles.eyebrow}>CURRENT READ</p>
-                  {currentBook ? (
-                    <div className={styles.currentBookInfo}>
-                      <img src={currentBook.cover} alt={currentBook.title} className={styles.miniCover} />
-                      <div>
-                        <h3 className={styles.cardHeader}>{currentBook.title}</h3>
-                        <p className={styles.cardSubtext}>{currentBook.author}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className={styles.emptyState}>
-                      <div className={styles.placeholderBox}>+</div>
-                      <div>
-                        <h3 className={styles.cardHeader}>You haven't picked a book yet</h3>
-                        <p className={styles.cardSubtext}>
-                          Choose your first read and we'll keep it right here.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  <button type="button" className={styles.primaryBtn}>
-                    {currentBook ? 'Continue reading' : 'Pick my first book'}
-                  </button>
-                </div>
-              )}
-
-              {activeSlide === 1 && (
-                <div className={`${styles.card} ${styles.topPickCard}`}>
-                  <p className={styles.eyebrow}>OUR TOP PICK FOR YOU</p>
-                  <div className={styles.topPickContent}>
-                    <img
-                      src="https://covers.openlibrary.org/b/id/8225261-L.jpg"
-                      alt="World War Z"
-                      className={styles.topPickCover}
-                    />
-                    <div>
-                      <h3 className={styles.cardHeader}>World War Z</h3>
-                      <p className={styles.cardSubtext}>Based on your quiz answers.</p>
-                    </div>
-                  </div>
-                  <button type="button" className={styles.primaryBtn}>Start reading</button>
-                </div>
-              )}
-
-              {activeSlide === 2 && (
-                <div className={`${styles.card} ${styles.retakeCard}`}>
-                  <p className={styles.eyebrow}>MOOD CHANGED?</p>
-                  <h3 className={styles.cardHeader}>Retake your quiz</h3>
-                  <p className={styles.cardSubtext}>Answer again and we'll refresh everything on your shelf.</p>
-                  <button type="button" className={styles.primaryBtn} onClick={onRetakeQuiz}>
-                    Retake Quiz
-                  </button>
-                </div>
-              )}
-
-              <div className={styles.dotsContainer}>
-                {[0, 1, 2].map((idx) => (
-                  <span
-                    key={idx}
-                    className={`${styles.dot} ${activeSlide === idx ? styles.activeDot : ''}`}
-                    onClick={() => setActiveSlide(idx)}
-                  />
-                ))}
-              </div>
+              <HomeCarousel
+                currentBook={currentBook}
+                onRetakeQuiz={onRetakeQuiz}
+              />
             </section>
 
+            {/* Recommendations Shelves */}
             <section className={styles.recommendationsSection}>
               {/* 1. Recommended for You */}
               <div className={styles.categoryRow}>
