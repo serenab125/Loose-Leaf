@@ -4,31 +4,24 @@ import Search from '../pages/Search/Search';
 import { Profile } from '../pages/Profile/Profile';
 import { fetchPersonalizedRecommendations } from '../services/bookService';
 
-const MOCK_CATEGORIES = [
-  {
-    title: 'Recommended for You',
-    books: [
-      { id: 1, title: 'The Great Gatsby', cover: 'https://covers.openlibrary.org/b/id/8311267-L.jpg' },
-      { id: 2, title: 'The Hunger Games', cover: 'https://covers.openlibrary.org/b/id/13254928-L.jpg' },
-      { id: 3, title: 'The Hobbit', cover: 'https://covers.openlibrary.org/b/id/8406786-L.jpg' }
-    ]
-  },
-  {
-    title: 'Popular Right Now',
-    books: [
-      { id: 4, title: 'Yesteryear', cover: 'https://covers.openlibrary.org/b/id/14556424-L.jpg' },
-      { id: 5, title: 'Dungeon Crawler Carl', cover: 'https://covers.openlibrary.org/b/id/14589201-L.jpg' },
-      { id: 6, title: 'The Wedding People', cover: 'https://covers.openlibrary.org/b/id/14601211-L.jpg' }
-    ]
-  },
-  {
-    title: 'Short & Easy Reads',
-    books: [
-      { id: 7, title: 'Wonder', cover: 'https://covers.openlibrary.org/b/id/8231856-L.jpg' },
-      { id: 8, title: 'milk and honey', cover: 'https://covers.openlibrary.org/b/id/8235111-L.jpg' },
-      { id: 9, title: 'Percy Jackson', cover: 'https://covers.openlibrary.org/b/id/7984916-L.jpg' }
-    ]
-  }
+const RECOMMENDED_FOR_YOU = [
+  { id: 'r1', title: 'The Hunger Games', cover: 'https://covers.openlibrary.org/b/id/13254928-L.jpg' },
+  { id: 'r2', title: 'The Hobbit', cover: 'https://covers.openlibrary.org/b/id/8406786-L.jpg' },
+  { id: 'r3', title: 'One of Us Is Lying', cover: 'https://covers.openlibrary.org/b/id/8381286-L.jpg' },
+  { id: 'r4', title: 'Hollow Kingdom', cover: 'https://covers.openlibrary.org/b/id/10521270-L.jpg' },
+  { id: 'r5', title: 'Percy Jackson', cover: 'https://covers.openlibrary.org/b/id/7984916-L.jpg' },
+];
+
+const POPULAR_RIGHT_NOW = [
+  { id: 'p1', title: 'Yesteryear', cover: 'https://covers.openlibrary.org/b/id/14556424-L.jpg' },
+  { id: 'p2', title: 'Dungeon Crawler Carl', cover: 'https://covers.openlibrary.org/b/id/14589201-L.jpg' },
+  { id: 'p3', title: 'The Wedding People', cover: 'https://covers.openlibrary.org/b/id/14601211-L.jpg' },
+];
+
+const SHORT_EASY_READS = [
+  { id: 's1', title: 'Wonder', cover: 'https://covers.openlibrary.org/b/id/8231856-L.jpg' },
+  { id: 's2', title: 'milk and honey', cover: 'https://covers.openlibrary.org/b/id/8235111-L.jpg' },
+  { id: 's3', title: 'Percy Jackson', cover: 'https://covers.openlibrary.org/b/id/7984916-L.jpg' },
 ];
 
 export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) {
@@ -57,7 +50,6 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
                 <h1 className={styles.brandTitle}>LooseLeaf</h1>
                 <span className={styles.leafIcon}>🍃</span>
               </div>
-              <div className={styles.headerDivider} />
             </header>
 
             <section className={styles.bannerSection}>
@@ -83,7 +75,7 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
                       </div>
                     </div>
                   )}
-                  <button className={styles.primaryBtn}>
+                  <button type="button" className={styles.primaryBtn}>
                     {currentBook ? 'Continue reading' : 'Pick my first book'}
                   </button>
                 </div>
@@ -93,17 +85,17 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
                 <div className={`${styles.card} ${styles.topPickCard}`}>
                   <p className={styles.eyebrow}>OUR TOP PICK FOR YOU</p>
                   <div className={styles.topPickContent}>
-                    <img 
-                      src="https://covers.openlibrary.org/b/id/8225261-L.jpg" 
-                      alt="World War Z" 
-                      className={styles.topPickCover} 
+                    <img
+                      src="https://covers.openlibrary.org/b/id/8225261-L.jpg"
+                      alt="World War Z"
+                      className={styles.topPickCover}
                     />
                     <div>
                       <h3 className={styles.cardHeader}>World War Z</h3>
                       <p className={styles.cardSubtext}>Based on your quiz answers.</p>
                     </div>
                   </div>
-                  <button className={styles.primaryBtn}>Start reading</button>
+                  <button type="button" className={styles.primaryBtn}>Start reading</button>
                 </div>
               )}
 
@@ -112,7 +104,7 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
                   <p className={styles.eyebrow}>MOOD CHANGED?</p>
                   <h3 className={styles.cardHeader}>Retake your quiz</h3>
                   <p className={styles.cardSubtext}>Answer again and we'll refresh everything on your shelf.</p>
-                  <button className={styles.primaryBtn} onClick={onRetakeQuiz}>
+                  <button type="button" className={styles.primaryBtn} onClick={onRetakeQuiz}>
                     Retake Quiz
                   </button>
                 </div>
@@ -130,20 +122,37 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
             </section>
 
             <section className={styles.recommendationsSection}>
+              {/* 1. Recommended for You */}
+              <div className={styles.categoryRow}>
+                <h2 className={styles.categoryTitle}>Recommended for You</h2>
+                <div className={styles.bookScrollRow}>
+                  {RECOMMENDED_FOR_YOU.map((book) => (
+                    <div
+                      key={book.id}
+                      className={styles.bookCard}
+                      onClick={() => onSelectBook?.(book)}
+                    >
+                      <img src={book.cover} alt={book.title} className={styles.bookCover} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. Personalized Quiz Recommendation (Because You Like: ...) */}
               {personalizedRecs && (
                 <div className={styles.categoryRow}>
                   <h2 className={styles.categoryTitle}>{personalizedRecs.category}</h2>
                   <div className={styles.bookScrollRow}>
                     {personalizedRecs.books.map((book, idx) => (
-                      <div 
-                        key={book.bookId || idx} 
+                      <div
+                        key={book.bookId || idx}
                         className={styles.bookCard}
                         onClick={() => onSelectBook?.(book)}
                       >
-                        <img 
-                          src={book.coverUrl || book.cover || 'https://covers.openlibrary.org/b/id/8311267-L.jpg'} 
-                          alt={book.title} 
-                          className={styles.bookCover} 
+                        <img
+                          src={book.coverUrl || book.cover || 'https://covers.openlibrary.org/b/id/8311267-L.jpg'}
+                          alt={book.title}
+                          className={styles.bookCover}
                         />
                       </div>
                     ))}
@@ -151,22 +160,37 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
                 </div>
               )}
 
-              {MOCK_CATEGORIES.map((category) => (
-                <div key={category.title} className={styles.categoryRow}>
-                  <h2 className={styles.categoryTitle}>{category.title}</h2>
-                  <div className={styles.bookScrollRow}>
-                    {category.books.map((book) => (
-                      <div 
-                        key={book.id} 
-                        className={styles.bookCard}
-                        onClick={() => onSelectBook?.(book)}
-                      >
-                        <img src={book.cover} alt={book.title} className={styles.bookCover} />
-                      </div>
-                    ))}
-                  </div>
+              {/* 3. Popular Right Now */}
+              <div className={styles.categoryRow}>
+                <h2 className={styles.categoryTitle}>Popular Right Now</h2>
+                <div className={styles.bookScrollRow}>
+                  {POPULAR_RIGHT_NOW.map((book) => (
+                    <div
+                      key={book.id}
+                      className={styles.bookCard}
+                      onClick={() => onSelectBook?.(book)}
+                    >
+                      <img src={book.cover} alt={book.title} className={styles.bookCover} />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              {/* 4. Short & Easy Reads */}
+              <div className={styles.categoryRow}>
+                <h2 className={styles.categoryTitle}>Short & Easy Reads</h2>
+                <div className={styles.bookScrollRow}>
+                  {SHORT_EASY_READS.map((book) => (
+                    <div
+                      key={book.id}
+                      className={styles.bookCard}
+                      onClick={() => onSelectBook?.(book)}
+                    >
+                      <img src={book.cover} alt={book.title} className={styles.bookCover} />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </section>
           </>
         ) : activeTab === 'search' ? (
@@ -174,7 +198,7 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
         ) : activeTab === 'profile' ? (
           <Profile user={user} logout={logout} />
         ) : (
-          <div style={{ padding: '20px', textAlign: 'center', color: '#5b3113', fontFamily: 'Georgia, serif' }}>
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: '#5b3113', fontFamily: 'Georgia, serif' }}>
             <h2>{activeTab.toUpperCase()}</h2>
             <p>This tab is under construction.</p>
           </div>
