@@ -1,38 +1,37 @@
 import { supabase } from '../supabaseClient';
 
-export async function searchBooksByTitle(title) {
-  if (!title || typeof title !== 'string') return [];
+async function requestBookSearch(body) {
+  const { data, error } = await supabase.functions.invoke('search-books', {
+    body,
+  });
 
-  const cleanedTitle = title.replace(/[?/@]/g, '').trim();
-  if (!cleanedTitle) return [];
-
-  try {
-    const response = await fetch(
-      `https://openlibrary.org/search.json?title=${encodeURIComponent(cleanedTitle)}&limit=10`
-    );
-
-    if (!response.ok) {
-      throw new Error(`Open Library API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-
-    if (!data.docs || data.docs.length === 0) {
-      return [];
-    }
-
-    return data.docs.map((doc) => ({
-      bookId: doc.key || doc.cover_i || doc.title,
-      title: doc.title,
-      author: doc.author_name ? doc.author_name[0] : 'Unknown Author',
-      coverUrl: doc.cover_i
-        ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
-        : null,
-    }));
-  } catch (error) {
-    console.error('Error fetching books in searchBooksByTitle:', error);
-    return [];
+  if (error) {
+    throw new Error(data?.error || error.message || 'Book search failed.');
   }
+
+  if (data?.error) {
+    throw new Error(data.error);
+  }
+
+  return Array.isArray(data?.books) ? data.books : [];
+}
+
+export function searchBooksByTitle(title) {
+  const cleanTitle = typeof title === 'string' ? title.trim() : '';
+
+  if (!cleanTitle) {
+    return Promise.resolve([]);
+  }
+
+  return requestBookSearch({ query: cleanTitle });
+}
+
+export function searchBooksByCategory(category) {
+  if (typeof category !== 'string' || !category) {
+    return Promise.reject(new Error('Choose a search category.'));
+  }
+
+  return requestBookSearch({ category });
 }
 
 export const DEFAULT_BOOKS = [
