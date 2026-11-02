@@ -165,6 +165,7 @@ export const categoryData = {
             },
         ],
     },
+
     Series: {
         heading: "Get Lost in a Series",
         rows: [
@@ -174,6 +175,9 @@ export const categoryData = {
                     { title: "The Hunger Games", author: "Suzanne Collins" },
                     { title: "Percy Jackson and the Lightning Thief", author: "Rick Riordan" },
                     { title: "Divergent", author: "Veronica Roth" },
+                    { title: "The Maze Runner", author: "James Dashner" },
+                    { title: "The Selection", author: "Kiera Cass" },
+                    { title: "The 5th Wave", author: "Rick Yancey" },
                 ],
             },
             {
@@ -182,6 +186,9 @@ export const categoryData = {
                     { title: "Fourth Wing", author: "Rebecca Yarros" },
                     { title: "Throne of Glass", author: "Sarah J. Maas" },
                     { title: "Shatter Me", author: "Tahereh Mafi" },
+                    { title: "A Court of Thorns and Roses", author: "Sarah J. Maas" },
+                    { title: "Six of Crows", author: "Leigh Bardugo" },
+                    { title: "The Cruel Prince", author: "Holly Black" },
                 ],
             },
             {
@@ -190,10 +197,15 @@ export const categoryData = {
                     { title: "The Inheritance Games", author: "Jennifer Lynn Barnes" },
                     { title: "A Good Girl's Guide to Murder", author: "Holly Jackson" },
                     { title: "The Summer I Turned Pretty", author: "Jenny Han" },
+                    { title: "Magnolia Parks", author: "Jessa Hastings" },
+                    { title: "One of Us Is Lying", author: "Karen M. McManus" },
+                    { title: "Twisted Love", author: "Ana Huang" },
                 ],
             },
         ],
     },
+
+
 
     "Slow Burn": {
         heading: "Slow Burn Books",
@@ -204,6 +216,9 @@ export const categoryData = {
                     { title: "The Hating Game", author: "Sally Thorne" },
                     { title: "Beach Read", author: "Emily Henry" },
                     { title: "The Love Hypothesis", author: "Ali Hazelwood" },
+                    { title: "Book Lovers", author: "Emily Henry" },
+                    { title: "The Flatshare", author: "Beth O'Leary" },
+                    { title: "Wait for It", author: "Mariana Zapata" },
                 ],
             },
             {
@@ -212,6 +227,9 @@ export const categoryData = {
                     { title: "The Cruel Prince", author: "Holly Black" },
                     { title: "The Spanish Love Deception", author: "Elena Armas" },
                     { title: "Better Than the Movies", author: "Lynn Painter" },
+                    { title: "The Unhoneymooners", author: "Christina Lauren" },
+                    { title: "From Blood and Ash", author: "Jennifer L. Armentrout" },
+                    { title: "The Bridge Kingdom", author: "Danielle L. Jensen" },
                 ],
             },
             {
@@ -220,10 +238,15 @@ export const categoryData = {
                     { title: "People We Meet on Vacation", author: "Emily Henry" },
                     { title: "Love and Other Words", author: "Christina Lauren" },
                     { title: "The Wall of Winnipeg and Me", author: "Mariana Zapata" },
+                    { title: "Kulti", author: "Mariana Zapata" },
+                    { title: "The Simple Wild", author: "K. A. Tucker" },
+                    { title: "All Rhodes Lead Here", author: "Mariana Zapata" },
                 ],
             },
         ],
     },
+
+
 
     Romance: {
         heading: "Romance Books",
@@ -234,6 +257,9 @@ export const categoryData = {
                     { title: "It Ends with Us", author: "Colleen Hoover" },
                     { title: "The Love Hypothesis", author: "Ali Hazelwood" },
                     { title: "Happy Place", author: "Emily Henry" },
+                    { title: "Funny Story", author: "Emily Henry" },
+                    { title: "Love, Theoretically", author: "Ali Hazelwood" },
+                    { title: "Every Summer After", author: "Carley Fortune" },
                 ],
             },
             {
@@ -242,6 +268,9 @@ export const categoryData = {
                     { title: "Better Than the Movies", author: "Lynn Painter" },
                     { title: "The Cheat Sheet", author: "Sarah Adams" },
                     { title: "The Bodyguard", author: "Katherine Center" },
+                    { title: "When in Rome", author: "Sarah Adams" },
+                    { title: "Practice Makes Perfect", author: "Sarah Adams" },
+                    { title: "The Do-Over", author: "Lynn Painter" },
                 ],
             },
             {
@@ -250,10 +279,15 @@ export const categoryData = {
                     { title: "The Seven Husbands of Evelyn Hugo", author: "Taylor Jenkins Reid" },
                     { title: "Love and Other Words", author: "Christina Lauren" },
                     { title: "The Fault in Our Stars", author: "John Green" },
+                    { title: "Before We Were Strangers", author: "Renée Carlino" },
+                    { title: "One True Loves", author: "Taylor Jenkins Reid" },
+                    { title: "Me Before You", author: "Jojo Moyes" },
                 ],
             },
         ],
     },
+
+
 
     Thriller: {
         heading: "Thriller Books",
@@ -264,6 +298,9 @@ export const categoryData = {
                     { title: "The Silent Patient", author: "Alex Michaelides" },
                     { title: "The Housemaid", author: "Freida McFadden" },
                     { title: "Verity", author: "Colleen Hoover" },
+                    { title: "The Teacher", author: "Freida McFadden" },
+                    { title: "Never Lie", author: "Freida McFadden" },
+                    { title: "The Only One Left", author: "Riley Sager" },
                 ],
             },
             {
@@ -272,6 +309,9 @@ export const categoryData = {
                     { title: "Gone Girl", author: "Gillian Flynn" },
                     { title: "The Woman in the Window", author: "A. J. Finn" },
                     { title: "Behind Closed Doors", author: "B. A. Paris" },
+                    { title: "The Wife Between Us", author: "Greer Hendricks and Sarah Pekkanen" },
+                    { title: "The Last Mrs. Parrish", author: "Liv Constantine" },
+                    { title: "The Couple Next Door", author: "Shari Lapena" },
                 ],
             },
             {
@@ -280,9 +320,13 @@ export const categoryData = {
                     { title: "The Guest List", author: "Lucy Foley" },
                     { title: "The Paris Apartment", author: "Lucy Foley" },
                     { title: "Rock Paper Scissors", author: "Alice Feeney" },
+                    { title: "The Hunting Party", author: "Lucy Foley" },
+                    { title: "The Turn of the Key", author: "Ruth Ware" },
+                    { title: "The Family Upstairs", author: "Lisa Jewell" },
                 ],
             },
         ],
     },
+
 
 };
