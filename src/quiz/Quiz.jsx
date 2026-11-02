@@ -63,7 +63,8 @@ export function Quiz({ onSkip, user }) {
       if (error) throw error;
 
       console.log('Quiz answers saved successfully!', answers);
-      // TODO: Navigate to recommendations or user's shelf.
+      // Notify parent that quiz is complete
+      onComplete?.();
     } catch (error) {
       console.error('Error saving quiz answers:', error);
       setSaveError(error.message || 'Unable to save quiz answers.');

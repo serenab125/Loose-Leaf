@@ -1,5 +1,5 @@
 import './App.css'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from './account/useAuth'
 import { CreateAccount } from './account/CreateAccount'
 import ForgotPassword from './account/ForgotPassword'
@@ -9,11 +9,24 @@ import { Quiz } from './quiz/Quiz'
 import { Home } from './home/Home'
 
 function App() {
-  const { user, logout, loading } = useAuth()
+  const { user, logout, loading } = useAuth(false)
   const [view, setView] = useState(() =>
     window.location.pathname === '/reset-password' ? 'reset' : 'login')
   const [skipQuiz, setSkipQuiz] = useState(false)
   const [currentBook, setCurrentBook] = useState(null)
+  const [showHome, setShowHome] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
+  const [hasTakenOrSkippedQuiz, setHasTakenOrSkippedQuiz] = useState(() => {
+    const stored = localStorage.getItem('looseleaf_quiz_done')
+    return stored === 'true'
+  })
+
+  // Redirect to home screen if user has already completed/skipped the quiz
+  useEffect(() => {
+    if (hasTakenOrSkippedQuiz && user && !skipQuiz) {
+      setSkipQuiz(true)
+    }
+  }, [hasTakenOrSkippedQuiz, user, skipQuiz])
 
   if (loading) {
     return (
@@ -86,18 +99,36 @@ function App() {
         </button>
       </div>
 
-      {skipQuiz ? (
+      {showSearch ? (
+        // Show the search screen
+        <Search
+          onBack={() => setShowSearch(false)}
+          onHomeClick={() => setShowHome(true)}
+        />
+      ) : showHome ? (
         // Show the home screen with generalized book recommendations
         <Home
           user={user}
           currentBook={currentBook}
           onRetakeQuiz={() => setSkipQuiz(false)}
           onSelectBook={setCurrentBook}
+          onHomeClick={() => setShowHome(true)}
+          onSearchClick={() => setShowSearch(true)}
         />
       ) : (
+        // Show the quiz
         <Quiz
           user={user}
-          onSkip={() => setSkipQuiz(true)}
+          onSkip={() => {
+            setSkipQuiz(true)
+            // Mark quiz as done so next login goes straight to home
+            localStorage.setItem('looseleaf_quiz_done', 'true')
+          }}
+          onComplete={() => {
+            // Mark quiz as done so next login goes straight to home
+            localStorage.setItem('looseleaf_quiz_done', 'true')
+            setSkipQuiz(true)
+          }}
         />
       )}
     </main>

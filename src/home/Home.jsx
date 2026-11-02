@@ -71,7 +71,11 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook }) {
       </div>
 
       <nav className={styles.bottomNav}>
-        <button className={`${styles.navItem} ${styles.activeNavItem}`}>
+        <button
+          type="button"
+          className={`${styles.navItem} ${styles.activeNavItem}`}
+          onClick={() => onHomeClick?.()}
+        >
           <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
@@ -87,7 +91,11 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook }) {
           <span>Timer</span>
         </button>
 
-        <button className={styles.navItem}>
+        <button
+          type="button"
+          className={styles.navItem}
+          onClick={() => onSearchClick?.()}
+        >
           <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />

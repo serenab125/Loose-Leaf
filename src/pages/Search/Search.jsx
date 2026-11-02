@@ -15,7 +15,7 @@ const categories = [
     "Thriller",
 ];
 
-export default function Search() {
+export default function Search({ onBack }) {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [bookRows, setBookRows] = useState([]);
     const [loadingBooks, setLoadingBooks] = useState(false);
@@ -98,7 +98,7 @@ export default function Search() {
                     <button
                         type="button"
                         className="search-back-button"
-                        onClick={() => setSelectedCategory(null)}
+                        onClick={() => onBack?.()}
                     >
                         ← Back
                     </button>
