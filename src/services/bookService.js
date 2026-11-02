@@ -24,7 +24,9 @@ export async function searchBooksByTitle(title) {
     const validBooks = data.docs
       .filter((doc) => {
         const hasCover = Boolean(doc.cover_i);
-        const isPopular = (doc.edition_count && doc.edition_count > 1) || (doc.already_read_count && doc.already_read_count > 0);
+        const isPopular =
+          (doc.edition_count && doc.edition_count > 1) ||
+          (doc.already_read_count && doc.already_read_count > 0);
         const hasAuthor = doc.author_name && doc.author_name.length > 0;
         return hasCover && hasAuthor && isPopular;
       })
@@ -40,6 +42,13 @@ export async function searchBooksByTitle(title) {
     console.error('Error fetching books in searchBooksByTitle:', error);
     return [];
   }
+}
+
+export function searchBooksByCategory(category) {
+  if (typeof category !== 'string' || !category) {
+    return Promise.reject(new Error('Choose a search category.'));
+  }
+  return searchBooksByTitle(category);
 }
 
 // REAL TRENDING / BOOKTOK BOOKS
@@ -131,7 +140,6 @@ export async function fetchMultiPersonalizedRecommendations(userId) {
 
     const prefs = profile.reading_preferences;
 
-    // 1. Show/Movie-based section
     if (Array.isArray(prefs['movies-tv']) && prefs['movies-tv'].length > 0) {
       const showId = prefs['movies-tv'][0];
       if (SHOW_MAP[showId]) {
@@ -146,7 +154,6 @@ export async function fetchMultiPersonalizedRecommendations(userId) {
       }
     }
 
-    // 2. Mood/Vibe-based section
     if (Array.isArray(prefs.vibe) && prefs.vibe.length > 0) {
       const vibeId = prefs.vibe[0];
       if (VIBE_MAP[vibeId]) {
@@ -161,7 +168,6 @@ export async function fetchMultiPersonalizedRecommendations(userId) {
       }
     }
 
-    // 3. Genre-based section
     if (Array.isArray(prefs.stories) && prefs.stories.length > 0 && prefs.stories[0] !== 'not-sure') {
       const storyGenre = prefs.stories[0]
         .replace(/-/g, ' ')

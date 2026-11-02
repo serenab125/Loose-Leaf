@@ -7,12 +7,12 @@ export default function CurrentRead({ onNavigateToSearch }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const loadCurrentRead = useCallback(async () =>{
+    const loadCurrentRead = useCallback(async () => {
         setLoading(true);
         setError("");
 
         try {
-            const{
+            const {
                 data: { user },
                 error: authError,
             } = await supabase.auth.getUser();
@@ -25,18 +25,18 @@ export default function CurrentRead({ onNavigateToSearch }) {
             }
 
             const { data, error: queryError } = await supabase
-            .from("saved_books")
-            .select("open_library_id, title, author, cover_url")
-            .eq("user_id", user.id)
-            .eq("reading_status", "currently_reading")
-            .maybeSingle();
+                .from("saved_books")
+                .select("open_library_id, title, author, cover_url")
+                .eq("user_id", user.id)
+                .eq("reading_status", "currently_reading")
+                .maybeSingle();
 
             if (queryError) throw queryError;
 
             setBook(data);
         } catch {
             setError("Failed to load current read.");
-        } finally{
+        } finally {
             setLoading(false);
         }
     }, []);
@@ -45,7 +45,7 @@ export default function CurrentRead({ onNavigateToSearch }) {
         loadCurrentRead();
     }, [loadCurrentRead]);
 
-       return (
+    return (
         <div>
             {loading ? (
                 <p role="status">Loading current read...</p>
@@ -57,7 +57,7 @@ export default function CurrentRead({ onNavigateToSearch }) {
                     </button>
                 </div>
             ) : (
-               <CurrentReadCard
+                <CurrentReadCard
                     book={book}
                     onPickBook={onNavigateToSearch}
                     onContinueReading={() => {
