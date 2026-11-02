@@ -216,7 +216,7 @@
 
 /* Bottom Navigation Bar */
 .bottomNav {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
@@ -227,6 +227,7 @@
   align-items: center;
   justify-content: space-around;
   padding: 0 8px;
+  box-shadow: 0 -2px 8px rgba(91, 49, 19, 0.08);
 }
 
 .navItem {

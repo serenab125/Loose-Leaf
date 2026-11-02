@@ -183,6 +183,7 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
           <span>Search</span>
         </button>
 
+
         <button
           type="button"
           className={`${styles.navItem} ${activeTab === 'profile' ? styles.activeNavItem : ''}`}

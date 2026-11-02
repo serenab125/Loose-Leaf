@@ -16,7 +16,7 @@ function App() {
     return 'login'
   })
 
-  const [isQuizCompleted, setIsQuizCompleted] = useState(false)
+  const [isQuizCompleted, setIsQuizCompleted] = useState(true)
 
   if (loading) {
     return (
