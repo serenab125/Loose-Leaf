@@ -7,6 +7,7 @@ import ResetPassword from './account/ResetPassword'
 import { Login } from './account/Login'
 import { Quiz } from './quiz/Quiz'
 import { Home } from './home/Home'
+import Search from './pages/Search/Search'
 
 function App() {
   const { user, logout, loading, savePreferences } = useAuth()
@@ -17,6 +18,7 @@ function App() {
   })
 
   const [isQuizCompleted, setIsQuizCompleted] = useState(false)
+  const [activePage, setActivePage] = useState('home')
 
   if (loading) {
     return (
@@ -116,11 +118,33 @@ function App() {
 
   return (
     <main>
-      <Home
-        user={user}
-        logout={logout}
-        onRetakeQuiz={() => setIsQuizCompleted(false)}
-      />
+      {activePage === 'search' ? (
+        <>
+          <button
+            type="button"
+            onClick={() => setActivePage('home')}
+            style={{
+              margin: '16px',
+              padding: '10px 16px',
+              cursor: 'pointer'
+            }}
+          >
+            ← Back to Home
+          </button>
+
+          <Search />
+        </>
+      ) : (
+        <Home
+          user={user}
+          logout={logout}
+          onRetakeQuiz={() => {
+            setActivePage('home')
+            setIsQuizCompleted(false)
+          }}
+          onNavigateToSearch={() => setActivePage('search')}
+        />
+      )}
     </main>
   )
 }

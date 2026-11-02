@@ -1,17 +1,15 @@
 import { useState } from 'react'
 import RetakeQuizCard from './RetakeQuizCard'
-import CurrentReadCard from './CurrentReadCard'
+import CurrentRead from './CurrentRead'
 import TopRecommendationCard from './TopRecommendationCard'
 import './home.css'
 
-function HomeCarousel({ onRetakeQuiz }) {
-  const [activeSlide, setActiveSlide] = useState(2)
+function HomeCarousel({ onRetakeQuiz, onNavigateToSearch }) {
+  const [activeSlide, setActiveSlide] = useState(0)
 
   const slides = [
-    <CurrentReadCard
-      key="current"
-      book={null}
-      onPickBook={() => alert('Pick a book clicked!')}
+    <CurrentRead key="current" 
+    onNavigateToSearch={onNavigateToSearch}
     />,
     <TopRecommendationCard
       key="recommendation"

@@ -10,7 +10,7 @@ import {
 } from '../services/bookService';
 import HomeCarousel from './HomeCarousel';
 
-export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) {
+export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, onNavigateToSearch }) {
   const [activeTab, setActiveTab] = useState('home');
   const [userShelves, setUserShelves] = useState([]);
 
@@ -35,12 +35,14 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
                 <h1 className={styles.brandTitle}>LooseLeaf</h1>
                 <span className={styles.leafIcon}>🍃</span>
               </div>
+              <div className={styles.headerDivider} />
             </header>
 
             <section className={styles.bannerSection}>
               <HomeCarousel
                 currentBook={currentBook}
                 onRetakeQuiz={onRetakeQuiz}
+                onNavigateToSearch={onNavigateToSearch}
               />
             </section>
 
@@ -156,7 +158,10 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
         <button
           type="button"
           className={`${styles.navItem} ${activeTab === 'search' ? styles.activeNavItem : ''}`}
-          onClick={() => setActiveTab('search')}
+          onClick={() => {
+            setActiveTab('search');
+            onNavigateToSearch?.();
+          }}
         >
           <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <circle cx="11" cy="11" r="8" />

@@ -1,74 +1,88 @@
-import { useState } from 'react'
-import { useAuth } from './useAuth'
-import styles from './Login.module.css'
+import { useState } from 'react';
+import { useAuth } from './useAuth';
 
 export default function ResetPassword() {
-  const { updatePassword } = useAuth()
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const { updatePassword } = useAuth();
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    setMessage('')
+    e.preventDefault();
+    setMessage('');
+    setError('');
 
-    try {
-      await updatePassword(password, confirmPassword)
-      setMessage('Your password has been reset successfully!')
-    } catch (err) {
-      setError(err.message || 'Failed to update password.')
-    } finally {
-      setLoading(false)
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
     }
-  }
+
+    setLoading(true);
+    try {
+      await updatePassword(password, confirmPassword);
+      setMessage('Your password has been updated successfully! You can now log in.');
+    } catch (err) {
+      setError(err.message || 'Failed to update password.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.card}>
-        <h1 className={styles.heading}>Set New Password</h1>
-        <p className={styles.tagline}>Enter your new password below.</p>
+    <div className="auth-container" style={{ padding: '40px 20px', maxWidth: '393px', margin: '0 auto', fontFamily: 'Inter, sans-serif' }}>
+      <h2 style={{ fontFamily: 'Georgia, serif', color: '#5b3113', textAlign: 'center' }}>Reset Your Password</h2>
+      <p style={{ color: '#8c7365', textAlign: 'center', fontSize: '14px', marginBottom: '24px' }}>
+        Enter a new password for your LooseLeaf account.
+      </p>
 
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <div className={styles.fieldGroup}>
-            <label className={styles.label} htmlFor="new-password">
-              NEW PASSWORD
-            </label>
-            <input
-              id="new-password"
-              className={styles.input}
-              type="password"
-              placeholder="Enter new password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+      {message && <p style={{ color: '#2e7d32', textAlign: 'center', fontSize: '14px' }}>{message}</p>}
+      {error && <p style={{ color: '#d32f2f', textAlign: 'center', fontSize: '14px' }}>{error}</p>}
 
-          <div className={styles.fieldGroup}>
-            <label className={styles.label} htmlFor="confirm-password">
-              CONFIRM PASSWORD
-            </label>
-            <input
-              id="confirm-password"
-              className={styles.input}
-              type="password"
-              placeholder="Confirm new password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
-          </div>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div>
+          <label style={{ display: 'block', fontSize: '13px', color: '#5b3113', marginBottom: '6px' }}>New Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ebe5d5', boxSizing: 'border-box' }}
+          />
+        </div>
 
-          {message && <p style={{ color: '#2e7d32', fontSize: '14px', margin: '8px 0' }}>{message}</p>}
-          {error && <p className={styles.error}>{error}</p>}
+        <div>
+          <label style={{ display: 'block', fontSize: '13px', color: '#5b3113', marginBottom: '6px' }}>Confirm New Password</label>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            minLength={6}
+            style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ebe5d5', boxSizing: 'border-box' }}
+          />
+        </div>
 
-          <button type="submit" className={styles.buttonPrimary} disabled={loading}>
-            {loading ? 'Updating...' : 'Update Password'}
-          </button>
-        </form>
-      </div>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            padding: '14px',
+            borderRadius: '16px',
+            backgroundColor: '#5b3113',
+            color: '#fff',
+            border: 'none',
+            fontWeight: '600',
+            cursor: 'pointer',
+            marginTop: '8px'
+          }}
+        >
+          {loading ? 'Updating...' : 'Update Password'}
+        </button>
+      </form>
     </div>
-  )
+  );
 }
