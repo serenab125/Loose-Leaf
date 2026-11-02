@@ -1,12 +1,42 @@
 import { useState, useEffect } from 'react';
+
 import { supabase } from '../supabaseClient';
 
-export function useAuth() {
+export function useAuth(persistSession = true) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+
   useEffect(() => {
+    // If "Remember me" is ON, try to restore the session from localStorage
+    // (a manually-persisted copy stored on sign-in).
+    if (persistSession) {
+      const saved = localStorage.getItem('looseleaf_session');
+      if (saved) {
+        try {
+          const session = JSON.parse(saved);
+          // Manually set the session so the auth state is restored immediately.
+          // Note: supabase.auth.setSession requires the full session object.
+          if (session.access_token && session.refresh_token) {
+            supabase.auth.setSession({
+              access_token: session.access_token,
+              refresh_token: session.refresh_token,
+            }).then(({ data }) => {
+              setUser(data.session?.user ?? null);
+              setLoading(false);
+            }).catch(() => {
+              setLoading(false);
+            });
+            return; // skip the default getSession() below
+          }
+        } catch {
+          localStorage.removeItem('looseleaf_session');
+        }
+      }
+    }
+
+    // Default: read the session from Supabase's memory storage.
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
@@ -18,7 +48,7 @@ export function useAuth() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [persistSession]);
 
   const createAccount = async (email, password, fullName) => {
     setLoading(true);
@@ -51,6 +81,21 @@ export function useAuth() {
         password,
       });
       if (authError) throw authError;
+
+      // Persist the session to localStorage only if "Remember me" is ON.
+      if (persistSession) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session) {
+          const sessionJson = JSON.stringify(sessionData.session);
+          localStorage.setItem('looseleaf_session', sessionJson);
+        }
+      }
+
+      // Refresh the session so the auth state is fully committed in memory.
+      const { error: refreshError } = await supabase.auth.getSession();
+      if (refreshError) {
+        console.warn('Failed to refresh session after sign-in:', refreshError.message);
+      }
       return data;
     } catch (err) {
       setError(err.message || 'Sign-in failed');
@@ -116,6 +161,10 @@ const updatePassword = async (password, confirmPassword) => {
     setError('');
     try {
       await supabase.auth.signOut();
+      // Clear the manually-stored session when "Remember me" is ON.
+      if (persistSession) {
+        localStorage.removeItem('looseleaf_session');
+      }
     } catch (err) {
       setError(err.message || 'Sign-out failed');
     } finally {
@@ -123,40 +172,12 @@ const updatePassword = async (password, confirmPassword) => {
     }
   };
 
-  const savePreferences = async (preferences) => {
-  if (!user) return;
-  setLoading(true);
-  setError('');
-
-  try {
-    const { data, error: dbError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: user.id,
-        email: user.email,
-        full_name: user.user_metadata?.full_name || '',
-        reading_preferences: preferences,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'id' });
-
-    if (dbError) throw dbError;
-    return data;
-  } catch (err) {
-    console.error('Error saving preferences:', err);
-    setError(err.message || 'Failed to save reading preferences');
-    throw err;
-  } finally {
-    setLoading(false);
-  }
-};
-
   return {
     user,
     createAccount,
     login,
     signIn: login,
     logout,
-    savePreferences,
     resetPassword,
     updatePassword,
     loading,

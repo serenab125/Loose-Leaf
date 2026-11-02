@@ -134,6 +134,22 @@
   text-align: center;
 }
 
+/* Login screen */
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #8a7a6a;
+  cursor: pointer;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #4a2a1a;
+}
+
 /* LooseLeaf Figma-inspired mobile styling */
 
 .container {
