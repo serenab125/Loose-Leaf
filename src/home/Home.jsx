@@ -46,6 +46,7 @@ export function Home({user,currentBook ,onRetakeQuiz, onSelectBook, onNavigateTo
         {/* Serena's Sprint 2 Homepage Carousel */}
         <section className={styles.bannerSection}>
           <HomeCarousel
+            user={user}
             onRetakeQuiz={onRetakeQuiz}
             onNavigateToSearch={onNavigateToSearch}
           />

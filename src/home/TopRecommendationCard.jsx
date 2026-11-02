@@ -11,9 +11,9 @@ function TopRecommendationCard({ book, onStartReading }) {
       {book ? (
         <>
           <div className="top-recommendation-content">
-            {book.cover_url ? (
+            {(book.coverUrl || book.cover_url) ? (
               <img
-                src={book.cover_url}
+                src={book.coverUrl || book.cover_url}
                 alt={`Cover of ${book.title}`}
                 className="top-recommendation-cover"
               />
