@@ -2,38 +2,23 @@ import React, { useState, useEffect } from 'react';
 import styles from './Home.module.css';
 import Search from '../pages/Search/Search';
 import { Profile } from '../pages/Profile/Profile';
-import { fetchPersonalizedRecommendations } from '../services/bookService';
+import {
+  fetchMultiPersonalizedRecommendations,
+  POPULAR_BOOKTOK_BOOKS,
+  RECOMMENDED_FOR_YOU,
+  SHORT_EASY_READS,
+} from '../services/bookService';
 import HomeCarousel from './HomeCarousel';
-
-const RECOMMENDED_FOR_YOU = [
-  { id: 'r1', title: 'The Hunger Games', cover: 'https://covers.openlibrary.org/b/id/13254928-L.jpg' },
-  { id: 'r2', title: 'The Hobbit', cover: 'https://covers.openlibrary.org/b/id/8406786-L.jpg' },
-  { id: 'r3', title: 'One of Us Is Lying', cover: 'https://covers.openlibrary.org/b/id/8381286-L.jpg' },
-  { id: 'r4', title: 'Hollow Kingdom', cover: 'https://covers.openlibrary.org/b/id/10521270-L.jpg' },
-  { id: 'r5', title: 'Percy Jackson', cover: 'https://covers.openlibrary.org/b/id/7984916-L.jpg' },
-];
-
-const POPULAR_RIGHT_NOW = [
-  { id: 'p1', title: 'Yesteryear', cover: 'https://covers.openlibrary.org/b/id/14556424-L.jpg' },
-  { id: 'p2', title: 'Dungeon Crawler Carl', cover: 'https://covers.openlibrary.org/b/id/14589201-L.jpg' },
-  { id: 'p3', title: 'The Wedding People', cover: 'https://covers.openlibrary.org/b/id/14601211-L.jpg' },
-];
-
-const SHORT_EASY_READS = [
-  { id: 's1', title: 'Wonder', cover: 'https://covers.openlibrary.org/b/id/8231856-L.jpg' },
-  { id: 's2', title: 'milk and honey', cover: 'https://covers.openlibrary.org/b/id/8235111-L.jpg' },
-  { id: 's3', title: 'Percy Jackson', cover: 'https://covers.openlibrary.org/b/id/7984916-L.jpg' },
-];
 
 export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) {
   const [activeTab, setActiveTab] = useState('home');
-  const [personalizedRecs, setPersonalizedRecs] = useState(null);
+  const [userShelves, setUserShelves] = useState([]);
 
   useEffect(() => {
     async function loadRecs() {
       if (user?.id) {
-        const recData = await fetchPersonalizedRecommendations(user.id);
-        setPersonalizedRecs(recData);
+        const shelves = await fetchMultiPersonalizedRecommendations(user.id);
+        setUserShelves(shelves);
       }
     }
     loadRecs();
@@ -44,7 +29,6 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
       <div className={styles.scrollableContent}>
         {activeTab === 'home' ? (
           <>
-            {/* LooseLeaf Header */}
             <header className={styles.brandHeader}>
               <div className={styles.logoWrapper}>
                 <span className={styles.leafIcon}>🍃</span>
@@ -53,7 +37,6 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
               </div>
             </header>
 
-            {/* Serena's Sprint 2 Homepage Carousel */}
             <section className={styles.bannerSection}>
               <HomeCarousel
                 currentBook={currentBook}
@@ -61,7 +44,6 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
               />
             </section>
 
-            {/* Recommendations Shelves */}
             <section className={styles.recommendationsSection}>
               {/* 1. Recommended for You */}
               <div className={styles.categoryRow}>
@@ -79,19 +61,19 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
                 </div>
               </div>
 
-              {/* 2. Personalized Quiz Recommendation (Because You Like: ...) */}
-              {personalizedRecs && (
-                <div className={styles.categoryRow}>
-                  <h2 className={styles.categoryTitle}>{personalizedRecs.category}</h2>
+              {/* 2. Multiple Quiz Shelves (Because You Like..., Match Your Mood..., Explore Genre...) */}
+              {userShelves.map((shelf, idx) => (
+                <div key={idx} className={styles.categoryRow}>
+                  <h2 className={styles.categoryTitle}>{shelf.title}</h2>
                   <div className={styles.bookScrollRow}>
-                    {personalizedRecs.books.map((book, idx) => (
+                    {shelf.books.map((book, bIdx) => (
                       <div
-                        key={book.bookId || idx}
+                        key={book.bookId || bIdx}
                         className={styles.bookCard}
                         onClick={() => onSelectBook?.(book)}
                       >
                         <img
-                          src={book.coverUrl || book.cover || 'https://covers.openlibrary.org/b/id/8311267-L.jpg'}
+                          src={book.coverUrl || book.cover}
                           alt={book.title}
                           className={styles.bookCover}
                         />
@@ -99,13 +81,13 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout }) 
                     ))}
                   </div>
                 </div>
-              )}
+              ))}
 
-              {/* 3. Popular Right Now */}
+              {/* 3. Popular Right Now (Trending & BookTok Hits) */}
               <div className={styles.categoryRow}>
-                <h2 className={styles.categoryTitle}>Popular Right Now</h2>
+                <h2 className={styles.categoryTitle}>Popular Right Now 🔥</h2>
                 <div className={styles.bookScrollRow}>
-                  {POPULAR_RIGHT_NOW.map((book) => (
+                  {POPULAR_BOOKTOK_BOOKS.map((book) => (
                     <div
                       key={book.id}
                       className={styles.bookCard}
