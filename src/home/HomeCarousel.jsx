@@ -1,15 +1,21 @@
-import { useEffect, useState } from 'react'
+
+import { useEffect, useRef, useState } from 'react'
 import RetakeQuizCard from './RetakeQuizCard'
 import CurrentRead from './CurrentRead'
 import TopRecommendationCard from './TopRecommendationCard'
-import './home.css'
 import { fetchPersonalizedRecommendations } from '../services/bookService'
+import './home.css'
 
-function HomeCarousel({ user,onRetakeQuiz, onNavigateToSearch }) {
+function HomeCarousel({ user, onRetakeQuiz, onNavigateToSearch }) {
   const [activeSlide, setActiveSlide] = useState(0)
-
   const [recommendedBook, setRecommendedBook] = useState(null)
   const [recommendationLoading, setRecommendationLoading] = useState(true)
+
+  // Track touch and mouse dragging
+  const dragStartX = useRef(null)
+  const dragStartY = useRef(null)
+  const isDragging = useRef(false)
+  const preventClick = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -35,7 +41,6 @@ function HomeCarousel({ user,onRetakeQuiz, onNavigateToSearch }) {
         }
       }
     }
-  
 
     loadRecommendation()
 
@@ -43,6 +48,68 @@ function HomeCarousel({ user,onRetakeQuiz, onNavigateToSearch }) {
       cancelled = true
     }
   }, [user?.id])
+
+  // Loop continuously through all three slides
+  const nextSlide = () => {
+    setActiveSlide((previous) => (previous + 1) % 3)
+  }
+
+  const previousSlide = () => {
+    setActiveSlide((previous) => (previous - 1 + 3) % 3)
+  }
+
+  // Detect when a swipe or drag begins
+  const handlePointerDown = (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+
+    dragStartX.current = event.clientX
+    dragStartY.current = event.clientY
+    isDragging.current = true
+    preventClick.current = false
+  }
+
+  // Determine whether the user swiped left or right
+  const handlePointerUp = (event) => {
+    if (!isDragging.current || dragStartX.current === null) return
+
+    const differenceX = event.clientX - dragStartX.current
+    const differenceY = event.clientY - dragStartY.current
+
+    isDragging.current = false
+    dragStartX.current = null
+    dragStartY.current = null
+
+    // Ignore small movements and vertical scrolling
+    if (
+      Math.abs(differenceX) < 50 ||
+      Math.abs(differenceX) <= Math.abs(differenceY)
+    ) {
+      return
+    }
+
+    preventClick.current = true
+
+    if (differenceX < 0) {
+      nextSlide()
+    } else {
+      previousSlide()
+    }
+  }
+
+  const handlePointerCancel = () => {
+    isDragging.current = false
+    dragStartX.current = null
+    dragStartY.current = null
+  }
+
+  // Stop card buttons from activating after a swipe
+  const handleClickCapture = (event) => {
+    if (preventClick.current) {
+      event.preventDefault()
+      event.stopPropagation()
+      preventClick.current = false
+    }
+  }
 
   const slides = [
     <CurrentRead
@@ -72,7 +139,13 @@ function HomeCarousel({ user,onRetakeQuiz, onNavigateToSearch }) {
 
   return (
     <section className="home-carousel" aria-label="Homepage highlights">
-      <div className="home-carousel-content">
+      <div
+        className="home-carousel-content"
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+        onClickCapture={handleClickCapture}
+      >
         {slides[activeSlide]}
       </div>
 

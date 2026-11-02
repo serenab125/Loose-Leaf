@@ -331,3 +331,9 @@
   outline: 3px solid #929b32;
   outline-offset: 3px;
 }
+
+/* Allow vertical scrolling while supporting horizontal swipes */
+.home-carousel-content {
+  touch-action: pan-y;
+  user-select: none;
+}
