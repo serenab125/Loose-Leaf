@@ -6,6 +6,7 @@ import ForgotPassword from './account/ForgotPassword'
 import ResetPassword from './account/ResetPassword'
 import { Login } from './account/Login'
 import { Quiz } from './quiz/Quiz'
+import Search from './pages/Search/Search'
 
 function App() {
   const { user, logout, loading } = useAuth()
@@ -83,10 +84,24 @@ function App() {
       </div>
 
 
-      <Quiz
-        user={user}
-        onSkip={() => console.log('Quiz skipped')}
-      />
+      <div style={{ display: 'flex', gap: '10px', padding: '12px 20px' }}>
+        <button type="button" onClick={() => setView('quiz')}>
+          Quiz
+        </button>
+
+        <button type="button" onClick={() => setView('search')}>
+          Search
+        </button>
+      </div>
+
+      {view === 'search' ? (
+        <Search />
+      ) : (
+        <Quiz
+          user={user}
+          onSkip={() => console.log('Quiz skipped')}
+        />
+      )}
     </main>
   )
 }
