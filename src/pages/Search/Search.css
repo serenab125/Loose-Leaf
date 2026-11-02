@@ -1,0 +1,207 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lobster&display=swap');
+
+.search-page {
+    min-height: 100vh;
+    background-color: #fdf8f3;
+    padding: 32px 20px 100px;
+    color: #5a321a;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    max-width: 393px;
+    margin: 0 auto;
+}
+
+.search-logo {
+    font-family: 'Lobster', cursive;
+    font-size: 32px;
+    font-weight: 400;
+    text-align: center;
+    margin: 0 0 24px;
+    color: #5a321a;
+}
+
+/* Search Bar Input */
+.search-bar-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: #f7f3e9;
+    border: 1px solid #ebe5d5;
+    border-radius: 24px;
+    padding: 0 16px;
+    height: 48px;
+    margin-bottom: 28px;
+}
+
+.search-icon {
+    font-size: 16px;
+    color: #b59b88;
+    margin-right: 10px;
+}
+
+.search-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: #5a321a;
+    outline: none;
+}
+
+.search-input::placeholder {
+    color: #b59b88;
+}
+
+.search-clear-btn {
+    background: transparent;
+    border: none;
+    color: #b59b88;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+/* Section Headings */
+.section-title {
+    font-family: 'Georgia', serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: #5a321a;
+    margin: 0 0 16px;
+}
+
+/* Top Searches Horizontal Row */
+.top-searches-section {
+    margin-bottom: 28px;
+}
+
+.top-searches-row {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+}
+
+.top-searches-row::-webkit-scrollbar {
+    display: none;
+}
+
+.top-search-card {
+    flex: 0 0 100px;
+    height: 150px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(90, 50, 26, 0.1);
+    cursor: pointer;
+}
+
+.top-search-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Categories Grid */
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 12px;
+}
+
+.category-btn {
+    height: 56px;
+    padding: 12px;
+    border-radius: 18px;
+    border: 1px solid #ebe5d5;
+    background-color: #f7f3e9;
+    color: #5a321a;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
+
+.category-btn:nth-child(even) {
+    background-color: #fcece9;
+    border-color: #f6dbd6;
+}
+
+/* Suggested Titles Cards View */
+.suggested-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.search-status-msg {
+    font-size: 14px;
+    color: #8c7365;
+    margin-bottom: 16px;
+}
+
+.suggested-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.suggested-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: #f7f3e9;
+    border: 1px solid #ebe5d5;
+    border-radius: 20px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.suggested-card:active {
+    transform: scale(0.99);
+}
+
+.suggested-cover {
+    width: 52px;
+    height: 76px;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.suggested-no-cover {
+    width: 52px;
+    height: 76px;
+    border-radius: 8px;
+    background-color: #ebe5d5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 11px;
+    color: #5a321a;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.suggested-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.suggested-title {
+    font-family: 'Georgia', serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: #5a321a;
+    margin: 0 0 4px;
+}
+
+.suggested-author {
+    font-size: 13px;
+    color: #8c7365;
+    margin: 0;
+}

@@ -28,7 +28,7 @@ const MOCK_CATEGORIES = [
   }
 ];
 
-export function Home({ user, currentBook, onRetakeQuiz, onSelectBook }) {
+export function Home({user,currentBook ,onRetakeQuiz, onSelectBook, onNavigateToSearch}) {
   return (
     <div className={styles.appViewport}>
       <div className={styles.scrollableContent}>
@@ -47,6 +47,7 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook }) {
         <section className={styles.bannerSection}>
           <HomeCarousel
             onRetakeQuiz={onRetakeQuiz}
+            onNavigateToSearch={onNavigateToSearch}
           />
         </section>
 
@@ -87,8 +88,17 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook }) {
           <span>Timer</span>
         </button>
 
-        <button className={styles.navItem}>
-          <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <button
+          className={styles.navItem}
+          onClick={onNavigateToSearch}
+        >
+          <svg
+            className={styles.navIcon}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
