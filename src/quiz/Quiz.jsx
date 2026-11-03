@@ -34,6 +34,9 @@ export function Quiz({ onSkip, user }) {
   } = useQuiz();
 
   const [saveError, setSaveError] = useState('');
+  const [saveStatus, setSaveStatus] = useState('');
+  const [hasSavedProgress, setHasSavedProgress] = useState(false);
+  const [restoreMessage, setRestoreMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   const handleComplete = async () => {
@@ -73,16 +76,55 @@ export function Quiz({ onSkip, user }) {
     }
   };
 
-  const remainingAnswers = Math.max(
-    0,
-    MIN_TASTE_ANSWERS - tasteAnsweredCount
-  );
+  const saveProgress = () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    setSaveStatus('');
+    setSaveError('');
+    try {
+      const progress = {
+        step: currentStep,
+        answers: { ...answers },
+      };
+      localStorage.setItem('looseleaf_quiz_progress', JSON.stringify(progress));
+      setSaveStatus('Progress saved — you can close and come back later.');
+      setTimeout(() => setSaveStatus(''), 3000);
+    } catch (err) {
+      setSaveStatus(err.message || 'Unable to save progress.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('looseleaf_quiz_progress');
+      if (raw) {
+        const progress = JSON.parse(raw);
+        if (progress && progress.step !== undefined) {
+          restoreProgress(progress);
+          setHasSavedProgress(true);
+          setRestoreMessage('Your quiz progress has been restored — you can continue from where you left off.');
+          const timer = setTimeout(() => setRestoreMessage(''), 5000);
+          return () => clearTimeout(timer);
+        }
+      }
+    } catch (err) {
+      // ignore malformed progress
+    }
+  }, []);
+
 
   return (
     <div className="quiz-container">
       {saveError && (
         <p role="alert" style={{ color: '#b91c1c', padding: '12px' }}>
           {saveError}
+        </p>
+      )}
+      {restoreMessage && (
+        <p role="alert" style={{ color: '#603417', padding: '12px' }}>
+          {restoreMessage}
         </p>
       )}
       {isIntro ? (
@@ -171,6 +213,15 @@ export function Quiz({ onSkip, user }) {
                   >
                     Continue →
                   </button>
+
+                  <button
+                    type="button"
+                    className="quiz-save-resume"
+                    onClick={saveProgress}
+                    disabled={isSaving}
+                  >
+                    Save &amp; Resume
+                  </button>
                 </div>
               </>
             )}
@@ -216,6 +267,15 @@ export function Quiz({ onSkip, user }) {
                     onClick={completeQuiz}
                   >
                     Skip goal setting for now
+                  </button>
+
+                  <button
+                    type="button"
+                    className="quiz-save-resume"
+                    onClick={saveProgress}
+                    disabled={isSaving}
+                  >
+                    Save &amp; Resume
                   </button>
                 </div>
               </>

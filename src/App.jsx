@@ -11,6 +11,7 @@ import { Home } from './home/Home'
 function App() {
   const { user, logout, loading, savePreferences } = useAuth()
 
+  const [currentBook, setCurrentBook] = useState(null)
   const [view, setView] = useState(() => {
     if (window.location.pathname === '/reset-password') return 'reset'
     return 'login'
@@ -119,6 +120,7 @@ function App() {
       <Home
         user={user}
         logout={logout}
+        currentBook={currentBook}
         onRetakeQuiz={() => setIsQuizCompleted(false)}
       />
     </main>

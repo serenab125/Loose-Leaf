@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 
-import { supabase } from '../supabaseClient';
+import { supabaseFor } from '../supabaseClient';
 
 export function useAuth(persistSession = true) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Create supabase client based on the remember-me setting.
+  const supabase = supabaseFor(persistSession);
 
   useEffect(() => {
     // If "Remember me" is ON, try to restore the session from localStorage
@@ -28,7 +30,10 @@ export function useAuth(persistSession = true) {
             }).catch(() => {
               setLoading(false);
             });
-            return; // skip the default getSession() below
+            // Continue to the default getSession() below to ensure the session
+            // is fully established and subscribed to auth state changes.
+          } else {
+            localStorage.removeItem('looseleaf_session');
           }
         } catch {
           localStorage.removeItem('looseleaf_session');
@@ -48,7 +53,7 @@ export function useAuth(persistSession = true) {
     });
 
     return () => subscription.unsubscribe();
-  }, [persistSession]);
+  }, [persistSession, supabase]);
 
   const createAccount = async (email, password, fullName) => {
     setLoading(true);
