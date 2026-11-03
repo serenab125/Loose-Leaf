@@ -9,7 +9,15 @@ import { Quiz } from './quiz/Quiz'
 import { Home } from './home/Home'
 
 function App() {
-  const { user, logout, loading, savePreferences } = useAuth()
+  const [rememberMe, setRememberMe] = useState(false);
+  const [hasLoggedIn, setIsLoggedIn] = useState(false);
+  // App ALWAYS uses persistSession=false (memory-only). The "remember me" flag
+  // only controls whether the Login instance saves the session to localStorage
+  // on sign-in. Once the user actually authenticates, hasLoggedIn flips to true
+  // and App switches to persistSession=true so it can restore the saved session
+  // across refreshes/reloads. App never restores a session from localStorage
+  // before the user has explicitly authenticated.
+  const { user, logout, loading, savePreferences } = useAuth(rememberMe, hasLoggedIn);
 
   const [view, setView] = useState(() => {
     if (window.location.pathname === '/reset-password') return 'reset'
@@ -45,6 +53,8 @@ function App() {
           <Login
             onNavigateToCreateAccount={() => setView('create')}
             onNavigateToForgotPassword={() => setView('forgot')}
+            rememberMe={rememberMe}
+            setRememberMe={setRememberMe}
           />
         )}
       </main>

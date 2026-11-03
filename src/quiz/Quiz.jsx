@@ -12,7 +12,7 @@ import './quiz.css';
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 
-export function Quiz({ onSkip, user }) {
+export function Quiz({ onSkip, onComplete, user }) {
 
   //setting the pop up for skip quiz as false
   const [showSkipPopup, setShowSkipPopup] = useState(false);

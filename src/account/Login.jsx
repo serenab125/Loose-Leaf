@@ -2,9 +2,8 @@ import { useState } from 'react';
 import styles from './Login.module.css';
 import { useAuth } from './useAuth';
 
-export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword }) {
-  const [rememberMe, setRememberMe] = useState(false);
-  const { signIn, loading, error, clearError } = useAuth(rememberMe);
+export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword, rememberMe, setRememberMe, onLogin }) {
+  const { signIn, loading } = useAuth(rememberMe, false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
