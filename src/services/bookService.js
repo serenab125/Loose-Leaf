@@ -1,5 +1,6 @@
 import { supabase } from '../supabaseClient';
 
+
 export async function searchBooksByTitle(title) {
   if (!title || typeof title !== 'string') return [];
 
@@ -44,6 +45,7 @@ export async function searchBooksByTitle(title) {
   }
 }
 
+
 export function searchBooksByCategory(category) {
   if (typeof category !== 'string' || !category) {
     return Promise.reject(new Error('Choose a search category.'));
@@ -51,7 +53,29 @@ export function searchBooksByCategory(category) {
   return searchBooksByTitle(category);
 }
 
-// REAL TRENDING / BOOKTOK BOOKS
+
+export const DEFAULT_BOOKS = [
+  {
+    bookId: '1',
+    title: 'The Great Gatsby',
+    author: 'F. Scott Fitzgerald',
+    coverUrl: 'https://covers.openlibrary.org/b/id/8311267-L.jpg',
+  },
+  {
+    bookId: '2',
+    title: 'The Hunger Games',
+    author: 'Suzanne Collins',
+    coverUrl: 'https://covers.openlibrary.org/b/id/13254928-L.jpg',
+  },
+  {
+    bookId: '3',
+    title: 'The Hobbit',
+    author: 'J.R.R. Tolkien',
+    coverUrl: 'https://covers.openlibrary.org/b/id/8406786-L.jpg',
+  },
+];
+
+
 export const POPULAR_BOOKTOK_BOOKS = [
   {
     id: 'p1',
@@ -100,6 +124,7 @@ export const SHORT_EASY_READS = [
   { id: 's4', title: 'Scythe', cover: 'https://covers.openlibrary.org/b/id/8381286-L.jpg' },
 ];
 
+
 const SHOW_MAP = {
   'walking-dead': { label: 'The Walking Dead', search: 'zombie apocalypse' },
   'stranger-things': { label: 'Stranger Things', search: 'supernatural mystery' },
@@ -123,6 +148,68 @@ const VIBE_MAP = {
   exciting: { label: 'Exciting', search: 'adventure' },
   'thought-provoking': { label: 'Thought-provoking', search: 'philosophical fiction' },
 };
+
+
+export async function fetchPersonalizedRecommendations(userId) {
+  try {
+    if (!userId) {
+      return { category: 'Popular Reads', books: DEFAULT_BOOKS };
+    }
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('reading_preferences')
+      .eq('id', userId)
+      .single();
+
+    if (error || !profile?.reading_preferences) {
+      return { category: 'Popular Reads', books: DEFAULT_BOOKS };
+    }
+
+    const prefs = profile.reading_preferences;
+
+    if (Array.isArray(prefs['movies-tv']) && prefs['movies-tv'].length > 0) {
+      const showId = prefs['movies-tv'][0];
+      if (SHOW_MAP[showId]) {
+        const { label, search } = SHOW_MAP[showId];
+        const books = await searchBooksByTitle(search);
+        return {
+          category: `Because You Like: ${label}`,
+          books: books.length > 0 ? books : DEFAULT_BOOKS,
+        };
+      }
+    }
+
+    if (Array.isArray(prefs.vibe) && prefs.vibe.length > 0) {
+      const vibeId = prefs.vibe[0];
+      if (VIBE_MAP[vibeId]) {
+        const { label, search } = VIBE_MAP[vibeId];
+        const books = await searchBooksByTitle(search);
+        return {
+          category: `Match Your Mood: ${label}`,
+          books: books.length > 0 ? books : DEFAULT_BOOKS,
+        };
+      }
+    }
+
+    if (Array.isArray(prefs.stories) && prefs.stories.length > 0 && prefs.stories[0] !== 'not-sure') {
+      const storyGenre = prefs.stories[0]
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+
+      const books = await searchBooksByTitle(storyGenre);
+      return {
+        category: `Because You Like: ${storyGenre}`,
+        books: books.length > 0 ? books : DEFAULT_BOOKS,
+      };
+    }
+
+    return { category: 'Popular Reads', books: DEFAULT_BOOKS };
+  } catch (err) {
+    console.error('Failed to fetch personalized recommendations:', err);
+    return { category: 'Popular Reads', books: DEFAULT_BOOKS };
+  }
+}
 
 export async function fetchMultiPersonalizedRecommendations(userId) {
   const sections = [];

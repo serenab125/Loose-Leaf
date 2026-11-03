@@ -9,7 +9,6 @@ export function useAuth(persistSession = true) {
   const supabaseClient = useMemo(() => supabaseFor(persistSession), [persistSession]);
 
   useEffect(() => {
-    // If "Remember me" is ON, try to restore the session from localStorage
     if (persistSession) {
       const saved = localStorage.getItem('looseleaf_session');
       if (saved) {
@@ -36,7 +35,6 @@ export function useAuth(persistSession = true) {
       }
     }
 
-    // Default: read session from Supabase client
     supabaseClient.auth
       .getSession()
       .then(({ data: { session } }) => {

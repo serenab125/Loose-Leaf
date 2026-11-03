@@ -29,6 +29,7 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
       <div className={styles.scrollableContent}>
         {activeTab === 'home' ? (
           <>
+            {/* Header */}
             <header className={styles.brandHeader}>
               <div className={styles.logoWrapper}>
                 <span className={styles.leafIcon}>🍃</span>
@@ -38,14 +39,17 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
               <div className={styles.headerDivider} />
             </header>
 
+            {/* Serena's Sprint 2 Homepage Carousel Section */}
             <section className={styles.bannerSection}>
               <HomeCarousel
+                user={user}
                 currentBook={currentBook}
                 onRetakeQuiz={onRetakeQuiz}
                 onNavigateToSearch={onNavigateToSearch}
               />
             </section>
 
+            {/* Recommendations Shelves */}
             <section className={styles.recommendationsSection}>
               {/* 1. Recommended for You */}
               <div className={styles.categoryRow}>
