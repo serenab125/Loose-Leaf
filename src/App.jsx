@@ -143,6 +143,28 @@ function App() {
             setIsQuizCompleted(false)
           }}
           onNavigateToSearch={() => setActivePage('search')}
+        >
+          Sign out
+        </button>
+      </div>
+
+
+      <div style={{ display: 'flex', gap: '10px', padding: '12px 20px' }}>
+        <button type="button" onClick={() => setView('quiz')}>
+          Quiz
+        </button>
+
+        <button type="button" onClick={() => setView('search')}>
+          Search
+        </button>
+      </div>
+
+      {view === 'search' ? (
+        <Search />
+      ) : (
+        <Quiz
+          user={user}
+          onSkip={() => console.log('Quiz skipped')}
         />
       )}
     </main>

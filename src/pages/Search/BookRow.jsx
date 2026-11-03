@@ -1,5 +1,29 @@
 
+import { useState } from "react";
 import "./Search.css";
+
+function BookCover({ book }) {
+    const [failed, setFailed] = useState(false);
+
+    const fallbackUrl = book.bookId
+        ? `https://covers.openlibrary.org/b/olid/${book.bookId}-M.jpg?default=false`
+        : null;
+
+    const coverUrl = book.coverUrl || fallbackUrl;
+
+    return coverUrl && !failed ? (
+        <img
+            src={coverUrl}
+            alt={`Cover of ${book.title}`}
+            loading="lazy"
+            onError={() => setFailed(true)}
+        />
+    ) : (
+        <div className="search-book-no-cover">
+            {book.title || "Cover unavailable"}
+        </div>
+    );
+}
 
 export default function BookRow({ title, books = [] }) {
     return (
@@ -12,17 +36,7 @@ export default function BookRow({ title, books = [] }) {
                         className="search-book-item"
                         key={book.bookId ?? index}
                     >
-                        {book.coverUrl ? (
-                            <img
-                                src={book.coverUrl}
-                                alt={`Cover of ${book.title}`}
-                                loading="lazy"
-                            />
-                        ) : (
-                            <div className="search-book-no-cover">
-                                {book.title || "Cover unavailable"}
-                            </div>
-                        )}
+                        <BookCover book={book} />
                     </div>
                 ))}
             </div>
