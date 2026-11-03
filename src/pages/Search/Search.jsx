@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import BookRow from "./BookRow";
 import { categoryData } from "./categoryData";
@@ -15,18 +16,71 @@ const categories = [
     "Thriller",
 ];
 
+const normalize = (text) =>
+    (text ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const coverCache = new Map();
+
+async function findBookCover(bookInfo) {
+    // Use manually assigned covers without making an API request.
+    if (bookInfo.coverUrl) {
+        return { ...bookInfo, bookId: bookInfo.title };
+    }
+
+    const cacheKey = `${bookInfo.title}|${bookInfo.author}`;
+
+    if (coverCache.has(cacheKey)) {
+        return coverCache.get(cacheKey);
+    }
+
+    let book = {
+        bookId: bookInfo.title,
+        title: bookInfo.title,
+        author: bookInfo.author,
+        coverUrl: null,
+    };
+
+    try {
+        const results = await searchBooksByTitle(bookInfo.title);
+
+        const exactMatches = results.filter(
+            (result) =>
+                normalize(result.title) === normalize(bookInfo.title) &&
+                normalize(result.author).includes(normalize(bookInfo.author))
+        );
+
+        const match =
+            exactMatches.find((result) => result.coverUrl) ??
+            exactMatches[0];
+
+        if (match) {
+            book = {
+                ...book,
+                bookId: match.bookId ?? bookInfo.title,
+                coverUrl: match.coverUrl ?? null,
+            };
+        }
+    } catch (error) {
+        console.warn(`Could not load cover for ${bookInfo.title}`, error);
+    }
+
+    if (book.coverUrl) {
+        coverCache.set(cacheKey, book);
+    }
+
+    return book;
+}
+
 export default function Search() {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [bookRows, setBookRows] = useState([]);
     const [loadingBooks, setLoadingBooks] = useState(false);
-    const [booksError, setBooksError] = useState("");
 
     useEffect(() => {
         const category = categoryData[selectedCategory];
 
         if (!category) {
             setBookRows([]);
-            setBooksError("");
             setLoadingBooks(false);
             return;
         }
@@ -35,53 +89,59 @@ export default function Search() {
 
         async function loadBooks() {
             setLoadingBooks(true);
-            setBooksError("");
-            setBookRows([]);
 
-            try {
-                const rows = [];
+            // Display all curated books immediately, even before covers load.
+            setBookRows(
+                category.rows.map((row) => ({
+                    title: row.title,
+                    books: row.books.map((book) => ({
+                        ...book,
+                        bookId: book.title,
+                        coverUrl: book.coverUrl ?? null,
+                    })),
+                }))
+            );
 
-                for (const row of category.rows) {
-                    const books = [];
+            // Load up to 4 book covers at a time.
+            const tasks = category.rows.flatMap((row, rowIndex) =>
+                row.books.map((bookInfo, bookIndex) => ({
+                    bookInfo,
+                    rowIndex,
+                    bookIndex,
+                }))
+            );
 
-                    for (const bookInfo of row.books) {
-                        const results = await searchBooksByTitle(bookInfo.title);
+            const worker = async () => {
+                while (tasks.length > 0 && !cancelled) {
+                    const task = tasks.shift();
+                    if (!task) break;
 
-                        // Prefer an exact title match when available.
+                    const book = await findBookCover(task.bookInfo);
 
-                        const normalize = (text) =>
-                            text?.toLowerCase().replace(/[^a-z0-9]/g, "") ?? "";
+                    if (cancelled) return;
 
-                        const exactMatches = results.filter(
-                            (book) =>
-                                normalize(book.title) === normalize(bookInfo.title) &&
-                                normalize(book.author).includes(normalize(bookInfo.author))
-                        );
-
-                        const match =
-                            exactMatches.find((book) => book.coverUrl) ??
-                            exactMatches[0];
-
-                        books.push({
-                            bookId: match?.bookId ?? bookInfo.title,
-                            title: bookInfo.title,
-                            author: bookInfo.author,
-                            coverUrl: bookInfo.coverUrl ?? match?.coverUrl ?? null,
-                        });
-
-                    }
-
-                    rows.push({ title: row.title, books });
+                    setBookRows((previousRows) =>
+                        previousRows.map((row, rowIndex) =>
+                            rowIndex !== task.rowIndex
+                                ? row
+                                : {
+                                    ...row,
+                                    books: row.books.map((existing, bookIndex) =>
+                                        bookIndex === task.bookIndex
+                                            ? book
+                                            : existing
+                                    ),
+                                }
+                        )
+                    );
                 }
+            };
 
-                if (!cancelled) setBookRows(rows);
-            } catch {
-                if (!cancelled) {
-                    setBooksError("Could not load recommendations. Please try again.");
-                }
-            } finally {
-                if (!cancelled) setLoadingBooks(false);
-            }
+            await Promise.all(
+                Array.from({ length: 4 }, () => worker())
+            );
+
+            if (!cancelled) setLoadingBooks(false);
         }
 
         loadBooks();
@@ -104,26 +164,22 @@ export default function Search() {
                     </button>
 
                     <h1 className="search-results-title">
-                        {selectedCategory === "Movies"
-                            ? "Books for Movie Lovers"
-                            : `${selectedCategory} Books`}
+                        {categoryData[selectedCategory]?.heading}
                     </h1>
 
-                    {loadingBooks && <p>Loading recommendations...</p>}
-
-                    {booksError && (
-                        <p className="search-results-message">{booksError}</p>
+                    {loadingBooks && (
+                        <p className="search-results-message">
+                            Loading book covers...
+                        </p>
                     )}
 
-                    {!loadingBooks &&
-                        !booksError &&
-                        bookRows.map((row) => (
-                            <BookRow
-                                key={row.title}
-                                title={row.title}
-                                books={row.books}
-                            />
-                        ))}
+                    {bookRows.map((row) => (
+                        <BookRow
+                            key={row.title}
+                            title={row.title}
+                            books={row.books}
+                        />
+                    ))}
                 </>
             ) : (
                 <>

@@ -6,16 +6,8 @@ export const categoryData = {
             {
                 title: "Books That Became Movies",
                 books: [
-                    {
-                        title: "The Hunger Games",
-                        author: "Suzanne Collins",
-                        coverUrl: "https://covers.openlibrary.org/b/olid/OL46874697M-M.jpg"
-                    },
-                    {
-                        title: "Harry Potter and the Sorcerer's Stone",
-                        author: "J. K. Rowling",
-                        coverUrl: "https://covers.openlibrary.org/b/olid/OL7961604M-M.jpg"
-                    },
+                    { title: "The Hunger Games", author: "Suzanne Collins", coverUrl: "https://covers.openlibrary.org/b/olid/OL46874697M-M.jpg" },
+                    { title: "Harry Potter and the Sorcerer's Stone", author: "J. K. Rowling", coverUrl: "https://covers.openlibrary.org/b/olid/OL7961604M-M.jpg" },
                     { title: "Divergent", author: "Veronica Roth" },
                     { title: "The Maze Runner", author: "James Dashner" },
                     { title: "The Fault in Our Stars", author: "John Green" },
@@ -25,14 +17,10 @@ export const categoryData = {
             {
                 title: "Fan-Favorite Reads",
                 books: [
-                    {
-                        title: "The 5th Wave",
-                        author: "Rick Yancey",
-                        coverUrl: "https://covers.openlibrary.org/b/olid/OL26873850M-M.jpg"
-                    },
+                    { title: "The 5th Wave", author: "Rick Yancey", coverUrl: "https://covers.openlibrary.org/b/olid/OL26873850M-M.jpg" },
                     { title: "The Road", author: "Cormac McCarthy" },
                     { title: "Warm Bodies", author: "Isaac Marion" },
-                    { title: "The Selection", author: "Kiera Cass" },
+                    { title: "Me Before You", author: "Jojo Moyes" },
                     { title: "The Darkest Minds", author: "Alexandra Bracken" },
                     { title: "Ready Player One", author: "Ernest Cline" },
                 ],
@@ -43,7 +31,7 @@ export const categoryData = {
                     { title: "It Ends with Us", author: "Colleen Hoover" },
                     { title: "Project Hail Mary", author: "Andy Weir" },
                     { title: "People We Meet on Vacation", author: "Emily Henry" },
-                    { title: "The Idea of You", author: "Robinne Lee" },
+                    { title: "The Long Walk", author: "Stephen King" },
                     { title: "Red, White & Royal Blue", author: "Casey McQuiston" },
                     { title: "The Ballad of Songbirds and Snakes", author: "Suzanne Collins" },
                 ],
@@ -58,9 +46,9 @@ export const categoryData = {
                 title: "Books That Became TV Shows",
                 books: [
                     { title: "The Summer I Turned Pretty", author: "Jenny Han" },
-                    { title: "Bridgerton: The Duke and I", author: "Julia Quinn" },
+                    { title: "The Handmaid's Tale", author: "Margaret Atwood" },
                     { title: "One of Us Is Lying", author: "Karen M. McManus" },
-                    { title: "The Vampire Diaries", author: "L. J. Smith" },
+                    { title: "Outlander", author: "Diana Gabaldon" },
                     { title: "The 100", author: "Kass Morgan" },
                     { title: "The Last Thing He Told Me", author: "Laura Dave" },
                 ],
@@ -81,7 +69,7 @@ export const categoryData = {
                 books: [
                     { title: "Normal People", author: "Sally Rooney" },
                     { title: "Big Little Lies", author: "Liane Moriarty" },
-                    { title: "The Queen's Gambit", author: "Walter Tevis" },
+                    { title: "Sharp Objects", author: "Gillian Flynn" },
                     { title: "Little Fires Everywhere", author: "Celeste Ng" },
                     { title: "Daisy Jones & The Six", author: "Taylor Jenkins Reid" },
                     { title: "Nine Perfect Strangers", author: "Liane Moriarty" },
@@ -89,44 +77,46 @@ export const categoryData = {
             },
         ],
     },
+
     "< 300 Pages": {
         heading: "Short & Sweet Reads",
         rows: [
             {
                 title: "Quick Reads",
                 books: [
-                    { title: "The Alchemist", author: "Paulo Coelho" },
-                    { title: "Of Mice and Men", author: "John Steinbeck" },
+                    { title: "Every Heart a Doorway", author: "Seanan McGuire" },
+                    { title: "The Giver", author: "Lois Lowry" },
                     { title: "The Outsiders", author: "S. E. Hinton" },
-                    { title: "The Metamorphosis", author: "Franz Kafka" },
-                    { title: "Fahrenheit 451", author: "Ray Bradbury" },
-                    { title: "The Old Man and the Sea", author: "Ernest Hemingway" },
+                    { title: "Coraline", author: "Neil Gaiman" },
+                    { title: "The Ocean at the End of the Lane", author: "Neil Gaiman" },
+                    { title: "Tuck Everlasting", author: "Natalie Babbitt" },
                 ],
             },
             {
                 title: "Short Romance Reads",
                 books: [
+                    { title: "The Exception to the Rule", author: "Christina Lauren" },
                     { title: "The Statistical Probability of Love at First Sight", author: "Jennifer E. Smith" },
-                    { title: "This Is How You Lose the Time War", author: "Amal El-Mohtar and Max Gladstone" },
-                    { title: "The Blue Castle", author: "L. M. Montgomery" },
-                    { title: "The Lover", author: "Marguerite Duras" },
-                    { title: "The Bridges of Madison County", author: "Robert James Waller" },
-                    { title: "The Ghost and Mrs. Muir", author: "R. A. Dick" },
+                    { title: "The DUFF", author: "Kody Keplinger" },
+                    { title: "Flipped", author: "Wendelin Van Draanen" },
+                    { title: "Nick & Norah's Infinite Playlist", author: "Rachel Cohn and David Levithan" },
+                    { title: "The Boyfriend List", author: "E. Lockhart" },
                 ],
             },
             {
                 title: "Short Books, Big Impact",
                 books: [
-                    { title: "The Giver", author: "Lois Lowry" },
-                    { title: "Animal Farm", author: "George Orwell" },
-                    { title: "The Little Prince", author: "Antoine de Saint-Exupéry" },
-                    { title: "The Great Gatsby", author: "F. Scott Fitzgerald" },
+                    { title: "The Tao of Pooh", author: "Benjamin Hoff" },
+                    { title: "Lord of the Flies", author: "William Golding" },
+                    { title: "Of Mice and Men", author: "John Steinbeck" },
+                    { title: "A Monster Calls", author: "Patrick Ness" },
                     { title: "The House on Mango Street", author: "Sandra Cisneros" },
-                    { title: "The Pearl", author: "John Steinbeck" },
+                    { title: "The Five People You Meet in Heaven", author: "Mitch Albom" },
                 ],
             },
         ],
     },
+
     "> 300 Pages": {
         heading: "Long Reads Worth the Time",
         rows: [
@@ -136,9 +126,9 @@ export const categoryData = {
                     { title: "Fourth Wing", author: "Rebecca Yarros" },
                     { title: "A Court of Thorns and Roses", author: "Sarah J. Maas" },
                     { title: "The Priory of the Orange Tree", author: "Samantha Shannon" },
-                    { title: "The Serpent and the Wings of Night", author: "Carissa Broadbent" },
                     { title: "The Poppy War", author: "R. F. Kuang" },
                     { title: "Six of Crows", author: "Leigh Bardugo" },
+                    { title: "The Atlas Six", author: "Olivie Blake" },
                 ],
             },
             {
@@ -155,7 +145,7 @@ export const categoryData = {
             {
                 title: "Epic Stories",
                 books: [
-                    { title: "The Book Thief", author: "Markus Zusak" },
+                    { title: "Babel", author: "R. F. Kuang" },
                     { title: "The Goldfinch", author: "Donna Tartt" },
                     { title: "The Name of the Wind", author: "Patrick Rothfuss" },
                     { title: "A Little Life", author: "Hanya Yanagihara" },
@@ -172,40 +162,38 @@ export const categoryData = {
             {
                 title: "Popular Book Series",
                 books: [
-                    { title: "The Hunger Games", author: "Suzanne Collins" },
-                    { title: "Percy Jackson and the Lightning Thief", author: "Rick Riordan" },
-                    { title: "Divergent", author: "Veronica Roth" },
-                    { title: "The Maze Runner", author: "James Dashner" },
-                    { title: "The Selection", author: "Kiera Cass" },
-                    { title: "The 5th Wave", author: "Rick Yancey" },
+                    { title: "The Lightning Thief", author: "Rick Riordan" },
+                    { title: "The Darkest Star", author: "Jennifer L. Armentrout" },
+                    { title: "The Cruel Prince", author: "Holly Black" },
+                    { title: "Legend", author: "Marie Lu" },
+                    { title: "Cinder", author: "Marissa Meyer" },
+                    { title: "Clockwork Angel", author: "Cassandra Clare" },
                 ],
             },
             {
                 title: "Fantasy Series",
                 books: [
-                    { title: "Fourth Wing", author: "Rebecca Yarros" },
                     { title: "Throne of Glass", author: "Sarah J. Maas" },
                     { title: "Shatter Me", author: "Tahereh Mafi" },
-                    { title: "A Court of Thorns and Roses", author: "Sarah J. Maas" },
-                    { title: "Six of Crows", author: "Leigh Bardugo" },
-                    { title: "The Cruel Prince", author: "Holly Black" },
+                    { title: "Caraval", author: "Stephanie Garber" },
+                    { title: "Once Upon a Broken Heart", author: "Stephanie Garber" },
+                    { title: "Powerless", author: "Lauren Roberts" },
+                    { title: "Divine Rivals", author: "Rebecca Ross" },
                 ],
             },
             {
                 title: "Romance & Mystery Series",
                 books: [
-                    { title: "The Inheritance Games", author: "Jennifer Lynn Barnes" },
-                    { title: "A Good Girl's Guide to Murder", author: "Holly Jackson" },
-                    { title: "The Summer I Turned Pretty", author: "Jenny Han" },
                     { title: "Magnolia Parks", author: "Jessa Hastings" },
-                    { title: "One of Us Is Lying", author: "Karen M. McManus" },
                     { title: "Twisted Love", author: "Ana Huang" },
+                    { title: "Binding 13", author: "Chloe Walsh" },
+                    { title: "The Hawthorne Legacy", author: "Jennifer Lynn Barnes" },
+                    { title: "The Reappearance of Rachel Price", author: "Holly Jackson" },
+                    { title: "Truly Devious", author: "Maureen Johnson" },
                 ],
             },
         ],
     },
-
-
 
     "Slow Burn": {
         heading: "Slow Burn Books",
@@ -215,38 +203,36 @@ export const categoryData = {
                 books: [
                     { title: "The Hating Game", author: "Sally Thorne" },
                     { title: "Beach Read", author: "Emily Henry" },
-                    { title: "The Love Hypothesis", author: "Ali Hazelwood" },
                     { title: "Book Lovers", author: "Emily Henry" },
                     { title: "The Flatshare", author: "Beth O'Leary" },
                     { title: "Wait for It", author: "Mariana Zapata" },
+                    { title: "Practice Makes Perfect", author: "Sarah Adams" },
                 ],
             },
             {
                 title: "Enemies to Lovers",
                 books: [
-                    { title: "The Cruel Prince", author: "Holly Black" },
                     { title: "The Spanish Love Deception", author: "Elena Armas" },
-                    { title: "Better Than the Movies", author: "Lynn Painter" },
                     { title: "The Unhoneymooners", author: "Christina Lauren" },
                     { title: "From Blood and Ash", author: "Jennifer L. Armentrout" },
                     { title: "The Bridge Kingdom", author: "Danielle L. Jensen" },
+                    { title: "The Deal", author: "Elle Kennedy" },
+                    { title: "The Worst Best Man", author: "Mia Sosa" },
                 ],
             },
             {
                 title: "Romance Worth the Wait",
                 books: [
-                    { title: "People We Meet on Vacation", author: "Emily Henry" },
-                    { title: "Love and Other Words", author: "Christina Lauren" },
                     { title: "The Wall of Winnipeg and Me", author: "Mariana Zapata" },
                     { title: "Kulti", author: "Mariana Zapata" },
                     { title: "The Simple Wild", author: "K. A. Tucker" },
                     { title: "All Rhodes Lead Here", author: "Mariana Zapata" },
+                    { title: "Yours Truly", author: "Abby Jimenez" },
+                    { title: "You Deserve Each Other", author: "Sarah Hogle" },
                 ],
             },
         ],
     },
-
-
 
     Romance: {
         heading: "Romance Books",
@@ -254,19 +240,19 @@ export const categoryData = {
             {
                 title: "Popular Romance",
                 books: [
-                    { title: "It Ends with Us", author: "Colleen Hoover" },
                     { title: "The Love Hypothesis", author: "Ali Hazelwood" },
                     { title: "Happy Place", author: "Emily Henry" },
                     { title: "Funny Story", author: "Emily Henry" },
                     { title: "Love, Theoretically", author: "Ali Hazelwood" },
                     { title: "Every Summer After", author: "Carley Fortune" },
+                    { title: "Just for the Summer", author: "Abby Jimenez" },
                 ],
             },
             {
                 title: "Cute & Cozy Romance",
                 books: [
                     { title: "Better Than the Movies", author: "Lynn Painter" },
-                    { title: "The Cheat Sheet", author: "Sarah Adams" },
+                    { title: "The Rom-Commers", author: "Katherine Center" },
                     { title: "The Bodyguard", author: "Katherine Center" },
                     { title: "When in Rome", author: "Sarah Adams" },
                     { title: "Practice Makes Perfect", author: "Sarah Adams" },
@@ -276,18 +262,16 @@ export const categoryData = {
             {
                 title: "Emotional Love Stories",
                 books: [
-                    { title: "The Seven Husbands of Evelyn Hugo", author: "Taylor Jenkins Reid" },
                     { title: "Love and Other Words", author: "Christina Lauren" },
-                    { title: "The Fault in Our Stars", author: "John Green" },
-                    { title: "Before We Were Strangers", author: "Renée Carlino" },
+                    { title: "Reminders of Him", author: "Colleen Hoover" },
                     { title: "One True Loves", author: "Taylor Jenkins Reid" },
-                    { title: "Me Before You", author: "Jojo Moyes" },
+                    { title: "Before I Let Go", author: "Kennedy Ryan" },
+                    { title: "The Things We Leave Unfinished", author: "Rebecca Yarros" },
+                    { title: "The Light We Lost", author: "Jill Santopolo" },
                 ],
             },
         ],
     },
-
-
 
     Thriller: {
         heading: "Thriller Books",
@@ -307,26 +291,24 @@ export const categoryData = {
                 title: "Psychological Thrillers",
                 books: [
                     { title: "Gone Girl", author: "Gillian Flynn" },
-                    { title: "The Woman in the Window", author: "A. J. Finn" },
                     { title: "Behind Closed Doors", author: "B. A. Paris" },
-                    { title: "The Wife Between Us", author: "Greer Hendricks and Sarah Pekkanen" },
                     { title: "The Last Mrs. Parrish", author: "Liv Constantine" },
                     { title: "The Couple Next Door", author: "Shari Lapena" },
+                    { title: "The Perfect Marriage", author: "Jeneva Rose" },
+                    { title: "None of This Is True", author: "Lisa Jewell" },
                 ],
             },
             {
                 title: "Mystery & Suspense",
                 books: [
-                    { title: "The Guest List", author: "Lucy Foley" },
                     { title: "The Paris Apartment", author: "Lucy Foley" },
                     { title: "Rock Paper Scissors", author: "Alice Feeney" },
                     { title: "The Hunting Party", author: "Lucy Foley" },
                     { title: "The Turn of the Key", author: "Ruth Ware" },
                     { title: "The Family Upstairs", author: "Lisa Jewell" },
+                    { title: "The Locked Door", author: "Freida McFadden" },
                 ],
             },
         ],
     },
-
-
 };
