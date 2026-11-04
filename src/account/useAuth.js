@@ -1,12 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
-import { supabaseFor } from '../supabaseClient';
+import { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 
 export function useAuth(persistSession = true) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  const supabaseClient = useMemo(() => supabaseFor(persistSession), [persistSession]);
 
   useEffect(() => {
     if (persistSession) {
@@ -15,7 +13,7 @@ export function useAuth(persistSession = true) {
         try {
           const session = JSON.parse(saved);
           if (session.access_token && session.refresh_token) {
-            supabaseClient.auth
+            supabase.auth
               .setSession({
                 access_token: session.access_token,
                 refresh_token: session.refresh_token,
@@ -35,7 +33,7 @@ export function useAuth(persistSession = true) {
       }
     }
 
-    supabaseClient.auth
+    supabase.auth
       .getSession()
       .then(({ data: { session } }) => {
         setUser(session?.user ?? null);
@@ -45,19 +43,19 @@ export function useAuth(persistSession = true) {
 
     const {
       data: { subscription },
-    } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, [supabaseClient, persistSession]);
+  }, [persistSession]);
 
   const createAccount = async (email, password, fullName) => {
     setLoading(true);
     setError('');
     try {
-      const { data, error: authError } = await supabaseClient.auth.signUp({
+      const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -79,21 +77,21 @@ export function useAuth(persistSession = true) {
     setLoading(true);
     setError('');
     try {
-      const { data, error: authError } = await supabaseClient.auth.signInWithPassword({
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (authError) throw authError;
 
       if (persistSession) {
-        const { data: sessionData } = await supabaseClient.auth.getSession();
+        const { data: sessionData } = await supabase.auth.getSession();
         if (sessionData.session) {
           const sessionJson = JSON.stringify(sessionData.session);
           localStorage.setItem('looseleaf_session', sessionJson);
         }
       }
 
-      const { error: refreshError } = await supabaseClient.auth.getSession();
+      const { error: refreshError } = await supabase.auth.getSession();
       if (refreshError) {
         console.warn('Failed to refresh session after sign-in:', refreshError.message);
       }
@@ -109,12 +107,10 @@ export function useAuth(persistSession = true) {
   const resetPassword = async (email) => {
     setLoading(true);
     setError('');
-
     try {
-      const { error: authError } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: new URL('/reset-password', window.location.origin).toString(),
       });
-
       if (authError) throw authError;
     } catch (err) {
       setError(err.message || 'Password reset failed');
@@ -126,7 +122,6 @@ export function useAuth(persistSession = true) {
 
   const updatePassword = async (password, confirmPassword) => {
     setError('');
-
     if (typeof password !== 'string' || password.length < 6) {
       const validationError = new Error('Password must be at least 6 characters long.');
       setError(validationError.message);
@@ -141,8 +136,7 @@ export function useAuth(persistSession = true) {
 
     setLoading(true);
     try {
-      const { data, error: authError } = await supabaseClient.auth.updateUser({ password });
-
+      const { data, error: authError } = await supabase.auth.updateUser({ password });
       if (authError) throw authError;
       return data;
     } catch (err) {
@@ -157,7 +151,7 @@ export function useAuth(persistSession = true) {
     setLoading(true);
     setError('');
     try {
-      await supabaseClient.auth.signOut();
+      await supabase.auth.signOut();
       if (persistSession) {
         localStorage.removeItem('looseleaf_session');
       }
@@ -174,7 +168,7 @@ export function useAuth(persistSession = true) {
     setError('');
 
     try {
-      const { data, error: dbError } = await supabaseClient
+      const { data, error: dbError } = await supabase
         .from('profiles')
         .upsert(
           {

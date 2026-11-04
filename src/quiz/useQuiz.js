@@ -96,6 +96,11 @@ export function useQuiz() {
     ((tasteAnsweredCount + goalAnsweredCount) / totalQuestions) * 100
   );
 
+  const restoreProgress = useCallback(({ step, answers: answersToRestore }) => {
+    setCurrentStep(step);
+    setAnswers({ ...answersToRestore });
+  }, []);
+
   return {
     currentStep,
     answers,
@@ -105,6 +110,7 @@ export function useQuiz() {
     goToGoals,
     goBackToTaste,
     completeQuiz,
+    restoreProgress,
     isIntro,
     isTaste,
     isGoals,

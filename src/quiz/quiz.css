@@ -137,6 +137,30 @@
   padding: 6px;
 }
 
+.quiz-save-resume {
+  border: none;
+  background: transparent;
+  color: #5b3113;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  text-decoration: underline;
+  text-decoration-color: #b5a195;
+  text-underline-offset: 2px;
+}
+
+.quiz-save-resume:hover {
+  background: #f9dddd;
+  color: #603417;
+}
+
+.quiz-save-resume:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Small screens */
 @media (max-width: 420px) {
   .quiz-content {

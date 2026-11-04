@@ -1,16 +1,11 @@
-
 import { useState } from 'react';
 import styles from './QuizQuestion.module.css';
 
 export function QuizQuestion({ section, answer, onAnswer, number }) {
   const [showAll, setShowAll] = useState(false);
-
   const isMultiSelect = section.type === 'multi-select';
   const currentAnswer = answer?.[section.id];
-
-  const selectedValues = Array.isArray(currentAnswer)
-    ? currentAnswer
-    : [];
+  const selectedValues = Array.isArray(currentAnswer) ? currentAnswer : [];
 
   const isSelected = (optionId) =>
     isMultiSelect
@@ -23,9 +18,7 @@ export function QuizQuestion({ section, answer, onAnswer, number }) {
       return;
     }
 
-    // Exclusive choices clear other selections.
     const exclusiveIds = ['not-sure', 'everything', 'surprise'];
-
     if (exclusiveIds.includes(optionId)) {
       onAnswer(
         section.id,
@@ -37,7 +30,6 @@ export function QuizQuestion({ section, answer, onAnswer, number }) {
     const filtered = selectedValues.filter(
       (id) => !exclusiveIds.includes(id)
     );
-
     const updated = filtered.includes(optionId)
       ? filtered.filter((id) => id !== optionId)
       : [...filtered, optionId];
@@ -48,12 +40,9 @@ export function QuizQuestion({ section, answer, onAnswer, number }) {
   const pillStyle = isMultiSelect;
   const colorStyle = section.style === 'olive' ? 'olive' : 'pink';
 
-  // Show a limited number of options until expanded.
   const visibleLimit = section.initialVisible;
   const hasMoreOptions =
-    Number.isInteger(visibleLimit) &&
-    section.options.length > visibleLimit;
-
+    Number.isInteger(visibleLimit) && section.options.length > visibleLimit;
   const visibleOptions =
     hasMoreOptions && !showAll
       ? section.options.slice(0, visibleLimit)
@@ -64,44 +53,25 @@ export function QuizQuestion({ section, answer, onAnswer, number }) {
       <div className={styles.sectionHeader}>
         <div className={styles.sectionLabel}>
           <span
-            className={`${styles.number} ${number % 2 === 0
-                ? styles.pinkNumber
-                : styles.greenNumber
-              }`}
+            className={`${styles.number} ${
+              number % 2 === 0 ? styles.pinkNumber : styles.greenNumber
+            }`}
           >
             {number}
           </span>
-
-          <span className={styles.sectionTitle}>
-            {section.title}
-          </span>
+          <span className={styles.sectionTitle}>{section.title}</span>
         </div>
-
-        {isMultiSelect && (
-          <span className={styles.multiBadge}>
-            Pick as many
-          </span>
-        )}
+        {isMultiSelect && <span className={styles.multiBadge}>Pick as many</span>}
       </div>
 
-      <h2 className={styles.questionText}>
-        {section.question}
-      </h2>
-
+      <h2 className={styles.questionText}>{section.question}</h2>
       {section.instructions && (
-        <p className={styles.instructions}>
-          {section.instructions}
-        </p>
+        <p className={styles.instructions}>{section.instructions}</p>
       )}
 
-      <div
-        className={
-          pillStyle ? styles.pillGrid : styles.optionsGrid
-        }
-      >
+      <div className={pillStyle ? styles.pillGrid : styles.optionsGrid}>
         {visibleOptions.map((option) => {
           const selected = isSelected(option.id);
-
           return (
             <label
               key={option.id}
@@ -122,20 +92,11 @@ export function QuizQuestion({ section, answer, onAnswer, number }) {
                 onChange={() => handleSelect(option.id)}
                 className={styles.radioInput}
               />
-
-              {!pillStyle && (
-                <span className={styles.optionCheck} />
-              )}
-
+              {!pillStyle && <span className={styles.optionCheck} />}
               <span className={styles.optionContent}>
-                <span className={styles.optionTitle}>
-                  {option.label}
-                </span>
-
+                <span className={styles.optionTitle}>{option.label}</span>
                 {option.subtitle && (
-                  <span className={styles.optionSubtitle}>
-                    {option.subtitle}
-                  </span>
+                  <span className={styles.optionSubtitle}>{option.subtitle}</span>
                 )}
               </span>
             </label>
@@ -150,8 +111,8 @@ export function QuizQuestion({ section, answer, onAnswer, number }) {
           onClick={() => setShowAll((previous) => !previous)}
         >
           {showAll
-            ? 'Show less ↑'
-            : `Show more (${section.options.length - visibleLimit} more) ↓`}
+            ? 'Show less'
+            : `Show more (${section.options.length - visibleLimit} more)`}
         </button>
       )}
     </section>

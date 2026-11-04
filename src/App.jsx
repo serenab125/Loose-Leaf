@@ -1,31 +1,32 @@
-import './App.css'
-import { useState } from 'react'
-import { useAuth } from './account/useAuth'
-import { CreateAccount } from './account/CreateAccount'
-import ForgotPassword from './account/ForgotPassword'
-import ResetPassword from './account/ResetPassword'
-import { Login } from './account/Login'
-import { Quiz } from './quiz/Quiz'
-import { Home } from './home/Home'
-import Search from './pages/Search/Search'
+import './App.css';
+import { useState } from 'react';
+import { useAuth } from './account/useAuth';
+import { CreateAccount } from './account/CreateAccount';
+import ForgotPassword from './account/ForgotPassword';
+import ResetPassword from './account/ResetPassword';
+import { Login } from './account/Login';
+import { Quiz } from './quiz/Quiz';
+import { Home } from './home/Home';
+import Search from './pages/Search/Search';
 
 function App() {
-  const { user, logout, loading, savePreferences } = useAuth()
+  const { user, logout, loading, savePreferences } = useAuth();
 
+  const [currentBook, setCurrentBook] = useState(null);
   const [view, setView] = useState(() => {
-    if (window.location.pathname === '/reset-password') return 'reset'
-    return 'login'
-  })
+    if (window.location.pathname === '/reset-password') return 'reset';
+    return 'login';
+  });
 
-  const [isQuizCompleted, setIsQuizCompleted] = useState(false)
-  const [activePage, setActivePage] = useState('home')
+  const [isQuizCompleted, setIsQuizCompleted] = useState(false);
+  const [activePage, setActivePage] = useState('home');
 
   if (loading) {
     return (
       <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#fdf8f3' }}>
         <p style={{ color: '#5b3113', fontFamily: 'Georgia, serif' }}>Loading LooseLeaf...</p>
       </main>
-    )
+    );
   }
 
   if (view === 'reset') {
@@ -33,7 +34,7 @@ function App() {
       <main>
         <ResetPassword />
       </main>
-    )
+    );
   }
 
   if (!user) {
@@ -50,24 +51,24 @@ function App() {
           />
         )}
       </main>
-    )
+    );
   }
 
   const handleQuizComplete = async (quizAnswers) => {
     try {
       if (savePreferences) {
-        await savePreferences(quizAnswers)
+        await savePreferences(quizAnswers);
       }
     } catch (err) {
-      console.error('Error saving quiz results:', err)
+      console.error('Error saving quiz results:', err);
     } finally {
-      setIsQuizCompleted(true)
+      setIsQuizCompleted(true);
     }
-  }
+  };
 
   const handleQuizSkip = () => {
-    setIsQuizCompleted(true)
-  }
+    setIsQuizCompleted(true);
+  };
 
   if (!isQuizCompleted) {
     return (
@@ -113,7 +114,7 @@ function App() {
           onComplete={handleQuizComplete}
         />
       </main>
-    )
+    );
   }
 
   return (
@@ -132,43 +133,23 @@ function App() {
             ← Back to Home
           </button>
 
-          <Search />
+          <Search onSelectBook={(book) => setCurrentBook(book)} />
         </>
       ) : (
         <Home
           user={user}
           logout={logout}
+          currentBook={currentBook}
           onRetakeQuiz={() => {
-            setActivePage('home')
-            setIsQuizCompleted(false)
+            setActivePage('home');
+            setIsQuizCompleted(false);
           }}
           onNavigateToSearch={() => setActivePage('search')}
-        >
-          Sign out
-        </button>
-      </div>
-
-
-      <div style={{ display: 'flex', gap: '10px', padding: '12px 20px' }}>
-        <button type="button" onClick={() => setView('quiz')}>
-          Quiz
-        </button>
-
-        <button type="button" onClick={() => setView('search')}>
-          Search
-        </button>
-      </div>
-
-      {view === 'search' ? (
-        <Search />
-      ) : (
-        <Quiz
-          user={user}
-          onSkip={() => console.log('Quiz skipped')}
+          onSelectBook={(book) => setCurrentBook(book)}
         />
       )}
     </main>
-  )
+  );
 }
 
-export default App
+export default App;

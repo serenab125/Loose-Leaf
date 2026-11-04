@@ -63,11 +63,11 @@ export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword })
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-            />
-          </div>
+              />
+              </div>
 
-          <div className={styles.fieldGroup}>
-            <label className={styles.checkboxLabel}>
+              <div className={styles.fieldGroup}>
+              <label className={styles.checkboxLabel}>
               <input
                 type="checkbox"
                 className={styles.checkbox}
@@ -75,10 +75,10 @@ export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword })
                 onChange={(e) => setRememberMe(e.target.checked)}
               />
               <span>Remember me</span>
-            </label>
-          </div>
+              </label>
+              </div>
 
-          {(formError || error) && <p className={styles.error}>{formError || error}</p>}
+              {formError && <p className={styles.error}>{formError}</p>}
 
           <button type="submit" className={styles.buttonPrimary} disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}

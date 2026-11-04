@@ -1,22 +1,17 @@
+import { useState, useEffect } from 'react';
 import {
   TASTE_SECTIONS,
   GOAL_SECTIONS,
-  MIN_TASTE_ANSWERS,
 } from './quizData';
 import { useQuiz } from './useQuiz';
 import { QuizIntroduction } from './QuizIntroduction';
 import { QuizQuestion } from './QuizQuestion';
 import { QuizLoading } from './QuizLoading';
 import './quiz.css';
-import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 
-export function Quiz({ onSkip, onComplete, user }) {
-  // Setting the pop-up for skipping the quiz
+export function Quiz({ onSkip, user, onComplete }) {
   const [showSkipPopup, setShowSkipPopup] = useState(false);
-  const [saveError, setSaveError] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-
   const {
     answers,
     answerQuestion,
@@ -31,39 +26,40 @@ export function Quiz({ onSkip, onComplete, user }) {
     completeQuiz,
     canContinue,
     tasteAnsweredCount,
+    restoreProgress,
+    currentStep
   } = useQuiz();
+
+  const [saveError, setSaveError] = useState('');
+  const [saveStatus, setSaveStatus] = useState('');
+  const [hasSavedProgress, setHasSavedProgress] = useState(false);
+  const [restoreMessage, setRestoreMessage] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const remainingAnswers = Math.max(0, 3 - tasteAnsweredCount);
 
   const handleComplete = async () => {
     if (isSaving) return;
-
     setIsSaving(true);
     setSaveError('');
-
     try {
-      console.log('Quiz complete! Answers:', answers);
-
-      // 1. Trigger parent onComplete callback if provided (e.g., from App.jsx)
-      if (onComplete) {
-        await onComplete(answers);
-      } 
-      // 2. Fallback direct upsert if user prop is passed directly to Quiz
-      else if (user?.id) {
-        const { error } = await supabase
-          .from('profiles')
-          .upsert(
-            {
-              id: user.id,
-              full_name: user.user_metadata?.full_name || '',
-              email: user.email,
-              reading_preferences: answers,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: 'id' }
-          );
-
-        if (error) throw error;
-        console.log('Quiz answers saved successfully!', answers);
+      if (!user?.id) {
+        throw new Error('You must be signed in to save your quiz.');
       }
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(
+          {
+            id: user.id,
+            full_name: user.user_metadata?.full_name || '',
+            email: user.email,
+            reading_preferences: answers,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'id' }
+        );
+      if (error) throw error;
+      onComplete?.();
     } catch (error) {
       console.error('Error saving quiz answers:', error);
       setSaveError(error.message || 'Unable to save quiz answers.');
@@ -72,29 +68,63 @@ export function Quiz({ onSkip, onComplete, user }) {
     }
   };
 
-  const remainingAnswers = Math.max(
-    0,
-    MIN_TASTE_ANSWERS - tasteAnsweredCount
-  );
+  const saveProgress = () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    setSaveStatus('');
+    setSaveError('');
+    try {
+      const progress = {
+        step: currentStep,
+        answers: { ...answers },
+      };
+      localStorage.setItem('looseleaf_quiz_progress', JSON.stringify(progress));
+      setSaveStatus('Progress saved — you can close and come back later.');
+      setTimeout(() => setSaveStatus(''), 3000);
+    } catch (err) {
+      setSaveStatus(err.message || 'Unable to save progress.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('looseleaf_quiz_progress');
+      if (raw) {
+        const progress = JSON.parse(raw);
+        if (progress && progress.step !== undefined) {
+          restoreProgress(progress);
+          setHasSavedProgress(true);
+          setRestoreMessage('Your quiz progress has been restored.');
+          const timer = setTimeout(() => setRestoreMessage(''), 5000);
+          return () => clearTimeout(timer);
+        }
+      }
+    } catch (err) {
+      // ignore
+    }
+  }, [restoreProgress]);
 
   return (
     <div className="quiz-container">
       {saveError && (
-        <p role="alert" style={{ color: '#b91c1c', padding: '12px', textAlign: 'center' }}>
+        <p role="alert" style={{ color: '#b91c1c', padding: '12px' }}>
           {saveError}
         </p>
       )}
+      {restoreMessage && (
+        <p role="alert" style={{ color: '#603417', padding: '12px' }}>
+          {restoreMessage}
+        </p>
+      )}
       {isIntro ? (
-        // Introduction page to take quiz or skip quiz
         <QuizIntroduction
           onGetStarted={goToNext}
-          onSkipQuiz={() => setShowSkipPopup(true)} 
+          onSkipQuiz={() => setShowSkipPopup(true)}
         />
       ) : isComplete ? (
-        <QuizLoading
-          onComplete={handleComplete}
-          onRetake={goToIntro}
-        />
+        <QuizLoading onComplete={handleComplete} onRetake={goToIntro} />
       ) : (
         <main className="quiz-scroll-page">
           <div className="quiz-content">
@@ -103,9 +133,8 @@ export function Quiz({ onSkip, onComplete, user }) {
               className="quiz-back"
               onClick={isGoals ? goBackToTaste : goToIntro}
             >
-              ← Back
+              Back
             </button>
-
             <div
               className="quiz-progress-track"
               role="progressbar"
@@ -123,18 +152,13 @@ export function Quiz({ onSkip, onComplete, user }) {
             {isTaste && (
               <>
                 <header className="quiz-page-header">
-                  <p className="quiz-eyebrow">
-                    YOUR READING QUIZ · STEP 1 OF 2
-                  </p>
-
+                  <p className="quiz-eyebrow">YOUR READING QUIZ • STEP 1 OF 2</p>
                   <h1>Tell us a little about you</h1>
-
                   <p className="quiz-description">
-                    Scroll through and tap whatever feels right.
-                    Answer at least 3 questions to continue.
+                    Scroll through and tap whatever feels right. Answer at least 3
+                    questions to continue.
                   </p>
                 </header>
-
                 {TASTE_SECTIONS.map((section, index) => (
                   <QuizQuestion
                     key={section.id}
@@ -144,24 +168,34 @@ export function Quiz({ onSkip, onComplete, user }) {
                     onAnswer={answerQuestion}
                   />
                 ))}
-
                 <div className="quiz-finish">
                   <p className="quiz-answer-count" aria-live="polite">
                     {canContinue
                       ? `${tasteAnsweredCount} questions answered — you're ready!`
-                      : `Answer ${remainingAnswers} more ${remainingAnswers === 1
-                        ? 'question'
-                        : 'questions'
-                      } to continue.`}
+                      : `Answer ${remainingAnswers} more question(s) to continue.`}
                   </p>
-
+                  <button
+                    type="button"
+                    className="quiz-skip-button"
+                    onClick={() => setShowSkipPopup(true)}
+                  >
+                    Skip Quiz
+                  </button>
                   <button
                     type="button"
                     className="quiz-finish-button"
                     onClick={goToGoals}
                     disabled={!canContinue}
                   >
-                    Continue →
+                    Continue
+                  </button>
+                  <button
+                    type="button"
+                    className="quiz-save-resume"
+                    onClick={saveProgress}
+                    disabled={isSaving}
+                  >
+                    Save &amp; Resume
                   </button>
                 </div>
               </>
@@ -170,19 +204,14 @@ export function Quiz({ onSkip, onComplete, user }) {
             {isGoals && (
               <>
                 <header className="quiz-page-header">
-                  <p className="quiz-eyebrow">
-                    YOUR READING GOALS · STEP 2 OF 2
-                  </p>
-
+                  <p className="quiz-eyebrow">YOUR READING GOALS • STEP 2 OF 2</p>
                   <h1>Let's make reading fit your life</h1>
-
                   <p className="quiz-description">
-                    LooseLeaf's reading timer helps you build a reading
-                    habit at your own pace. Answer two quick questions
-                    to personalize your goal, or skip for now.
+                    LooseLeaf's reading timer helps you build a reading habit at
+                    your own pace. Answer two quick questions to personalize your
+                    goal, or skip for now.
                   </p>
                 </header>
-
                 {GOAL_SECTIONS.map((section, index) => (
                   <QuizQuestion
                     key={section.id}
@@ -192,7 +221,6 @@ export function Quiz({ onSkip, onComplete, user }) {
                     onAnswer={answerQuestion}
                   />
                 ))}
-
                 <div className="quiz-finish">
                   <button
                     type="button"
@@ -201,13 +229,20 @@ export function Quiz({ onSkip, onComplete, user }) {
                   >
                     Find My Books
                   </button>
-
                   <button
                     type="button"
                     className="quiz-skip-button"
                     onClick={completeQuiz}
                   >
                     Skip goal setting for now
+                  </button>
+                  <button
+                    type="button"
+                    className="quiz-save-resume"
+                    onClick={saveProgress}
+                    disabled={isSaving}
+                  >
+                    Save &amp; Resume
                   </button>
                 </div>
               </>
@@ -216,7 +251,6 @@ export function Quiz({ onSkip, onComplete, user }) {
         </main>
       )}
 
-      {/* Pop-up for skipping the quiz */}
       {showSkipPopup && (
         <div className="skip-popup-overlay">
           <div
@@ -226,15 +260,11 @@ export function Quiz({ onSkip, onComplete, user }) {
             aria-labelledby="skip-popup-title"
           >
             <h2 id="skip-popup-title">Skip the Quiz?</h2>
-
             <p>
-              Skipping the quiz means your book recommendations
-              will be more general instead of personalized to
-              your interests.
+              Skipping the quiz means your book recommendations will be more
+              general instead of personalized to your interests.
             </p>
-
             <p>Would you like to continue?</p>
-
             <div className="skip-popup-buttons">
               <button
                 type="button"
@@ -246,7 +276,6 @@ export function Quiz({ onSkip, onComplete, user }) {
               >
                 Yes, Skip Quiz
               </button>
-
               <button
                 type="button"
                 className="skip-cancel-button"

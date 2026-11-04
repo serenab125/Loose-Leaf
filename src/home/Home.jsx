@@ -39,7 +39,7 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
               <div className={styles.headerDivider} />
             </header>
 
-            {/* Serena's Sprint 2 Homepage Carousel Section */}
+            {/* Carousel */}
             <section className={styles.bannerSection}>
               <HomeCarousel
                 user={user}
@@ -67,7 +67,7 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
                 </div>
               </div>
 
-              {/* 2. Multiple Quiz Shelves (Because You Like..., Match Your Mood..., Explore Genre...) */}
+              {/* 2. Personalized Quiz Shelves */}
               {userShelves.map((shelf, idx) => (
                 <div key={idx} className={styles.categoryRow}>
                   <h2 className={styles.categoryTitle}>{shelf.title}</h2>
@@ -89,7 +89,7 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
                 </div>
               ))}
 
-              {/* 3. Popular Right Now (Trending & BookTok Hits) */}
+              {/* 3. Popular Right Now */}
               <div className={styles.categoryRow}>
                 <h2 className={styles.categoryTitle}>Popular Right Now 🔥</h2>
                 <div className={styles.bookScrollRow}>
@@ -189,3 +189,5 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
     </div>
   );
 }
+
+export default Home;

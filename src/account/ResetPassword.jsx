@@ -1,88 +1,156 @@
 import { useState } from 'react';
 import { useAuth } from './useAuth';
+import { supabase } from '../supabaseClient';
+import styles from './Login.module.css';
 
 export default function ResetPassword() {
+  const { updatePassword, loading } = useAuth();
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const { updatePassword } = useAuth();
+  const [success, setSuccess] = useState('');
+  const [isReturning, setIsReturning] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
     setError('');
+    setSuccess('');
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
     }
 
-    setLoading(true);
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
     try {
       await updatePassword(password, confirmPassword);
-      setMessage('Your password has been updated successfully! You can now log in.');
+      setSuccess(
+        'Password updated successfully! You can now sign in with your new password.'
+      );
+      setPassword('');
+      setConfirmPassword('');
     } catch (err) {
-      setError(err.message || 'Failed to update password.');
-    } finally {
-      setLoading(false);
+      setError(
+        err.message || 'Unable to update password. Please try again.'
+      );
+    }
+  };
+
+  const handleReturnToLogin = async () => {
+    setIsReturning(true);
+    setError('');
+
+    try {
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) throw signOutError;
+      window.location.assign('/');
+    } catch (err) {
+      setError(
+        err.message || 'Unable to return to sign in. Please try again.'
+      );
+      setIsReturning(false);
     }
   };
 
   return (
-    <div className="auth-container" style={{ padding: '40px 20px', maxWidth: '393px', margin: '0 auto', fontFamily: 'Inter, sans-serif' }}>
-      <h2 style={{ fontFamily: 'Georgia, serif', color: '#5b3113', textAlign: 'center' }}>Reset Your Password</h2>
-      <p style={{ color: '#8c7365', textAlign: 'center', fontSize: '14px', marginBottom: '24px' }}>
-        Enter a new password for your LooseLeaf account.
-      </p>
+    <div className={styles.container}>
+      <div className={styles.card}>
+        <h1 className={styles.heading}>LooseLeaf</h1>
+        <p className={styles.tagline}>Find your next chapter.</p>
 
-      {message && <p style={{ color: '#2e7d32', textAlign: 'center', fontSize: '14px' }}>{message}</p>}
-      {error && <p style={{ color: '#d32f2f', textAlign: 'center', fontSize: '14px' }}>{error}</p>}
+        {success ? (
+          <div className={styles.form}>
+            <p
+              role="status"
+              style={{
+                textAlign: 'center',
+                color: '#5b3113',
+                lineHeight: '1.6'
+              }}
+            >
+              {success}
+            </p>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div>
-          <label style={{ display: 'block', fontSize: '13px', color: '#5b3113', marginBottom: '6px' }}>New Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ebe5d5', boxSizing: 'border-box' }}
-          />
-        </div>
+            {error && (
+              <p className={styles.error} role="alert">
+                {error}
+              </p>
+            )}
 
-        <div>
-          <label style={{ display: 'block', fontSize: '13px', color: '#5b3113', marginBottom: '6px' }}>Confirm New Password</label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            minLength={6}
-            style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ebe5d5', boxSizing: 'border-box' }}
-          />
-        </div>
+            <button
+              type="button"
+              className={styles.buttonPrimary}
+              onClick={handleReturnToLogin}
+              disabled={isReturning}
+            >
+              {isReturning ? 'Returning...' : 'Return to Sign In'}
+            </button>
+          </div>
+        ) : (
+          <>
+            <form className={styles.form} onSubmit={handleSubmit}>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label} htmlFor="new-password">
+                  NEW PASSWORD
+                </label>
+                <input
+                  id="new-password"
+                  className={styles.input}
+                  type="password"
+                  placeholder="Enter new password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                />
+              </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            padding: '14px',
-            borderRadius: '16px',
-            backgroundColor: '#5b3113',
-            color: '#fff',
-            border: 'none',
-            fontWeight: '600',
-            cursor: 'pointer',
-            marginTop: '8px'
-          }}
-        >
-          {loading ? 'Updating...' : 'Update Password'}
-        </button>
-      </form>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label} htmlFor="confirm-new-password">
+                  CONFIRM NEW PASSWORD
+                </label>
+                <input
+                  id="confirm-new-password"
+                  className={styles.input}
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              {error && (
+                <p className={styles.error} role="alert">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                className={styles.buttonPrimary}
+                disabled={loading}
+              >
+                {loading ? 'Updating Password...' : 'Update Password'}
+              </button>
+            </form>
+
+            <button
+              type="button"
+              className={styles.forgotPassword}
+              onClick={handleReturnToLogin}
+              disabled={isReturning}
+            >
+              Back to Sign In
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
