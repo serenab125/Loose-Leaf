@@ -7,34 +7,37 @@ export function useAuth(persistSession = true, restoreSession = true) {
   // This ensures "Remember me" off correctly clears sessions across tab closes.
   const supabase = supabaseFor(persistSession);
 
-  // NOTE: we deliberately do NOT restore the session from localStorage here.
-  // The login form must always be shown first; the session is restored only
-  // after the user has authenticated (via the onAuthStateChange listener
-  // below). This prevents "instant login" when the page is refreshed.
-  // The loading state starts as true so the app shows a loading screen until
-  // the user has either authenticated or the session has been established.
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Determine if there is a saved session in localStorage (used to decide
-  // whether to clear the session when "Remember me" is OFF).
-  const hasSavedSession = localStorage.getItem('looseleaf_session') !== null;
+  // NOTE: hasSavedSession is checked inside the effect below so it re-reads
+  // localStorage on every run; this avoids stale-closure issues when the
+  // persistSession flag flips during login/logout.
 
   // Subscribe to auth state changes. When "Remember me" is OFF and there is
-  // no saved session, sign out to clear any pending session from storage.
-  // If there IS a saved session, keep it so a closed tab returns the user
-  // to the home screen.
+  // no saved session (in the active client's storage for memory-only storage),
+  // sign out to clear any pending session. If there IS a saved session,
+  // keep it so a closed tab returns the user to the home screen.
   useEffect(() => {
+    // Check if there is a saved session in the active client.
+    // When persistSession = true, the session is in localStorage (persistent).
+    // When persistSession = false, the session is in sessionStorage (memory-only).
+    const hasSavedSession = supabase.auth.session !== null;
+
     if (!persistSession && !hasSavedSession) {
       supabase.auth.signOut().catch(() => {});
     }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // For INITIAL_SESSION events, do NOT restore the session automatically.
-      // The user must explicitly authenticate via the login form first.
+      // For INITIAL_SESSION events, restore the saved session when
+      // restoreSession is true; otherwise clear the user.
       if (event === 'INITIAL_SESSION') {
-        setUser(null);
+        if (restoreSession) {
+          setUser(session?.user ?? null);
+        } else {
+          setUser(null);
+        }
         setLoading(false);
         return;
       }
@@ -52,7 +55,7 @@ export function useAuth(persistSession = true, restoreSession = true) {
     });
 
     return () => subscription.unsubscribe();
-  }, [persistSession, supabase.auth, restoreSession, hasSavedSession]);
+  }, [persistSession, supabase.auth, restoreSession]);
 
   const createAccount = async (email, password, fullName) => {
     setLoading(true);
@@ -86,24 +89,10 @@ export function useAuth(persistSession = true, restoreSession = true) {
       });
       if (authError) throw authError;
 
-      // Persist the session to localStorage only if "Remember me" is ON.
-      if (persistSession) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData.session) {
-          const sessionJson = JSON.stringify(sessionData.session);
-          localStorage.setItem('looseleaf_session', sessionJson);
-        }
-      }
-
-      // Refresh the session so the auth state is fully committed in memory.
-      const { error: refreshError } = await supabase.auth.getSession();
-      if (refreshError) {
-        console.warn('Failed to refresh session after sign-in:', refreshError.message);
-      }
-
-      // "Remember me" off: the session is stored in sessionStorage (memory
-      // storage) and is automatically cleared when the tab closes.
-      // No signOut() needed here - the session persists in memory only.
+      // The supabase client (persistSession=true) already persists the session
+      // to localStorage; no manual localStorage.setItem needed here.
+      // The session is stored in sessionStorage (memory) when persistSession
+      // is false, which is automatically cleared when the tab closes.
       return data;
     } catch (err) {
       setError(err.message || 'Sign-in failed');
@@ -165,10 +154,8 @@ export function useAuth(persistSession = true, restoreSession = true) {
     setError('');
     try {
       await supabase.auth.signOut();
-      // Clear the manually-stored session when "Remember me" is ON.
-      if (persistSession) {
-        localStorage.removeItem('looseleaf_session');
-      }
+      // The supabase client (persistSession=true) handles session cleanup;
+      // no manual localStorage.removeItem needed here.
     } catch (err) {
       setError(err.message || 'Sign-out failed');
     } finally {

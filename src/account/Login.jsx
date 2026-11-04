@@ -3,7 +3,7 @@ import styles from './Login.module.css';
 import { useAuth } from './useAuth';
 
 export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword, rememberMe, setRememberMe, onLogin }) {
-  const { signIn, loading } = useAuth(rememberMe, false);
+  const { signIn, loading } = useAuth(rememberMe);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +19,7 @@ export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword, r
     setFormError('');
     try {
       await signIn(email.trim(), password);
+      onLogin?.();
     } catch (err) {
       setFormError(err.message || 'Failed to sign in. Please try again.');
     }

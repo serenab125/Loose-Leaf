@@ -9,15 +9,39 @@ import { Quiz } from './quiz/Quiz'
 import { Home } from './home/Home'
 
 function App() {
-  const [rememberMe, setRememberMe] = useState(false);
-  const [hasLoggedIn, setIsLoggedIn] = useState(false);
-  // App ALWAYS uses persistSession=false (memory-only). The "remember me" flag
-  // only controls whether the Login instance saves the session to localStorage
-  // on sign-in. Once the user actually authenticates, hasLoggedIn flips to true
-  // and App switches to persistSession=true so it can restore the saved session
-  // across refreshes/reloads. App never restores a session from localStorage
-  // before the user has explicitly authenticated.
-  const { user, logout, loading, savePreferences } = useAuth(rememberMe, hasLoggedIn);
+  // Persist rememberMe and hasLoggedIn so they survive page refreshes/reloads.
+  // This is essential for "Remember me" to keep the user signed in across tabs.
+  const [rememberMe, setRememberMe] = useState(() => {
+    const saved = localStorage.getItem('looseleaf_remember_me');
+    return saved === 'true';
+  });
+  const [hasLoggedIn, setIsLoggedIn] = useState(() => {
+    const saved = localStorage.getItem('looseleaf_hasLoggedIn');
+    return saved === 'true';
+  });
+  const setRememberMeState = (value) => {
+    localStorage.setItem('looseleaf_remember_me', value ? 'true' : 'false');
+    setRememberMe(value);
+  };
+  const setHasLoggedInState = (value) => {
+    localStorage.setItem('looseleaf_hasLoggedIn', value ? 'true' : 'false');
+    setIsLoggedIn(value);
+  };
+
+  // Determine whether the session should persist across refreshes.
+  // "Remember me" ON  -> persistSession=true, the Supabase client saves the
+  //                     session to localStorage so the user stays signed in
+  //                     after the browser is closed and reopened.
+  // "Remember me" OFF -> persistSession=false, the session lives only in memory
+  //                     and is cleared when the tab closes.
+  const persistSession = rememberMe;
+
+  // restoreSession determines whether the session is restored on app load.
+  // If the user has logged in before (hasLoggedIn), the session is restored
+  // so the user is taken straight to the home screen after a refresh.
+  const restoreSession = hasLoggedIn;
+
+  const { user, logout, loading, savePreferences } = useAuth(persistSession, restoreSession);
 
   const [view, setView] = useState(() => {
     if (window.location.pathname === '/reset-password') return 'reset'
@@ -54,7 +78,11 @@ function App() {
             onNavigateToCreateAccount={() => setView('create')}
             onNavigateToForgotPassword={() => setView('forgot')}
             rememberMe={rememberMe}
-            setRememberMe={setRememberMe}
+            setRememberMe={setRememberMeState}
+            onLogin={() => {
+              setIsLoggedIn(true);
+              setHasLoggedInState(true);
+            }}
           />
         )}
       </main>
