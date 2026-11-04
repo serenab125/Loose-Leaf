@@ -142,28 +142,36 @@ export function Quiz({ onSkip, onComplete, user, userId, supabaseClient }) {
 
   // Save quiz progress when the user skips (preserving their answers)
   const handleSkip = async () => {
-    if (userId) {
-      setIsSaving(true);
-      setSaveError('');
-      setSaveStatus('saving');
-
-      try {
-        await saveQuizProgress(
-          userId,
-          answers,
-          stepToNumber(isGoals ? 2 : isTaste ? 1 : 3),
-          { client: supabaseClient, completed: false }
-        );
-      } catch (err) {
-        console.warn('Skip: failed to save quiz progress', err);
-      } finally {
-        setSaveStatus('saved');
-        setTimeout(() => setSaveStatus('idle'), 1500);
-        setIsSaving(false);
-      }
+    if (!userId) {
+      setSaveStatus('saved');
+      setIsSaving(false);
+      return;
     }
 
-    // Close popup and notify parent
+    setIsSaving(true);
+    setSaveError('');
+    setSaveStatus('saving');
+
+    try {
+      await saveQuizProgress(
+        userId,
+        answers,
+        stepToNumber(isGoals ? 2 : isTaste ? 1 : 3),
+        { client: supabaseClient, completed: false }
+      );
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 1500);
+    } catch (err) {
+      console.warn('Skip: failed to save quiz progress', err);
+      setSaveError('Failed to save your answers. Please try again.');
+      setSaveStatus('error');
+      setIsSaving(false);
+      return; // Don't close popup or notify parent if save failed
+    } finally {
+      setIsSaving(false);
+    }
+
+    // Close popup and notify parent only if save succeeded
     setShowSkipPopup(false);
     onSkip?.({ status: 'skipped' });
   };
@@ -371,6 +379,11 @@ export function Quiz({ onSkip, onComplete, user, userId, supabaseClient }) {
             {saveStatus === 'saved' && (
               <p style={{ fontSize: 12, color: '#15803d', textAlign: 'center', padding: '8px 0' }}>
                 ✓ Answers saved to your profile
+              </p>
+            )}
+            {saveStatus === 'error' && (
+              <p style={{ fontSize: 12, color: '#b91c1c', textAlign: 'center', padding: '8px 0' }}>
+                {saveError || 'Failed to save your answers. Please try again.'}
               </p>
             )}
 
