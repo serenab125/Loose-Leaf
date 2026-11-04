@@ -1,12 +1,14 @@
 import './App.css'
-import { useState } from 'react'
-import { useAuth } from './account/useAuth'
-import { CreateAccount } from './account/CreateAccount'
-import ForgotPassword from './account/ForgotPassword'
-import ResetPassword from './account/ResetPassword'
-import { Login } from './account/Login'
-import { Quiz } from './quiz/Quiz'
-import { Home } from './home/Home'
+import { useState } from 'react';
+import { useAuth } from './account/useAuth';
+import { supabase } from './supabaseClient';
+import { CreateAccount } from './account/CreateAccount';
+import ForgotPassword from './account/ForgotPassword';
+import ResetPassword from './account/ResetPassword';
+import { Login } from './account/Login';
+import { Quiz } from './quiz/Quiz';
+import { Home } from './home/Home';
+import { hasIncompleteQuizProgress } from './services/quizService';
 
 function App() {
   // Persist rememberMe and hasLoggedIn so they survive page refreshes/reloads.
@@ -48,6 +50,24 @@ function App() {
     return 'login'
   })
 
+  // State for checking incomplete quiz progress on login
+  const [redirectToQuiz, setRedirectToQuiz] = useState(false);
+
+  // Check for incomplete quiz progress on app load when user is authenticated
+  useState(() => {
+    if (user?.id) {
+      hasIncompleteQuizProgress(user.id)
+        .then((hasProgress) => {
+          if (hasProgress) {
+            setRedirectToQuiz(true);
+          }
+        })
+        .catch((err) => {
+          console.error('Error checking quiz progress:', err);
+        });
+    }
+  });
+
   const [isQuizCompleted, setIsQuizCompleted] = useState(true)
 
   if (loading) {
@@ -86,7 +106,22 @@ function App() {
           />
         )}
       </main>
-    )
+    );
+  }
+
+  // If there is incomplete quiz progress, redirect to the quiz
+  if (redirectToQuiz) {
+    return (
+      <main>
+        <Quiz
+          user={user}
+          onSkip={() => {}}
+          onComplete={() => setRedirectToQuiz(false)}
+          userId={user.id}
+          supabaseClient={supabase}
+        />
+      </main>
+    );
   }
 
   const handleQuizComplete = async (quizAnswers) => {
@@ -147,6 +182,7 @@ function App() {
           user={user}
           onSkip={handleQuizSkip}
           onComplete={handleQuizComplete}
+          supabaseClient={supabase}
         />
       </main>
     )

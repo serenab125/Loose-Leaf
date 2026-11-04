@@ -1,21 +1,28 @@
 
-import {
-  TASTE_SECTIONS,
-  GOAL_SECTIONS,
-  MIN_TASTE_ANSWERS,
-} from './quizData';
+import { useState, useEffect, useRef } from 'react';
+import { TASTE_SECTIONS, GOAL_SECTIONS, MIN_TASTE_ANSWERS } from './quizData';
 import { useQuiz } from './useQuiz';
 import { QuizIntroduction } from './QuizIntroduction';
 import { QuizQuestion } from './QuizQuestion';
 import { QuizLoading } from './QuizLoading';
 import './quiz.css';
-import { useState } from 'react';
 import { supabase } from '../supabaseClient';
+import { saveQuizProgress } from '../services/quizService';
 
-export function Quiz({ onSkip, onComplete, user }) {
+// Helper: convert step number to number (0=intro, 1=taste, 2=goals, 3=complete)
+const stepToNumber = (currentStep) => {
+  if (currentStep === 0) return 0;  // introduction
+  if (currentStep === 1) return 1;  // taste
+  if (currentStep === 2) return 2;  // goals
+  return 3;  // complete
+};
+
+export function Quiz({ onSkip, onComplete, user, userId, supabaseClient = supabase }) {
 
   //setting the pop up for skip quiz as false
   const [showSkipPopup, setShowSkipPopup] = useState(false);
+
+  const { currentStep, isRestoring, ...quizProps } = useQuiz();
 
   const {
     answers,
@@ -31,23 +38,81 @@ export function Quiz({ onSkip, onComplete, user }) {
     completeQuiz,
     canContinue,
     tasteAnsweredCount,
-  } = useQuiz();
+    restoreProgress,
+  } = quizProps;
 
   const [saveError, setSaveError] = useState('');
+  const [saveStatus, setSaveStatus] = useState('idle'); // idle | saving | saved
   const [isSaving, setIsSaving] = useState(false);
 
+  // Refs to skip saves triggered by restore and to prevent duplicate saves
+  const mountedRef = useRef(true);
+  const firstSaveRef = useRef(true);
+  const debounceRef = useRef(null);
+
+  // Restore saved progress when the component mounts
+  useEffect(() => {
+    if (userId) {
+      restoreProgress(userId);
+    }
+  }, [userId, restoreProgress]);
+
+  // Save progress with debounce and skip restore-triggered save
+  useEffect(() => {
+    // Skip save on first render after restore
+    if (userId && firstSaveRef.current && !isRestoring) {
+      firstSaveRef.current = false;
+      return;
+    }
+    if (mountedRef.current && !isRestoring) {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      debounceRef.current = setTimeout(() => {
+        saveQuizProgress(userId, answers, stepToNumber(isGoals ? 2 : isTaste ? 1 : 3), {
+          client: supabaseClient,
+          completed: false,
+        });
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 1500);
+      }, 600);
+    }
+  }, [answers, userId, isRestoring, isTaste, isGoals, supabaseClient, mountedRef, firstSaveRef]);
+
+  // Update mounted ref on unmount
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
+  // Save progress when quiz is marked complete
   const handleComplete = async () => {
     if (isSaving) return;
 
     setIsSaving(true);
     setSaveError('');
+    setSaveStatus('saving');
 
     try {
       if (!user?.id) {
         throw new Error('You must be signed in to save your quiz.');
       }
 
-      const { error } = await supabase
+      // Mark the quiz row as completed so restore skips it next time.
+      await saveQuizProgress(
+        user.id,
+        answers,
+        stepToNumber(currentStep),
+        { client: supabaseClient, completed: true }
+      );
+
+      // Save the answers as the user's reading_preferences for recommendations.
+      const { error } = await supabaseClient
         .from('profiles')
         .upsert(
           {
@@ -55,12 +120,14 @@ export function Quiz({ onSkip, onComplete, user }) {
             full_name: user.user_metadata?.full_name || '',
             email: user.email,
             reading_preferences: answers,
-            updated_at: new Date().toISOString(),
           },
           { onConflict: 'id' }
         );
 
       if (error) throw error;
+
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 1500);
 
       console.log('Quiz answers saved successfully!', answers);
       // Notify parent that quiz is complete
@@ -68,9 +135,22 @@ export function Quiz({ onSkip, onComplete, user }) {
     } catch (error) {
       console.error('Error saving quiz answers:', error);
       setSaveError(error.message || 'Unable to save quiz answers.');
+      setSaveStatus('idle');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Clear progress and go to intro (for "Retake" from complete screen)
+  const handleRetake = async () => {
+    if (userId) {
+      try {
+        await saveQuizProgress(userId, {}, 1, { client: supabaseClient, completed: false });
+      } catch (err) {
+        console.warn('Retake: failed to reset progress', err);
+      }
+    }
+    goToIntro();
   };
 
   const remainingAnswers = Math.max(
@@ -85,6 +165,18 @@ export function Quiz({ onSkip, onComplete, user }) {
           {saveError}
         </p>
       )}
+
+      {/* Optional tiny "Saved" indicator — safe to remove */}
+      {saveStatus === 'saving' && (
+        <p style={{ fontSize: 11, color: '#ad9384', textAlign: 'right', padding: '4px 20px 0' }}>
+          Saving…
+        </p>
+      )}
+      {saveStatus === 'saved' && (
+        <p style={{ fontSize: 11, color: '#ad9384', textAlign: 'right', padding: '4px 20px 0' }}>
+          Saved ✓
+        </p>
+      )}
       {isIntro ? (
         //introduction page to take quiz or skip quiz
         <QuizIntroduction
@@ -93,7 +185,7 @@ export function Quiz({ onSkip, onComplete, user }) {
       ) : isComplete ? (
         <QuizLoading
           onComplete={handleComplete}
-          onRetake={goToIntro}
+          onRetake={handleRetake}
         />
       ) : (
         <main className="quiz-scroll-page">

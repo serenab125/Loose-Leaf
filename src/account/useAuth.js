@@ -12,49 +12,47 @@ export function useAuth(persistSession = true, restoreSession = true) {
   const [error, setError] = useState('');
 
   // NOTE: hasSavedSession is checked inside the effect below so it re-reads
-  // localStorage on every run; this avoids stale-closure issues when the
+  // the session on every run; this avoids stale-closure issues when the
   // persistSession flag flips during login/logout.
 
   // Subscribe to auth state changes. When "Remember me" is OFF and there is
-  // no saved session (in the active client's storage for memory-only storage),
-  // sign out to clear any pending session. If there IS a saved session,
-  // keep it so a closed tab returns the user to the home screen.
+  // no saved session, sign out to clear any pending session. If there IS a
+  // saved session, keep it so a closed tab returns the user to home.
   useEffect(() => {
-    // Check if there is a saved session in the active client.
-    // When persistSession = true, the session is in localStorage (persistent).
-    // When persistSession = false, the session is in sessionStorage (memory-only).
-    const hasSavedSession = supabase.auth.session !== null;
+    // Load initial session asynchronously to avoid blocking the render.
+    let active = true;
+    let subscription = null;
 
-    if (!persistSession && !hasSavedSession) {
-      supabase.auth.signOut().catch(() => {});
-    }
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!active) return;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // For INITIAL_SESSION events, restore the saved session when
-      // restoreSession is true; otherwise clear the user.
+      // Only sign out if there's a stale persisted session that shouldn't be there.
+      // (When persistSession=false, the session is memory-only and should be cleared.)
+      if (!persistSession && session) {
+        await supabase.auth.signOut().catch(() => {});
+      }
+    })();
+
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'INITIAL_SESSION') {
-        if (restoreSession) {
-          setUser(session?.user ?? null);
-        } else {
-          setUser(null);
-        }
+        setUser(restoreSession ? session?.user ?? null : null);
         setLoading(false);
         return;
       }
-
       if (session?.user) {
-        if (restoreSession) {
-          setUser(session.user ?? null);
-        } else {
-          setUser(null);
-        }
+        setUser(restoreSession ? session.user : null);
       } else {
         setUser(null);
       }
       setLoading(false);
     });
+    subscription = data.subscription;
 
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, [persistSession, supabase.auth, restoreSession]);
 
   const createAccount = async (email, password, fullName) => {

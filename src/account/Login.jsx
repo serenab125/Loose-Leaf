@@ -2,7 +2,13 @@ import { useState } from 'react';
 import styles from './Login.module.css';
 import { useAuth } from './useAuth';
 
-export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword, rememberMe, setRememberMe, onLogin }) {
+export function Login({
+  onNavigateToCreateAccount = () => {},
+  onNavigateToForgotPassword = () => {},
+  rememberMe = false,
+  setRememberMe = () => {},
+  onLogin = () => {},
+}) {
   const { signIn, loading } = useAuth(rememberMe);
 
   const [email, setEmail] = useState('');
