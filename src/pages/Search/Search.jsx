@@ -1,9 +1,13 @@
-
 import { useRef, useState, useEffect } from "react";
 import BookRow from "./BookRow";
 import BookCover from "./BookCover";
 import { categoryData } from "./categoryData";
-import { searchBooksByTitle } from "../../services/bookService";
+import {
+  searchBooksByCategory,
+  searchBooksByTitle,
+  fetchPopularSearchTerms,
+  recordPopularSearchTerm,
+} from "../../services/bookService";
 import "./Search.css";
 
 const CATEGORIES = [
@@ -92,27 +96,81 @@ async function findBookCover(bookInfo) {
 export default function Search({ onSelectBook }) {
   // Live Typing Search state
   const [query, setQuery] = useState("");
+  const [popularSearches, setPopularSearches] = useState([]);
+  const [activeCategory, setActiveCategory] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const requestNumber = useRef(0);
 
-  // Category view state
+  // Refs for tracking search requests and timers
+  const requestNumber = useRef(0);
+  const searchTimer = useRef(null);
+  const popularSearchTimer = useRef(null);
+  const isMounted = useRef(false);
+
+  // Category view state (Michaela's features)
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [bookRows, setBookRows] = useState([]);
   const [loadingCategoryBooks, setLoadingCategoryBooks] = useState(false);
 
+  // Fetch initial popular search terms from Austin's backend service
+  useEffect(() => {
+    let active = true;
+    isMounted.current = true;
+
+    fetchPopularSearchTerms()
+      .then((books) => {
+        if (active && books && books.length > 0) setPopularSearches(books);
+      })
+      .catch(() => {
+        setPopularSearches(TOP_SEARCHES);
+      });
+
+    return () => {
+      active = false;
+      isMounted.current = false;
+      clearTimeout(searchTimer.current);
+      clearTimeout(popularSearchTimer.current);
+    };
+  }, []);
+
+  const schedulePopularSearchSave = (searchTerm, books) => {
+    const recommendation = books.find((book) => book.coverUrl) || books[0];
+    if (!recommendation) return;
+
+    clearTimeout(popularSearchTimer.current);
+    popularSearchTimer.current = setTimeout(async () => {
+      try {
+        await recordPopularSearchTerm(searchTerm, recommendation);
+        const updatedSearches = await fetchPopularSearchTerms();
+
+        if (isMounted.current && updatedSearches && updatedSearches.length > 0) {
+          setPopularSearches(updatedSearches);
+        }
+      } catch {
+        // Ignore errors when saving popular searches
+      }
+    }, 500);
+  };
+
   // Execute Live API Title Search
-  const runSearch = async (title) => {
+  const runSearch = async ({ title = "", category = null }) => {
     const currentRequest = ++requestNumber.current;
     setSearchLoading(true);
     setSearchError("");
     setSearchResults([]);
 
     try {
-      const results = await searchBooksByTitle(title);
+      const results = category
+        ? await searchBooksByCategory(category)
+        : await searchBooksByTitle(title);
+
       if (currentRequest !== requestNumber.current) return;
       setSearchResults(results);
+
+      if (!category && title.trim() && results.length > 0) {
+        schedulePopularSearchSave(title, results);
+      }
     } catch {
       if (currentRequest !== requestNumber.current) return;
       setSearchError("Unable to retrieve book results. Please try again.");
@@ -126,22 +184,37 @@ export default function Search({ onSelectBook }) {
   const handleSearchInput = (event) => {
     const value = event.target.value;
     setQuery(value);
-    setSelectedCategory(null); // Clear selected category when typing
+    setSelectedCategory(null);
+    setActiveCategory(null);
+    requestNumber.current += 1;
+    clearTimeout(searchTimer.current);
+    clearTimeout(popularSearchTimer.current);
+    setSearchResults([]);
+    setSearchError("");
 
     if (!value.trim()) {
-      requestNumber.current += 1;
-      setSearchResults([]);
-      setSearchError("");
       setSearchLoading(false);
       return;
     }
 
-    runSearch(value);
+    setSearchLoading(true);
+    const pendingRequest = requestNumber.current;
+
+    // Debounce search by 350ms to prevent rapid API requests while typing
+    searchTimer.current = setTimeout(() => {
+      if (pendingRequest === requestNumber.current) {
+        runSearch({ title: value });
+      }
+    }, 350);
   };
 
   const clearSearch = () => {
+    clearTimeout(searchTimer.current);
+    clearTimeout(popularSearchTimer.current);
     requestNumber.current += 1;
     setQuery("");
+    setSelectedCategory(null);
+    setActiveCategory(null);
     setSearchResults([]);
     setSearchError("");
     setSearchLoading(false);
@@ -284,7 +357,7 @@ export default function Search({ onSelectBook }) {
               {searchError && (
                 <div className="search-error" role="alert">
                   <p className="search-status-msg">{searchError}</p>
-                  <button type="button" onClick={() => runSearch(query)}>
+                  <button type="button" onClick={() => runSearch({ title: query })}>
                     Retry
                   </button>
                 </div>
@@ -327,13 +400,13 @@ export default function Search({ onSelectBook }) {
               <section className="top-searches-section">
                 <h2 className="section-title">Top Searches</h2>
                 <div className="top-searches-row">
-                  {TOP_SEARCHES.map((book) => (
+                  {(popularSearches.length > 0 ? popularSearches : TOP_SEARCHES).map((book) => (
                     <button
                       type="button"
-                      key={book.id}
+                      key={book.bookId || book.id || book.title}
                       className="top-search-card"
                       onClick={() => onSelectBook?.(book)}
-                      aria-label={`Select ${book.title}`}
+                      aria-label={`Popular search recommendation: ${book.title}`}
                     >
                       <BookCover
                         book={book}
