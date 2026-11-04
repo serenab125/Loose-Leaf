@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Lobster&display=swap');
+
 .search-page {
     min-height: 100vh;
     background-color: #fdf8f4;
@@ -7,12 +9,11 @@
 }
 
 .search-logo {
-    font-family: Georgia, serif;
+    font-family: 'Lobster', cursive;
     font-size: 32px;
-    font-style: italic;
-    font-weight: bold;
+    font-weight: 400;
     text-align: center;
-    margin: 0 0 30px;
+    margin: 0 0 24px;
     color: #5a321a;
 }
 
@@ -171,4 +172,195 @@
 /* Reduce spacing between recommendation rows */
 .search-book-section {
     margin-top: 22px;
+}
+
+
+/* Angela's Search Bar */
+.search-bar-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: #f7f3e9;
+    border: 1px solid #ebe5d5;
+    border-radius: 24px;
+    padding: 0 16px;
+    height: 48px;
+    margin-bottom: 28px;
+}
+
+.search-icon {
+    font-size: 16px;
+    color: #b59b88;
+    margin-right: 10px;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: #5a321a;
+    outline: none;
+}
+
+.search-input::placeholder {
+    color: #b59b88;
+}
+
+.search-clear-btn {
+    background: transparent;
+    border: none;
+    color: #b59b88;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+/* Top Searches */
+.section-title {
+    font-family: Georgia, serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: #5a321a;
+    margin: 0 0 16px;
+}
+
+.top-searches-section {
+    margin-bottom: 28px;
+}
+
+.top-searches-row {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+}
+
+.top-searches-row::-webkit-scrollbar {
+    display: none;
+}
+
+.top-search-card {
+    flex: 0 0 100px;
+    height: 150px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(90, 50, 26, 0.1);
+    cursor: pointer;
+    padding: 0;
+    border: 0;
+    background: #ebe5d5;
+}
+
+.top-search-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.top-search-no-cover {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 8px;
+    background-color: #ebe5d5;
+    color: #5a321a;
+    font-size: 11px;
+    text-align: center;
+}
+
+/* Live Search Results */
+.suggested-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.search-status-msg {
+    font-size: 14px;
+    color: #8c7365;
+    margin-bottom: 16px;
+}
+
+.suggested-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.suggested-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: #f7f3e9;
+    border: 1px solid #ebe5d5;
+    border-radius: 20px;
+    padding: 12px 16px;
+    cursor: pointer;
+    width: 100%;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+}
+
+.suggested-card:active {
+    transform: scale(0.99);
+}
+
+.suggested-cover,
+.suggested-no-cover {
+    flex: 0 0 52px;
+    width: 52px;
+    height: 76px;
+    border-radius: 8px;
+}
+
+.suggested-cover {
+    object-fit: cover;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.suggested-no-cover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ebe5d5;
+    color: #5a321a;
+    font-size: 11px;
+    text-align: center;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.suggested-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+}
+
+.suggested-title {
+    font-family: Georgia, serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: #5a321a;
+    margin-bottom: 4px;
+}
+
+.suggested-author {
+    font-size: 13px;
+    color: #8c7365;
+}
+
+.search-error button {
+    border: 1px solid #ebe5d5;
+    border-radius: 12px;
+    background: #fcece9;
+    color: #5a321a;
+    padding: 8px 16px;
+    cursor: pointer;
 }

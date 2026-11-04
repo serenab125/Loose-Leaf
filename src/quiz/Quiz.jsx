@@ -12,7 +12,7 @@ import './quiz.css';
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 
-export function Quiz({ onSkip, user }) {
+export function Quiz({ onSkip, onComplete, user }) {
 
   //setting the pop up for skip quiz as false
   const [showSkipPopup, setShowSkipPopup] = useState(false);
@@ -63,7 +63,7 @@ export function Quiz({ onSkip, user }) {
       if (error) throw error;
 
       console.log('Quiz answers saved successfully!', answers);
-      // TODO: Navigate to recommendations or user's shelf.
+      onComplete?.(answers);
     } catch (error) {
       console.error('Error saving quiz answers:', error);
       setSaveError(error.message || 'Unable to save quiz answers.');

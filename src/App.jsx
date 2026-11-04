@@ -7,9 +7,11 @@ import ResetPassword from './account/ResetPassword'
 import { Login } from './account/Login'
 import { Quiz } from './quiz/Quiz'
 import Search from './pages/Search/Search'
+import { Home } from './home/Home'
+import { Profile } from './pages/Profile/Profile'
 
 function App() {
-  const { user, logout, loading } = useAuth()
+  const { user, logout, loading, savePreferences } = useAuth()
   const [view, setView] = useState(() =>
     window.location.pathname === '/reset-password' ? 'reset' : 'login') // Possible views: 'login', 'create', 'forgot', 'reset'
 
@@ -48,60 +50,79 @@ function App() {
   return (
     <main>
 
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '12px 20px',
-          background: '#fdf8f3',
-          fontSize: '12px',
-          fontWeight: '400',
-          color: '#b69b8d'
-        }}
-      >
-        <span>
-          Welcome, {user.user_metadata?.full_name?.split(' ')[0] || user.email}!
-        </span>
+      <div className="app-content">
+        {view === 'home' ? (
+          <Home user={user} onRetakeQuiz={() => setView('quiz')} onNavigateToSearch={() => setView('search')} />
+        ) : view === 'search' ? (
+          <Search />
+        ) : view === 'profile' ? (
+          <Profile user={user} logout={logout} />
+        ) : (
+          <Quiz
+            user={user}
+            onSkip={() => setView('home')}
+            onComplete={async (answers) => {
+              try {
+                if (savePreferences) {
+                  await savePreferences(answers)
+                }
+              } catch (error) {
+                console.error('Could not save quiz preferences:', error)
+              } finally {
+                setView('home')
+              }
+            }}
+          />
+        )}
 
-        <button
-          type="button"
-          onClick={logout}
-          style={{
-            padding: 0,
-            border: 'none',
-            background: 'transparent',
-            color: '#b69b8d',
-            fontSize: '12px',
-            fontWeight: '400',
-            textDecoration: 'underline',
-            cursor: 'pointer'
-          }}
-        >
-          Sign out
-        </button>
+        {view !== 'quiz' && (
+          <nav className="bottom-nav" aria-label="Main navigation">
+            <button
+              type="button"
+              className={view === 'home' ? 'active' : ''}
+              onClick={() => setView('home')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              <span>Home</span>
+            </button>
+
+            <button type="button" disabled aria-label="Timer coming soon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span>Timer</span>
+            </button>
+
+            <button
+              type="button"
+              className={view === 'search' ? 'active' : ''}
+              onClick={() => setView('search')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <span>Search</span>
+            </button>
+
+            <button
+              type="button"
+              className={view === 'profile' ? 'active' : ''}
+              onClick={() => setView('profile')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span>Profile</span>
+            </button>
+          </nav>
+        )}
       </div>
-
-
-      <div style={{ display: 'flex', gap: '10px', padding: '12px 20px' }}>
-        <button type="button" onClick={() => setView('quiz')}>
-          Quiz
-        </button>
-
-        <button type="button" onClick={() => setView('search')}>
-          Search
-        </button>
-      </div>
-
-      {view === 'search' ? (
-        <Search />
-      ) : (
-        <Quiz
-          user={user}
-          onSkip={() => console.log('Quiz skipped')}
-        />
-      )}
     </main>
   )
 }

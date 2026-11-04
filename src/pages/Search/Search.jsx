@@ -1,6 +1,7 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BookRow from "./BookRow";
+import BookCover from "./BookCover";
 import { categoryData } from "./categoryData";
 import { searchBooksByTitle } from "../../services/bookService";
 import "./Search.css";
@@ -16,13 +17,33 @@ const categories = [
     "Thriller",
 ];
 
+const TOP_SEARCHES = [
+    {
+        id: "acotar",
+        title: "A Court of Thorns and Roses",
+        author: "Sarah J. Maas",
+        coverUrl: "https://covers.openlibrary.org/b/id/12818862-L.jpg?default=false",
+    },
+    {
+        id: "project-hail-mary",
+        title: "Project Hail Mary",
+        author: "Andy Weir",
+        coverUrl: "https://covers.openlibrary.org/b/id/10521270-L.jpg?default=false",
+    },
+    {
+        id: "calamity-club",
+        title: "The Calamity Club",
+        author: "Kathryn Stockett",
+        coverUrl: "https://covers.openlibrary.org/b/id/14589201-L.jpg?default=false",
+    },
+];
+
 const normalize = (text) =>
     (text ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
 const coverCache = new Map();
 
 async function findBookCover(bookInfo) {
-    // Use manually assigned covers without making an API request.
     if (bookInfo.coverUrl) {
         return { ...bookInfo, bookId: bookInfo.title };
     }
@@ -71,10 +92,16 @@ async function findBookCover(bookInfo) {
     return book;
 }
 
-export default function Search() {
+export default function Search({ onSelectBook }) {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [bookRows, setBookRows] = useState([]);
     const [loadingBooks, setLoadingBooks] = useState(false);
+
+    const [query, setQuery] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchError, setSearchError] = useState("");
+    const requestNumber = useRef(0);
 
     useEffect(() => {
         const category = categoryData[selectedCategory];
@@ -90,7 +117,6 @@ export default function Search() {
         async function loadBooks() {
             setLoadingBooks(true);
 
-            // Display all curated books immediately, even before covers load.
             setBookRows(
                 category.rows.map((row) => ({
                     title: row.title,
@@ -102,7 +128,6 @@ export default function Search() {
                 }))
             );
 
-            // Load up to 4 book covers at a time.
             const tasks = category.rows.flatMap((row, rowIndex) =>
                 row.books.map((bookInfo, bookIndex) => ({
                     bookInfo,
@@ -151,6 +176,56 @@ export default function Search() {
         };
     }, [selectedCategory]);
 
+    useEffect(() => {
+        const trimmedQuery = query.trim();
+
+        if (!trimmedQuery) {
+            requestNumber.current += 1;
+            setSearchResults([]);
+            setSearchError("");
+            setSearchLoading(false);
+            return;
+        }
+
+        const currentRequest = ++requestNumber.current;
+
+        setSearchLoading(true);
+        setSearchError("");
+        setSearchResults([]);
+
+        // Wait briefly so we don't request books on every keystroke.
+        const timeout = setTimeout(async () => {
+            try {
+                const results = await searchBooksByTitle(trimmedQuery);
+
+                if (currentRequest !== requestNumber.current) return;
+
+                setSearchResults(results);
+            } catch (error) {
+                if (currentRequest !== requestNumber.current) return;
+
+                console.error("Book search failed:", error);
+                setSearchError("Unable to retrieve books. Please try again.");
+            } finally {
+                if (currentRequest === requestNumber.current) {
+                    setSearchLoading(false);
+                }
+            }
+        }, 350);
+
+        return () => clearTimeout(timeout);
+    }, [query]);
+
+    const clearSearch = () => {
+        requestNumber.current += 1;
+        setQuery("");
+        setSearchResults([]);
+        setSearchError("");
+        setSearchLoading(false);
+    };
+
+    const showingResults = Boolean(query.trim());
+
     return (
         <main className="search-page">
             {selectedCategory ? (
@@ -185,23 +260,130 @@ export default function Search() {
                 <>
                     <h1 className="search-logo">LooseLeaf</h1>
 
-                    {/* Teammates' search features will go here */}
-                    <div className="search-placeholder">
-                        Search bar and Top Searches coming soon
+                    <div className="search-bar-container">
+                        <span className="search-icon" aria-hidden="true">
+                            🔍
+                        </span>
+
+                        <input
+                            type="search"
+                            className="search-input"
+                            placeholder="Search for a book title..."
+                            value={query}
+                            onChange={(event) => setQuery(event.target.value)}
+                            aria-label="Search books by title"
+                        />
+
+                        {showingResults && (
+                            <button
+                                type="button"
+                                className="search-clear-btn"
+                                onClick={clearSearch}
+                                aria-label="Clear search"
+                            >
+                                ✕
+                            </button>
+                        )}
                     </div>
 
-                    <div className="search-categories">
-                        {categories.map((category) => (
-                            <button
-                                key={category}
-                                type="button"
-                                className="search-category-button"
-                                onClick={() => setSelectedCategory(category)}
-                            >
-                                {category}
-                            </button>
-                        ))}
-                    </div>
+                    {showingResults ? (
+                        <section className="suggested-section" aria-live="polite">
+                            <h2 className="section-title">Suggested Titles</h2>
+
+                            {searchLoading && (
+                                <p className="search-status-msg">
+                                    Searching for books...
+                                </p>
+                            )}
+
+                            {searchError && (
+                                <div className="search-error" role="alert">
+                                    <p className="search-status-msg">
+                                        {searchError}
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setQuery(query + " ")}
+                                    >
+                                        Retry
+                                    </button>
+                                </div>
+                            )}
+
+                            {!searchLoading &&
+                                !searchError &&
+                                searchResults.length === 0 && (
+                                    <p className="search-status-msg">
+                                        No books found for "{query.trim()}".
+                                    </p>
+                                )}
+
+                            <div className="suggested-list">
+                                {searchResults.map((book, index) => (
+                                    <button
+                                        type="button"
+                                        key={book.bookId || `${book.title}-${index}`}
+                                        className="suggested-card"
+                                        onClick={() => onSelectBook?.(book)}
+                                    >
+                                        <BookCover
+                                            book={book}
+                                            imageClassName="suggested-cover"
+                                            placeholderClassName="suggested-no-cover"
+                                        />
+
+                                        <span className="suggested-info">
+                                            <span className="suggested-title">
+                                                {book.title || "Title unavailable"}
+                                            </span>
+                                            <span className="suggested-author">
+                                                by {book.author || "Unknown author"}
+                                            </span>
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </section>
+                    ) : (
+                        <>
+                            <section className="top-searches-section">
+                                <h2 className="section-title">Top Searches</h2>
+
+                                <div className="top-searches-row">
+                                    {TOP_SEARCHES.map((book) => (
+                                        <button
+                                            type="button"
+                                            key={book.id}
+                                            className="top-search-card"
+                                            onClick={() => {
+                                                setQuery(book.title);
+                                            }}
+                                            aria-label={`Search for ${book.title}`}
+                                        >
+                                            <BookCover
+                                                book={book}
+                                                imageClassName="top-search-cover"
+                                                placeholderClassName="top-search-no-cover"
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                            </section>
+
+                            <div className="search-categories">
+                                {categories.map((category) => (
+                                    <button
+                                        key={category}
+                                        type="button"
+                                        className="search-category-button"
+                                        onClick={() => setSelectedCategory(category)}
+                                    >
+                                        {category}
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </>
             )}
         </main>
