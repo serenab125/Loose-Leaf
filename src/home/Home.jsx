@@ -3,7 +3,7 @@ import { fetchMultiPersonalizedRecommendations, DEFAULT_BOOKS } from '../service
 import styles from './Home.module.css';
 import HomeCarousel from './HomeCarousel';
 
-export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, onNavigateToSearch }) {
+export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, onNavigateToSearch, skippedQuiz = false }) {
   const [userShelves, setUserShelves] = useState([]);
 
   useEffect(() => {
@@ -21,14 +21,16 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, onNavigate
         setUserShelves(
           shelves.length > 0
             ? shelves
-            : [{ title: 'Discover Your Next Read', books: DEFAULT_BOOKS }]
+            : skippedQuiz
+              ? [{ title: 'Discover Your Next Read', books: DEFAULT_BOOKS }]
+              : []
         );
       }
     }
 
     loadRecommendations();
     return () => { cancelled = true; };
-  }, [user?.id]);
+  }, [user?.id, skippedQuiz]);
 
 
   return (

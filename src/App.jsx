@@ -97,7 +97,12 @@ function App() {
 
       <div className="app-content">
         {view === 'home' ? (
-          <Home user={user} onRetakeQuiz={() => setView('quiz')} onNavigateToSearch={() => setView('search')} />
+          <Home
+            user={user}
+            skippedQuiz={localStorage.getItem(`looseleaf_quiz_skipped_${user.id}`) === 'true'}
+            onRetakeQuiz={() => setView('quiz')}
+            onNavigateToSearch={() => setView('search')}
+          />
         ) : view === 'search' ? (
           <Search />
         ) : view === 'profile' ? (
