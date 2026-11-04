@@ -38,6 +38,28 @@ export async function searchBooksBySubject(subject) {
   );
 }
 
+export async function fetchTrendingBooks() {
+  const response = await fetch(
+    "https://openlibrary.org/trending/daily.json?limit=20"
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to load trending books.");
+  }
+
+  const data = await response.json();
+
+  return (data.works ?? [])
+    .filter((book) => book.title && book.author_name?.length && book.cover_i)
+    .slice(0, 10)
+    .map((book) => ({
+      bookId: book.key.split("/").pop(),
+      title: book.title,
+      author: book.author_name.join(", "),
+      coverUrl: `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg?default=false`,
+    }));
+}
+
 export const DEFAULT_BOOKS = [
   {
     bookId: '1',

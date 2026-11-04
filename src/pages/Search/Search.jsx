@@ -3,8 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import BookRow from "./BookRow";
 import BookCover from "./BookCover";
 import { categoryData } from "./categoryData";
-import { searchBooksByTitle } from "../../services/bookService";
-import "./Search.css";
+import {
+    searchBooksByTitle,
+    fetchTrendingBooks,
+  } from "../../services/bookService";
+  import "./Search.css";
 
 const categories = [
     "Movies",
@@ -96,12 +99,36 @@ export default function Search({ onSelectBook }) {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [bookRows, setBookRows] = useState([]);
     const [loadingBooks, setLoadingBooks] = useState(false);
+    const [trendingBooks, setTrendingBooks] = useState(TOP_SEARCHES);
 
     const [query, setQuery] = useState("");
+    const [submittedQuery, setSubmittedQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchError, setSearchError] = useState("");
     const requestNumber = useRef(0);
+
+    useEffect(() => {
+        let cancelled = false;
+      
+        async function loadTrendingBooks() {
+          try {
+            const books = await fetchTrendingBooks();
+      
+            if (!cancelled && books.length > 0) {
+              setTrendingBooks(books);
+            }
+          } catch (error) {
+            console.warn("Could not load trending books:", error);
+          }
+        }
+      
+        loadTrendingBooks();
+      
+        return () => {
+          cancelled = true;
+        };
+      }, []);
 
     useEffect(() => {
         const category = categoryData[selectedCategory];
@@ -258,7 +285,23 @@ export default function Search({ onSelectBook }) {
                 </>
             ) : (
                 <>
-                    <h1 className="search-logo">LooseLeaf</h1>
+                    {submittedQuery ? (
+  <div className="search-submitted-header">
+    <button
+      type="button"
+      className="search-back-button"
+      onClick={() => setSubmittedQuery("")}
+    >
+      ← Back
+    </button>
+
+    <h1 className="search-results-title">
+      Search Results for "{submittedQuery}"
+    </h1>
+  </div>
+) : (
+  <h1 className="search-logo">LooseLeaf</h1>
+)}
 
                     <div className="search-bar-container">
                         <span className="search-icon" aria-hidden="true">
@@ -271,6 +314,32 @@ export default function Search({ onSelectBook }) {
                             placeholder="Search for a book title..."
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
+                            onKeyDown={async (event) => {
+                                if (event.key !== "Enter" || !query.trim()) return;
+                              
+                                event.preventDefault();
+                                setSubmittedQuery(query.trim());
+                              
+                                const currentRequest = ++requestNumber.current;
+                                setSearchLoading(true);
+                                setSearchError("");
+                              
+                                try {
+                                  const results = await searchBooksByTitle(query.trim());
+                              
+                                  if (currentRequest === requestNumber.current) {
+                                    setSearchResults(results);
+                                  }
+                                } catch (error) {
+                                  if (currentRequest === requestNumber.current) {
+                                    setSearchError("Unable to retrieve books. Please try again.");
+                                  }
+                                } finally {
+                                  if (currentRequest === requestNumber.current) {
+                                    setSearchLoading(false);
+                                  }
+                                }
+                              }}
                             aria-label="Search books by title"
                         />
 
@@ -288,7 +357,9 @@ export default function Search({ onSelectBook }) {
 
                     {showingResults ? (
                         <section className="suggested-section" aria-live="polite">
-                            <h2 className="section-title">Suggested Titles</h2>
+                            <h2 className="section-title">
+  {submittedQuery ? "Search Results" : "Suggested Titles"}
+</h2>
 
                             {searchLoading && (
                                 <p className="search-status-msg">
@@ -350,7 +421,7 @@ export default function Search({ onSelectBook }) {
                                 <h2 className="section-title">Top Searches</h2>
 
                                 <div className="top-searches-row">
-                                    {TOP_SEARCHES.map((book) => (
+                                {trendingBooks.slice(0, 3).map((book) => (
                                         <button
                                             type="button"
                                             key={book.id}

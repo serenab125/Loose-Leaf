@@ -49,7 +49,18 @@ function App() {
       const skippedQuiz =
         localStorage.getItem(`looseleaf_quiz_skipped_${user.id}`) === 'true';
 
-      setView(completedQuiz || skippedQuiz ? 'home' : 'quiz');
+        const savedQuizStep = localStorage.getItem('looseleaf_quiz_step');
+
+        const hasUnfinishedQuiz =
+          savedQuizStep === '1' || savedQuizStep === '2';
+        
+        setView(
+          hasUnfinishedQuiz
+            ? 'quiz'
+            : completedQuiz || skippedQuiz
+              ? 'home'
+              : 'quiz'
+        );
       setCheckingQuiz(false);
     }
 
@@ -100,7 +111,10 @@ function App() {
           <Home
             user={user}
             skippedQuiz={localStorage.getItem(`looseleaf_quiz_skipped_${user.id}`) === 'true'}
-            onRetakeQuiz={() => setView('quiz')}
+            onRetakeQuiz={() => {
+              localStorage.setItem('looseleaf_quiz_step', '0')
+              setView('quiz')
+            }}
             onNavigateToSearch={() => setView('search')}
           />
         ) : view === 'search' ? (
@@ -109,8 +123,9 @@ function App() {
           <Profile user={user} logout={logout} />
         ) : (
           <Quiz
-            user={user}
-            onSkip={() => {
+  user={user}
+  onBackToHome={() => setView('home')}
+  onSkip={() => {
               localStorage.setItem(`looseleaf_quiz_skipped_${user.id}`, 'true')
               setView('home')
             }}
