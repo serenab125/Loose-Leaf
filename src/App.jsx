@@ -1,5 +1,5 @@
 import './App.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from './account/useAuth';
 import { CreateAccount } from './account/CreateAccount';
 import ForgotPassword from './account/ForgotPassword';
@@ -66,6 +66,22 @@ function App() {
         });
     }
   });
+
+  // Handle URL routing: update view based on window.location.pathname
+  // This is needed for password reset flow (e.g., /reset-password)
+  useEffect(() => {
+    const handleRouteChange = () => {
+      if (window.location.pathname === '/reset-password') {
+        setView('reset');
+        setRedirectToQuiz(false);
+      } else if (view === 'reset') {
+        setView('login');
+      }
+    };
+    handleRouteChange();
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, [view]);
 
   if (loading) {
     return (
@@ -191,8 +207,8 @@ function App() {
         logout={logout}
         currentBook={null}
         onRetakeQuiz={() => {
-          setRedirectToQuiz(false);
-          setIsQuizCompleted(true);
+          setRedirectToQuiz(true);
+          setIsQuizCompleted(false);
         }}
         onNavigateToSearch={() => {}}
         onSelectBook={() => {}}
