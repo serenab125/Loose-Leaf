@@ -1,55 +1,27 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabaseFor } from '../supabaseClient';
 
 export function useAuth(persistSession = true) {
+  const supabase = supabaseFor(persistSession);
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (persistSession) {
-      const saved = localStorage.getItem('looseleaf_session');
-      if (saved) {
-        try {
-          const session = JSON.parse(saved);
-          if (session.access_token && session.refresh_token) {
-            supabase.auth
-              .setSession({
-                access_token: session.access_token,
-                refresh_token: session.refresh_token,
-              })
-              .then(({ data }) => {
-                setUser(data.session?.user ?? null);
-                setLoading(false);
-              })
-              .catch(() => {
-                setLoading(false);
-              });
-            return;
-          }
-        } catch {
-          localStorage.removeItem('looseleaf_session');
-        }
-      }
-    }
-
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        setUser(session?.user ?? null);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, [persistSession]);
+  }, [supabase.auth]);
 
   const createAccount = async (email, password, fullName) => {
     setLoading(true);
@@ -82,19 +54,7 @@ export function useAuth(persistSession = true) {
         password,
       });
       if (authError) throw authError;
-
-      if (persistSession) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData.session) {
-          const sessionJson = JSON.stringify(sessionData.session);
-          localStorage.setItem('looseleaf_session', sessionJson);
-        }
-      }
-
-      const { error: refreshError } = await supabase.auth.getSession();
-      if (refreshError) {
-        console.warn('Failed to refresh session after sign-in:', refreshError.message);
-      }
+      setUser(data.user);
       return data;
     } catch (err) {
       setError(err.message || 'Sign-in failed');
@@ -127,13 +87,11 @@ export function useAuth(persistSession = true) {
       setError(validationError.message);
       throw validationError;
     }
-
     if (password !== confirmPassword) {
       const validationError = new Error('Passwords do not match.');
       setError(validationError.message);
       throw validationError;
     }
-
     setLoading(true);
     try {
       const { data, error: authError } = await supabase.auth.updateUser({ password });
@@ -152,12 +110,11 @@ export function useAuth(persistSession = true) {
     setError('');
     try {
       await supabase.auth.signOut();
-      if (persistSession) {
-        localStorage.removeItem('looseleaf_session');
-      }
+      localStorage.removeItem('looseleaf_session');
     } catch (err) {
       setError(err.message || 'Sign-out failed');
     } finally {
+      setUser(null);
       setLoading(false);
     }
   };
@@ -166,7 +123,6 @@ export function useAuth(persistSession = true) {
     if (!user) return;
     setLoading(true);
     setError('');
-
     try {
       const { data, error: dbError } = await supabase
         .from('profiles')
@@ -180,7 +136,6 @@ export function useAuth(persistSession = true) {
           },
           { onConflict: 'id' }
         );
-
       if (dbError) throw dbError;
       return data;
     } catch (err) {

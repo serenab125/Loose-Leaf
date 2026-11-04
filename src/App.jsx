@@ -10,7 +10,10 @@ import { Home } from './home/Home';
 import Search from './pages/Search/Search';
 
 function App() {
-  const { user, logout, loading, savePreferences } = useAuth();
+  const [rememberMe, setRememberMe] = useState(false);
+  const [hasLoggedIn, setIsLoggedIn] = useState(true);
+
+  const { user, logout, loading, savePreferences } = useAuth(rememberMe, hasLoggedIn);
 
   const [currentBook, setCurrentBook] = useState(null);
   const [view, setView] = useState(() => {
@@ -48,6 +51,9 @@ function App() {
           <Login
             onNavigateToCreateAccount={() => setView('create')}
             onNavigateToForgotPassword={() => setView('forgot')}
+            rememberMe={rememberMe}
+            setRememberMe={setRememberMe}
+            onSuccess={() => setIsLoggedIn(true)}
           />
         )}
       </main>

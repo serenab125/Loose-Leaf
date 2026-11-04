@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState } from 'react';
 
 function MoodQuestion() {
   const vibeOptions = [
@@ -10,26 +10,23 @@ function MoodQuestion() {
     'Exciting',
     'Thought-provoking',
     'Surprise me!',
-  ]
+  ];
 
-  const [selectedVibes, setSelectedVibes] = useState([])
+  const [selectedVibes, setSelectedVibes] = useState([]);
 
   const toggleVibe = (vibe) => {
     if (selectedVibes.includes(vibe)) {
-      setSelectedVibes(selectedVibes.filter((item) => item !== vibe))
+      setSelectedVibes(selectedVibes.filter((item) => item !== vibe));
     } else {
-      setSelectedVibes([...selectedVibes, vibe])
+      setSelectedVibes([...selectedVibes, vibe]);
     }
-  }
+  };
 
   return (
     <section>
       <p>5 VIBE</p>
-
       <h2>What kind of stories are you looking for?</h2>
-
       <p>We can always change it later.</p>
-
       <div>
         {vibeOptions.map((vibe) => (
           <button
@@ -42,7 +39,7 @@ function MoodQuestion() {
         ))}
       </div>
     </section>
-  )
+  );
 }
 
-export default MoodQuestion
+export default MoodQuestion;

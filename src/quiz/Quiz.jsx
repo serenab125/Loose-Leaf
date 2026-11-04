@@ -10,7 +10,7 @@ import { QuizLoading } from './QuizLoading';
 import './quiz.css';
 import { supabase } from '../supabaseClient';
 
-export function Quiz({ onSkip, user, onComplete }) {
+export function Quiz({ onSkip, onComplete, user }) {
   const [showSkipPopup, setShowSkipPopup] = useState(false);
   const {
     answers,
@@ -102,7 +102,6 @@ export function Quiz({ onSkip, user, onComplete }) {
         }
       }
     } catch (err) {
-      // ignore
     }
   }, [restoreProgress]);
 
