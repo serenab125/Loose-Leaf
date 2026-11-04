@@ -47,6 +47,10 @@ function App() {
 
   const [redirectToQuiz, setRedirectToQuiz] = useState(false);
   const [isQuizCompleted, setIsQuizCompleted] = useState(true);
+  const [view, setView] = useState(() => {
+    if (window.location.pathname === '/reset-password') return 'reset'
+    return 'login'
+  });
 
   // Check for incomplete quiz progress on app load when user is authenticated
   useState(() => {
