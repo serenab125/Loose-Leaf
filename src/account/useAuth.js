@@ -7,6 +7,9 @@ export function useAuth(persistSession = true, restoreSession = true) {
   // This ensures "Remember me" off correctly clears sessions across tab closes.
   const supabase = supabaseFor(persistSession);
 
+  // Export the supabase client so it can be shared with other modules
+  const authClient = supabase;
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -172,5 +175,6 @@ export function useAuth(persistSession = true, restoreSession = true) {
     loading,
     error,
     clearError: () => setError(''),
+    supabase: authClient,  // Export the supabase client for use by other modules
   };
 }

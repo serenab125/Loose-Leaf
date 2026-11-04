@@ -1,7 +1,6 @@
 import './App.css'
 import { useState } from 'react';
 import { useAuth } from './account/useAuth';
-import { supabase } from './supabaseClient';
 import { CreateAccount } from './account/CreateAccount';
 import ForgotPassword from './account/ForgotPassword';
 import ResetPassword from './account/ResetPassword';
@@ -43,7 +42,8 @@ function App() {
   // so the user is taken straight to the home screen after a refresh.
   const restoreSession = hasLoggedIn;
 
-  const { user, logout, loading, savePreferences } = useAuth(persistSession, restoreSession);
+  const { user, logout, loading, savePreferences, supabase: appSupabase } =
+    useAuth(persistSession, restoreSession);
 
   const [view, setView] = useState(() => {
     if (window.location.pathname === '/reset-password') return 'reset'
@@ -118,7 +118,7 @@ function App() {
           onSkip={() => {}}
           onComplete={() => setRedirectToQuiz(false)}
           userId={user.id}
-          supabaseClient={supabase}
+          supabaseClient={appSupabase}
         />
       </main>
     );
@@ -182,7 +182,7 @@ function App() {
           user={user}
           onSkip={handleQuizSkip}
           onComplete={handleQuizComplete}
-          supabaseClient={supabase}
+          supabaseClient={appSupabase}
         />
       </main>
     )

@@ -9,7 +9,7 @@ export function Login({
   setRememberMe = () => {},
   onLogin = () => {},
 }) {
-  const { signIn, loading } = useAuth(rememberMe);
+  const { signIn, loading } = useAuth(rememberMe, false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

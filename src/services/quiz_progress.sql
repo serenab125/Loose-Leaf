@@ -19,6 +19,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_quiz_progress_user_incomplete
   ON quiz_progress (user_id)
   WHERE completed_at IS NULL;
 
+-- Ensure the saveQuizProgress upsert can find a unique row by user_id
+-- so the app can only have one quiz progress record per user at a time.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_quiz_progress_user_id ON quiz_progress (user_id);
+
 -- Index for fast lookup of incomplete progress
 CREATE INDEX IF NOT EXISTS idx_quiz_progress_user_id
   ON quiz_progress (user_id);
@@ -27,16 +31,27 @@ CREATE INDEX IF NOT EXISTS idx_quiz_progress_user_id
 CREATE INDEX IF NOT EXISTS idx_quiz_progress_completed_at
   ON quiz_progress (completed_at);
 
--- Trigger to auto-update updated_at on row update
-CREATE OR REPLACE FUNCTION set_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+-- Ensure RLS is enabled on quiz_progress
+ALTER TABLE quiz_progress ENABLE ROW LEVEL SECURITY;
 
-CREATE TRIGGER trigger_quiz_progress_updated_at
-  BEFORE UPDATE ON quiz_progress
-  FOR EACH ROW
-  EXECUTE FUNCTION set_updated_at();
+-- Policy: Allow users to insert their own quiz progress
+CREATE POLICY quiz_progress_insert_policy
+ON quiz_progress
+FOR INSERT
+TO authenticated
+WITH CHECK (user_id = auth.uid());
+
+-- Policy: Allow users to update their own quiz progress
+CREATE POLICY quiz_progress_update_policy
+ON quiz_progress
+FOR UPDATE
+TO authenticated
+USING (user_id = auth.uid())
+WITH CHECK (user_id = auth.uid());
+
+-- Policy: Allow users to select their own quiz progress
+CREATE POLICY quiz_progress_select_policy
+ON quiz_progress
+FOR SELECT
+TO authenticated
+USING (user_id = auth.uid());

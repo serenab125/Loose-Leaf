@@ -1,25 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './Profile.module.css';
 import { supabase } from '../../supabaseClient';
 
 export function Profile({ user, logout }) {
-  const [view, setView] = useState('main');
-
-  const [fullName, setFullName] = useState('');
+  // Lazy initialization avoids useState in an effect (react-hooks/set-state-in-effect)
+  const [fullName, setFullName] = useState(() => user?.user_metadata?.full_name || 'Jane Reader');
   const [bio, setBio] = useState('Book lover, tea enthusiast, and collector of dog-eared paperbacks. Always chasing a new good read. 🍵📚');
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('(555) 123-4567');
+  const [view, setView] = useState('main');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
-
   const [readingReminders, setReadingReminders] = useState(true);
   const [newRecommendations, setNewRecommendations] = useState(true);
 
   useEffect(() => {
     if (user) {
-      setEmail(user.email || '');
-      setFullName(user.user_metadata?.full_name || 'Jane Reader');
-
+      // Load profile data from the database (bio, phone) - no setState in effect
       async function loadProfileData() {
         const { data, error } = await supabase
           .from('profiles')
@@ -165,11 +161,11 @@ export function Profile({ user, logout }) {
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>EMAIL</label>
               <input
-                type="email"
-                className={styles.fieldInput}
-                value={email}
-                disabled
-              />
+                              type="email"
+                              className={styles.fieldInput}
+                              value={user.email || ''}
+                              disabled
+                            />
             </div>
 
             <div className={styles.fieldGroup}>

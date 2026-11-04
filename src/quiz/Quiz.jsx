@@ -6,7 +6,6 @@ import { QuizIntroduction } from './QuizIntroduction';
 import { QuizQuestion } from './QuizQuestion';
 import { QuizLoading } from './QuizLoading';
 import './quiz.css';
-import { supabase } from '../supabaseClient';
 import { saveQuizProgress } from '../services/quizService';
 
 // Helper: convert step number to number (0=intro, 1=taste, 2=goals, 3=complete)
@@ -17,7 +16,7 @@ const stepToNumber = (currentStep) => {
   return 3;  // complete
 };
 
-export function Quiz({ onSkip, onComplete, user, userId, supabaseClient = supabase }) {
+export function Quiz({ onSkip, onComplete, user, userId, supabaseClient }) {
 
   //setting the pop up for skip quiz as false
   const [showSkipPopup, setShowSkipPopup] = useState(false);
@@ -139,6 +138,34 @@ export function Quiz({ onSkip, onComplete, user, userId, supabaseClient = supaba
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Save quiz progress when the user skips (preserving their answers)
+  const handleSkip = async () => {
+    if (userId) {
+      setIsSaving(true);
+      setSaveError('');
+      setSaveStatus('saving');
+
+      try {
+        await saveQuizProgress(
+          userId,
+          answers,
+          stepToNumber(isGoals ? 2 : isTaste ? 1 : 3),
+          { client: supabaseClient, completed: false }
+        );
+      } catch (err) {
+        console.warn('Skip: failed to save quiz progress', err);
+      } finally {
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 1500);
+        setIsSaving(false);
+      }
+    }
+
+    // Close popup and notify parent
+    setShowSkipPopup(false);
+    onSkip?.({ status: 'skipped' });
   };
 
   // Clear progress and go to intro (for "Retake" from complete screen)
@@ -335,14 +362,23 @@ export function Quiz({ onSkip, onComplete, user, userId, supabaseClient = supaba
 
             <p>Would you like to continue?</p>
 
+            {/* Save status indicator — appears only after skipping */}
+            {saveStatus === 'saving' && (
+              <p style={{ fontSize: 12, color: '#15803d', textAlign: 'center', padding: '8px 0' }}>
+                Saving your answers…
+              </p>
+            )}
+            {saveStatus === 'saved' && (
+              <p style={{ fontSize: 12, color: '#15803d', textAlign: 'center', padding: '8px 0' }}>
+                ✓ Answers saved to your profile
+              </p>
+            )}
+
             <div className="skip-popup-buttons">
               <button
                 type="button"
                 className="skip-confirm-button"
-                onClick={() => {
-                  setShowSkipPopup(false);
-                  onSkip?.({ status: 'skipped' });
-                }}
+                onClick={handleSkip}
               >
                 Yes, Skip Quiz
               </button>
