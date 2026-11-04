@@ -2,6 +2,8 @@ import { useRef, useState } from 'react';
 import {
   searchBooksByCategory,
   searchBooksByTitle,
+  fetchPopularSearchTerms,
+  recordPopularSearchTerm,
 } from '../../services/bookService';
 import BookCover from './BookCover';
 import './Search.css';
@@ -38,11 +40,55 @@ const CATEGORIES = [
 
 export default function Search({ onSelectBook }) {
   const [query, setQuery] = useState('');
+  const [popularSearches, setPopularSearches] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState('');
   const requestNumber = useRef(0);
+  const searchTimer = useRef(null);
+  const popularSearchTimer = useRef(null);
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    let active = true;
+    isMounted.current = true;
+
+    fetchPopularSearchTerms()
+      .then((books) => {
+        if (active && books.length > 0) setPopularSearches(books);
+      })
+      .catch(() => {
+        // Keep the sample top searches if popular-search data is unavailable.
+        setPopularSearches(TOP_SEARCHES);
+      });
+
+    return () => {
+      active = false;
+      isMounted.current = false;
+      clearTimeout(searchTimer.current);
+      clearTimeout(popularSearchTimer.current);
+    };
+  }, []);
+
+  const schedulePopularSearchSave = (searchTerm, books) => {
+    const recommendation = books.find((book) => book.coverUrl) || books[0];
+    if (!recommendation) return;
+
+    clearTimeout(popularSearchTimer.current);
+    popularSearchTimer.current = setTimeout(async () => {
+      try {
+        await recordPopularSearchTerm(searchTerm, recommendation);
+        const updateSearches = await fetchPopularSearchTerms();
+
+        if (ismounted.current && updatedSearches.lenght > 0) {
+          setPopularSearches(updatedSearches);
+        }
+      } catch {
+        // Ignore errors when saving popular searches.
+      }
+    }, 500);
+  };
 
   const runSearch = async ({ title = '', category = null }) => {
     const currentRequest = ++requestNumber.current;
@@ -57,6 +103,9 @@ export default function Search({ onSelectBook }) {
 
       if (currentRequest !== requestNumber.current) return;
       setSearchResults(results);
+      if (!category && title.trim() && results.length >0) {
+        schedulePopularSearchSave(title, results);
+      }
     } catch {
       if (currentRequest !== requestNumber.current) return;
       setSearchError('Unable to retrieve book results. Please try again.');
@@ -67,29 +116,42 @@ export default function Search({ onSelectBook }) {
     }
   };
 
-  const handleSearchInput = (event) => {
-    const value = event.target.value;
-    setQuery(value);
-    setActiveCategory(null);
+const handleSearchInput = (event) => {
+  const value = event.target.value;
+  setQuery(value);
+  setActiveCategory(null);
+  requestNumber.current += 1;
+  clearTimeout(searchTimer.current);
+  clearTimeout(popularSearchTimer.current);
+  setSearchResults([]);
+  setSearchError('');
 
-    if (!value.trim()) {
-      requestNumber.current += 1;
-      setSearchResults([]);
-      setSearchError('');
-      setSearchLoading(false);
-      return;
+  if (!value.trim()) {
+    setSearchLoading(false);
+    return;
+  }
+
+  setSearchLoading(true);
+  const pendingRequest = requestNumber.current;
+
+  searchTimer.current = setTimeout(() => {
+    if (pendingRequest === requestNumber.current) {
+      runSearch({ title: value });
     }
-
-    runSearch({ title: value });
-  };
+  }, 350);
+};
 
   const handleCategorySelect = (category) => {
+    clearTimeout(searchTimer.current);
+    clearTimeout(popularSearchTimer.current);
     setQuery('');
     setActiveCategory(category);
     runSearch({ category });
   };
 
   const clearSearch = () => {
+    clearTimeout(searchTimer.current);
+    clearTimeout(popularSearchTimer.current);
     requestNumber.current += 1;
     setQuery('');
     setActiveCategory(null);
@@ -187,13 +249,13 @@ export default function Search({ onSelectBook }) {
           <section className="top-searches-section">
             <h2 className="section-title">Top Searches</h2>
             <div className="top-searches-row">
-              {TOP_SEARCHES.map((book) => (
+              {(popularSearches.length > 0 ? popularSearches : TOP_SEARCHES).map((book) => (
                 <button
                   type="button"
-                  key={book.id}
+                  key={book.bookId || book.id || book.title}
                   className="top-search-card"
                   onClick={() => onSelectBook?.(book)}
-                  aria-label={`Select ${book.title}`}
+                  aria-label={`Popular search recommendation: ${book.title}`}
                 >
                   <BookCover
                     book={book}
