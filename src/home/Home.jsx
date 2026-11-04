@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchMultiPersonalizedRecommendations } from '../services/bookService';
+import { fetchMultiPersonalizedRecommendations, DEFAULT_BOOKS } from '../services/bookService';
 import styles from './Home.module.css';
 import HomeCarousel from './HomeCarousel';
 
@@ -16,7 +16,14 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, onNavigate
       }
 
       const shelves = await fetchMultiPersonalizedRecommendations(user.id);
-      if (!cancelled) setUserShelves(shelves);
+
+      if (!cancelled) {
+        setUserShelves(
+          shelves.length > 0
+            ? shelves
+            : [{ title: 'Discover Your Next Read', books: DEFAULT_BOOKS }]
+        );
+      }
     }
 
     loadRecommendations();
