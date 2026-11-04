@@ -1,5 +1,5 @@
 import './App.css'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from './account/useAuth'
 import { CreateAccount } from './account/CreateAccount'
 import ForgotPassword from './account/ForgotPassword'
@@ -9,13 +9,58 @@ import { Quiz } from './quiz/Quiz'
 import Search from './pages/Search/Search'
 import { Home } from './home/Home'
 import { Profile } from './pages/Profile/Profile'
+import { supabase } from './supabaseClient'
 
 function App() {
   const { user, logout, loading, savePreferences } = useAuth()
+  const [checkingQuiz, setCheckingQuiz] = useState(true)
   const [view, setView] = useState(() =>
     window.location.pathname === '/reset-password' ? 'reset' : 'login') // Possible views: 'login', 'create', 'forgot', 'reset'
+  useEffect(() => {
+    if (loading) return;
 
-  if (loading) {
+    if (!user?.id) {
+      setCheckingQuiz(false);
+      return;
+    }
+
+    let cancelled = false;
+    setCheckingQuiz(true);
+
+    async function checkQuizHistory() {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('reading_preferences')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error('Could not check quiz history:', error);
+        setCheckingQuiz(false);
+        return;
+      }
+
+      const completedQuiz =
+        data?.reading_preferences &&
+        Object.keys(data.reading_preferences).length > 0;
+
+      const skippedQuiz =
+        localStorage.getItem(`looseleaf_quiz_skipped_${user.id}`) === 'true';
+
+      setView(completedQuiz || skippedQuiz ? 'home' : 'quiz');
+      setCheckingQuiz(false);
+    }
+
+    checkQuizHistory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, loading]);
+
+  if (loading || (user && checkingQuiz && view !== 'reset')) {
     return (
       <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#fdf8f3' }}>
         <p style={{ color: '#5b3113', fontFamily: 'Georgia, serif' }}>Loading LooseLeaf...</p>
@@ -60,9 +105,13 @@ function App() {
         ) : (
           <Quiz
             user={user}
-            onSkip={() => setView('home')}
+            onSkip={() => {
+              localStorage.setItem(`looseleaf_quiz_skipped_${user.id}`, 'true')
+              setView('home')
+            }}
             onComplete={async (answers) => {
               try {
+                localStorage.removeItem(`looseleaf_quiz_skipped_${user.id}`)
                 if (savePreferences) {
                   await savePreferences(answers)
                 }
