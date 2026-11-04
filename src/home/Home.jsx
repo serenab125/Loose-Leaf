@@ -10,7 +10,15 @@ import {
 } from '../services/bookService';
 import HomeCarousel from './HomeCarousel';
 
-export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, onNavigateToSearch }) {
+export function Home({
+  user,
+  currentBook,
+  onRetakeQuiz,
+  onSelectBook,
+  logout,
+  onNavigateToSearch,
+  skipQuiz = false,
+}) {
   const [activeTab, setActiveTab] = useState('home');
   const [userShelves, setUserShelves] = useState([]);
 
@@ -57,11 +65,15 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
                 <div className={styles.bookScrollRow}>
                   {RECOMMENDED_FOR_YOU.map((book) => (
                     <div
-                      key={book.id}
+                      key={book.id || book.bookId}
                       className={styles.bookCard}
                       onClick={() => onSelectBook?.(book)}
                     >
-                      <img src={book.cover} alt={book.title} className={styles.bookCover} />
+                      <img
+                        src={book.cover || book.coverUrl}
+                        alt={book.title}
+                        className={styles.bookCover}
+                      />
                     </div>
                   ))}
                 </div>
@@ -70,7 +82,11 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
               {/* 2. Personalized Quiz Shelves */}
               {userShelves.map((shelf, idx) => (
                 <div key={idx} className={styles.categoryRow}>
-                  <h2 className={styles.categoryTitle}>{shelf.title}</h2>
+                  <h2 className={styles.categoryTitle}>
+                    {skipQuiz && shelf.title.startsWith('Because You Like:')
+                      ? 'You might like...'
+                      : shelf.title}
+                  </h2>
                   <div className={styles.bookScrollRow}>
                     {shelf.books.map((book, bIdx) => (
                       <div
@@ -95,11 +111,15 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
                 <div className={styles.bookScrollRow}>
                   {POPULAR_BOOKTOK_BOOKS.map((book) => (
                     <div
-                      key={book.id}
+                      key={book.id || book.bookId}
                       className={styles.bookCard}
                       onClick={() => onSelectBook?.(book)}
                     >
-                      <img src={book.cover} alt={book.title} className={styles.bookCover} />
+                      <img
+                        src={book.cover || book.coverUrl}
+                        alt={book.title}
+                        className={styles.bookCover}
+                      />
                     </div>
                   ))}
                 </div>
@@ -111,11 +131,15 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
                 <div className={styles.bookScrollRow}>
                   {SHORT_EASY_READS.map((book) => (
                     <div
-                      key={book.id}
+                      key={book.id || book.bookId}
                       className={styles.bookCard}
                       onClick={() => onSelectBook?.(book)}
                     >
-                      <img src={book.cover} alt={book.title} className={styles.bookCover} />
+                      <img
+                        src={book.cover || book.coverUrl}
+                        alt={book.title}
+                        className={styles.bookCover}
+                      />
                     </div>
                   ))}
                 </div>
@@ -127,7 +151,14 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
         ) : activeTab === 'profile' ? (
           <Profile user={user} logout={logout} />
         ) : (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: '#5b3113', fontFamily: 'Georgia, serif' }}>
+          <div
+            style={{
+              padding: '40px 20px',
+              textAlign: 'center',
+              color: '#5b3113',
+              fontFamily: 'Georgia, serif',
+            }}
+          >
             <h2>{activeTab.toUpperCase()}</h2>
             <p>This tab is under construction.</p>
           </div>
@@ -137,10 +168,18 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
       <nav className={styles.bottomNav}>
         <button
           type="button"
-          className={`${styles.navItem} ${activeTab === 'home' ? styles.activeNavItem : ''}`}
+          className={`${styles.navItem} ${
+            activeTab === 'home' ? styles.activeNavItem : ''
+          }`}
           onClick={() => setActiveTab('home')}
         >
-          <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <svg
+            className={styles.navIcon}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
@@ -149,10 +188,18 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
 
         <button
           type="button"
-          className={`${styles.navItem} ${activeTab === 'timer' ? styles.activeNavItem : ''}`}
+          className={`${styles.navItem} ${
+            activeTab === 'timer' ? styles.activeNavItem : ''
+          }`}
           onClick={() => setActiveTab('timer')}
         >
-          <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <svg
+            className={styles.navIcon}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
             <circle cx="12" cy="12" r="10" />
             <polyline points="12 6 12 16 14" />
           </svg>
@@ -161,13 +208,21 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
 
         <button
           type="button"
-          className={`${styles.navItem} ${activeTab === 'search' ? styles.activeNavItem : ''}`}
+          className={`${styles.navItem} ${
+            activeTab === 'search' ? styles.activeNavItem : ''
+          }`}
           onClick={() => {
             setActiveTab('search');
             onNavigateToSearch?.();
           }}
         >
-          <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <svg
+            className={styles.navIcon}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
@@ -176,10 +231,18 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, on
 
         <button
           type="button"
-          className={`${styles.navItem} ${activeTab === 'profile' ? styles.activeNavItem : ''}`}
+          className={`${styles.navItem} ${
+            activeTab === 'profile' ? styles.activeNavItem : ''
+          }`}
           onClick={() => setActiveTab('profile')}
         >
-          <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <svg
+            className={styles.navIcon}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
             <circle cx="12" cy="7" r="4" />
           </svg>

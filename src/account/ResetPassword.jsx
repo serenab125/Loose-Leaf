@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from './useAuth';
-import { supabase } from '../supabaseClient';
+import { signOutEverywhere } from '../supabaseClient';
 import styles from './Login.module.css';
 
 export default function ResetPassword() {
-  const { updatePassword, loading } = useAuth();
-
+  const { updatePassword, loading } = useAuth(true);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -21,7 +20,6 @@ export default function ResetPassword() {
       setError('Passwords do not match.');
       return;
     }
-
     if (password.length < 6) {
       setError('Password must be at least 6 characters long.');
       return;
@@ -35,24 +33,18 @@ export default function ResetPassword() {
       setPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setError(
-        err.message || 'Unable to update password. Please try again.'
-      );
+      setError(err.message || 'Unable to update password. Please try again.');
     }
   };
 
   const handleReturnToLogin = async () => {
     setIsReturning(true);
     setError('');
-
     try {
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) throw signOutError;
+      await signOutEverywhere();
       window.location.assign('/');
     } catch (err) {
-      setError(
-        err.message || 'Unable to return to sign in. Please try again.'
-      );
+      setError(err.message || 'Unable to return to sign in. Please try again.');
       setIsReturning(false);
     }
   };
@@ -62,26 +54,10 @@ export default function ResetPassword() {
       <div className={styles.card}>
         <h1 className={styles.heading}>LooseLeaf</h1>
         <p className={styles.tagline}>Find your next chapter.</p>
-
         {success ? (
           <div className={styles.form}>
-            <p
-              role="status"
-              style={{
-                textAlign: 'center',
-                color: '#5b3113',
-                lineHeight: '1.6'
-              }}
-            >
-              {success}
-            </p>
-
-            {error && (
-              <p className={styles.error} role="alert">
-                {error}
-              </p>
-            )}
-
+            <p className={styles.status} role="status">{success}</p>
+            {error && <p className={styles.error} role="alert">{error}</p>}
             <button
               type="button"
               className={styles.buttonPrimary}
@@ -95,9 +71,7 @@ export default function ResetPassword() {
           <>
             <form className={styles.form} onSubmit={handleSubmit}>
               <div className={styles.fieldGroup}>
-                <label className={styles.label} htmlFor="new-password">
-                  NEW PASSWORD
-                </label>
+                <label className={styles.label} htmlFor="new-password">NEW PASSWORD</label>
                 <input
                   id="new-password"
                   className={styles.input}
@@ -109,11 +83,8 @@ export default function ResetPassword() {
                   minLength={6}
                 />
               </div>
-
               <div className={styles.fieldGroup}>
-                <label className={styles.label} htmlFor="confirm-new-password">
-                  CONFIRM NEW PASSWORD
-                </label>
+                <label className={styles.label} htmlFor="confirm-new-password">CONFIRM NEW PASSWORD</label>
                 <input
                   id="confirm-new-password"
                   className={styles.input}
@@ -124,13 +95,7 @@ export default function ResetPassword() {
                   required
                 />
               </div>
-
-              {error && (
-                <p className={styles.error} role="alert">
-                  {error}
-                </p>
-              )}
-
+              {error && <p className={styles.error} role="alert">{error}</p>}
               <button
                 type="submit"
                 className={styles.buttonPrimary}
@@ -139,7 +104,6 @@ export default function ResetPassword() {
                 {loading ? 'Updating Password...' : 'Update Password'}
               </button>
             </form>
-
             <button
               type="button"
               className={styles.forgotPassword}
