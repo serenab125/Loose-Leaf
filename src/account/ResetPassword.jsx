@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '../supabaseClient';
 import styles from './Login.module.css';
@@ -12,6 +12,17 @@ export default function ResetPassword() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [isReturning, setIsReturning] = useState(false);
+
+    // Read reset token from URL and restore session
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        const type = params.get('type');
+        if (token && type) {
+            // Use Supabase's built-in session restoration for password reset
+            supabase.auth.setSession({ access_token: token, refresh_token: type });
+        }
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
