@@ -1,4 +1,4 @@
-import './App.css'
+import './App.css';
 import { useState } from 'react';
 import { useAuth } from './account/useAuth';
 import { CreateAccount } from './account/CreateAccount';
@@ -45,13 +45,8 @@ function App() {
   const { user, logout, loading, savePreferences, supabase: appSupabase } =
     useAuth(persistSession, restoreSession);
 
-  const [view, setView] = useState(() => {
-    if (window.location.pathname === '/reset-password') return 'reset'
-    return 'login'
-  })
-
-  // State for checking incomplete quiz progress on login
   const [redirectToQuiz, setRedirectToQuiz] = useState(false);
+  const [isQuizCompleted, setIsQuizCompleted] = useState(true);
 
   // Check for incomplete quiz progress on app load when user is authenticated
   useState(() => {
@@ -68,14 +63,12 @@ function App() {
     }
   });
 
-  const [isQuizCompleted, setIsQuizCompleted] = useState(true)
-
   if (loading) {
     return (
       <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#fdf8f3' }}>
         <p style={{ color: '#5b3113', fontFamily: 'Georgia, serif' }}>Loading LooseLeaf...</p>
       </main>
-    )
+    );
   }
 
   if (view === 'reset') {
@@ -83,7 +76,7 @@ function App() {
       <main>
         <ResetPassword />
       </main>
-    )
+    );
   }
 
   if (!user) {
@@ -127,18 +120,18 @@ function App() {
   const handleQuizComplete = async (quizAnswers) => {
     try {
       if (savePreferences) {
-        await savePreferences(quizAnswers)
+        await savePreferences(quizAnswers);
       }
     } catch (err) {
-      console.error('Error saving quiz results:', err)
+      console.error('Error saving quiz results:', err);
     } finally {
-      setIsQuizCompleted(true)
+      setIsQuizCompleted(true);
     }
-  }
+  };
 
   const handleQuizSkip = () => {
-    setIsQuizCompleted(true)
-  }
+    setIsQuizCompleted(true);
+  };
 
   if (!isQuizCompleted) {
     return (
@@ -159,7 +152,6 @@ function App() {
           <span>
             Welcome, {user.user_metadata?.full_name?.split(' ')[0] || user.email}!
           </span>
-
           <button
             type="button"
             onClick={logout}
@@ -185,7 +177,7 @@ function App() {
           supabaseClient={appSupabase}
         />
       </main>
-    )
+    );
   }
 
   return (
@@ -193,10 +185,16 @@ function App() {
       <Home
         user={user}
         logout={logout}
-        onRetakeQuiz={() => setIsQuizCompleted(false)}
+        currentBook={null}
+        onRetakeQuiz={() => {
+          setRedirectToQuiz(false);
+          setIsQuizCompleted(true);
+        }}
+        onNavigateToSearch={() => {}}
+        onSelectBook={() => {}}
       />
     </main>
-  )
+  );
 }
 
-export default App
+export default App;
