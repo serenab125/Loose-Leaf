@@ -1,172 +1,184 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { supabaseFor, signOutEverywhere } from '../supabaseClient';
 
-import { supabaseFor } from '../supabaseClient';
-
-export function useAuth(persistSession = true, restoreSession = true) {
-  // Use a separate supabase client with the correct persistSession setting.
-  // This ensures "Remember me" off correctly clears sessions across tab closes.
-  const supabase = supabaseFor(persistSession);
-
-  // Export the supabase client so it can be shared with other modules
-  const authClient = supabase;
+export function useAuth(persistSession = true) {
+  const supabase = useMemo(() => supabaseFor(persistSession), [persistSession]);
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // NOTE: hasSavedSession is checked inside the effect below so it re-reads
-  // the session on every run; this avoids stale-closure issues when the
-  // persistSession flag flips during login/logout.
-
-  // Subscribe to auth state changes. When "Remember me" is OFF and there is
-  // no saved session, sign out to clear any pending session. If there IS a
-  // saved session, keep it so a closed tab returns the user to home.
   useEffect(() => {
-    // Load initial session asynchronously to avoid blocking the render.
     let active = true;
-    let subscription = null;
 
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!active) return;
-
-      // Only sign out if there's a stale persisted session that shouldn't be there.
-      // (When persistSession=false, the session is memory-only and should be cleared.)
-      if (!persistSession && session) {
-        await supabase.auth.signOut().catch(() => {});
-      }
-    })();
-
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'INITIAL_SESSION') {
-        setUser(restoreSession ? session?.user ?? null : null);
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (!active) return;
+        setUser(session?.user ?? null);
         setLoading(false);
-        return;
-      }
-      if (session?.user) {
-        setUser(restoreSession ? session.user : null);
-      } else {
-        setUser(null);
-      }
+      })
+      .catch(() => {
+        if (active) setLoading(false);
+      });
+
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
+      setUser(session?.user ?? null);
       setLoading(false);
     });
-    subscription = data.subscription;
 
     return () => {
       active = false;
-      subscription.unsubscribe();
+      data.subscription.unsubscribe();
     };
-  }, [persistSession, supabase.auth, restoreSession]);
+  }, [supabase]);
 
-  const createAccount = async (email, password, fullName) => {
+  const createAccount = useCallback(
+    async (email, password, fullName) => {
+      setLoading(true);
+      setError('');
+      try {
+        const { data, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: fullName },
+            emailRedirectTo: window.location.origin,
+          },
+        });
+        if (authError) throw authError;
+        return data;
+      } catch (err) {
+        setError(err.message || 'Sign-up failed');
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [supabase]
+  );
+
+  const login = useCallback(
+    async (email, password) => {
+      setLoading(true);
+      setError('');
+      try {
+        const { data, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (authError) throw authError;
+        setUser(data.user);
+        return data;
+      } catch (err) {
+        setError(err.message || 'Sign-in failed');
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [supabase]
+  );
+
+  const resetPassword = useCallback(
+    async (email) => {
+      setLoading(true);
+      setError('');
+      try {
+        const { error: authError } = await supabase.auth.resetPasswordForEmail(
+          email,
+          {
+            redirectTo: new URL('/reset-password', window.location.origin).toString(),
+          }
+        );
+        if (authError) throw authError;
+      } catch (err) {
+        setError(err.message || 'Password reset failed');
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [supabase]
+  );
+
+  const updatePassword = useCallback(
+    async (password, confirmPassword) => {
+      setError('');
+      if (typeof password !== 'string' || password.length < 6) {
+        const e = new Error('Password must be at least 6 characters long.');
+        setError(e.message);
+        throw e;
+      }
+      if (password !== confirmPassword) {
+        const e = new Error('Passwords do not match.');
+        setError(e.message);
+        throw e;
+      }
+      setLoading(true);
+      try {
+        const { data, error: authError } = await supabase.auth.updateUser({ password });
+        if (authError) throw authError;
+        return data;
+      } catch (err) {
+        setError(err.message || 'Password update failed');
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [supabase]
+  );
+
+  const logout = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const { data, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName },
-          emailRedirectTo: window.location.origin,
-        },
-      });
-      if (authError) throw authError;
-      return data;
-    } catch (err) {
-      setError(err.message || 'Sign-up failed');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const login = async (email, password) => {
-    setLoading(true);
-    setError('');
-    try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (authError) throw authError;
-
-      // The supabase client (persistSession=true) already persists the session
-      // to localStorage; no manual localStorage.setItem needed here.
-      // The session is stored in sessionStorage (memory) when persistSession
-      // is false, which is automatically cleared when the tab closes.
-      return data;
-    } catch (err) {
-      setError(err.message || 'Sign-in failed');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resetPassword = async (email) => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: new URL('/reset-password', window.location.origin).toString(),
-      });
-
-      if (authError) throw authError;
-    } catch (err) {
-      setError(err.message || 'Password reset failed');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updatePassword = async (password, confirmPassword) => {
-    setError('');
-
-    if (typeof password !== 'string' || password.length < 6) {
-      const validationError = new Error('Password must be at least 6 characters long.');
-      setError(validationError.message);
-      throw validationError;
-    }
-
-    if (password !== confirmPassword) {
-      const validationError = new Error('Passwords do not match.');
-      setError(validationError.message);
-      throw validationError;
-    }
-
-    setLoading(true);
-    try {
-      const { data, error: authError } = await supabase.auth.updateUser({ password });
-
-      if (authError) throw authError;
-      return data;
-    } catch (err) {
-      setError(err.message || 'Password update failed');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      await supabase.auth.signOut();
-      // The supabase client (persistSession=true) handles session cleanup;
-      // no manual localStorage.removeItem needed here.
+      await signOutEverywhere();
     } catch (err) {
       setError(err.message || 'Sign-out failed');
     } finally {
+      setUser(null);
       setLoading(false);
     }
-  };
+  }, []);
+
+  const savePreferences = useCallback(
+    async (preferences) => {
+      if (!user) return;
+      setLoading(true);
+      setError('');
+      try {
+        const { data, error: dbError } = await supabase
+          .from('profiles')
+          .upsert(
+            {
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata?.full_name || '',
+              reading_preferences: preferences,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'id' }
+          );
+        if (dbError) throw dbError;
+        return data;
+      } catch (err) {
+        console.error('Error saving preferences:', err);
+        setError(err.message || 'Failed to save reading preferences');
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [supabase, user]
+  );
 
   return {
     user,
     createAccount,
+    signUp: createAccount,
     login,
     signIn: login,
     logout,
@@ -175,6 +187,7 @@ export function useAuth(persistSession = true, restoreSession = true) {
     loading,
     error,
     clearError: () => setError(''),
-    supabase: authClient,  // Export the supabase client for use by other modules
+    savePreferences,
+    supabase,
   };
 }

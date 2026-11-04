@@ -255,3 +255,35 @@
   color: #5b3113;
   font-weight: 600;
 }
+
+.carouselContainer {
+  width: 100%;
+  position: relative;
+}
+
+.slideWrapper {
+  width: 100%;
+}
+
+.dotsContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #e4decb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.activeDot {
+  width: 22px;
+  border-radius: 6px;
+  background-color: #969732;
+}

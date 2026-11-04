@@ -24,11 +24,34 @@ export function supabaseFor(persistSession = true) {
     clients.set(
       persistSession,
       createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession },
+        auth: {
+          persistSession,
+          storage: persistSession ? window.localStorage : memoryStorage(),
+          autoRefreshToken: persistSession,
+          detectSessionInUrl: true,
+          flowType: 'pkce',
+        },
       })
     );
   }
   return clients.get(persistSession);
+}
+
+function memoryStorage() {
+  const store = new Map();
+  return {
+    getItem: (k) => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, v),
+    removeItem: (k) => store.delete(k),
+  };
+}
+
+export async function signOutEverywhere() {
+  await Promise.all(
+    Array.from(clients.values()).map((c) =>
+      c.auth.signOut({ scope: 'local' }).catch(() => {})
+    )
+  );
 }
 
 // Default client: "Remember me" is on (the session survives browser restarts).

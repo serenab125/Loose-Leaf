@@ -1,5 +1,5 @@
 import './App.css';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from './account/useAuth';
 import { CreateAccount } from './account/CreateAccount';
 import ForgotPassword from './account/ForgotPassword';
@@ -7,94 +7,50 @@ import ResetPassword from './account/ResetPassword';
 import { Login } from './account/Login';
 import { Quiz } from './quiz/Quiz';
 import { Home } from './home/Home';
-import { hasIncompleteQuizProgress } from './services/quizService';
+import Search from './pages/Search/Search';
 
 function App() {
-  // Persist rememberMe and hasLoggedIn so they survive page refreshes/reloads.
-  // This is essential for "Remember me" to keep the user signed in across tabs.
   const [rememberMe, setRememberMe] = useState(() => {
-    const saved = localStorage.getItem('looseleaf_remember_me');
-    return saved === 'true';
-  });
-  const [hasLoggedIn, setIsLoggedIn] = useState(() => {
-    const saved = localStorage.getItem('looseleaf_hasLoggedIn');
-    return saved === 'true';
-  });
-  const setRememberMeState = (value) => {
-    localStorage.setItem('looseleaf_remember_me', value ? 'true' : 'false');
-    setRememberMe(value);
-  };
-  const setHasLoggedInState = (value) => {
-    localStorage.setItem('looseleaf_hasLoggedIn', value ? 'true' : 'false');
-    setIsLoggedIn(value);
-  };
-
-  // Determine whether the session should persist across refreshes.
-  // "Remember me" ON  -> persistSession=true, the Supabase client saves the
-  //                     session to localStorage so the user stays signed in
-  //                     after the browser is closed and reopened.
-  // "Remember me" OFF -> persistSession=false, the session lives only in memory
-  //                     and is cleared when the tab closes.
-  const persistSession = rememberMe;
-
-  // restoreSession determines whether the session is restored on app load.
-  // If the user has logged in before (hasLoggedIn), the session is restored
-  // so the user is taken straight to the home screen after a refresh.
-  const restoreSession = hasLoggedIn;
-
-  const { user, logout, loading, savePreferences, supabase: appSupabase } =
-    useAuth(persistSession, restoreSession);
-
-  const [redirectToQuiz, setRedirectToQuiz] = useState(false);
-  const [isQuizCompleted, setIsQuizCompleted] = useState(true);
-  const [view, setView] = useState(() => {
-    if (window.location.pathname === '/reset-password') return 'reset'
-    return 'login'
-  });
-
-  // Check for incomplete quiz progress on app load when user is authenticated
-  useState(() => {
-    if (user?.id) {
-      hasIncompleteQuizProgress(user.id)
-        .then((hasProgress) => {
-          if (hasProgress) {
-            setRedirectToQuiz(true);
-          }
-        })
-        .catch((err) => {
-          console.error('Error checking quiz progress:', err);
-        });
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('looseleaf_remember_me') === 'true';
     }
+    return false;
   });
 
-  // Handle URL routing: update view based on window.location.pathname
-  // This is needed for password reset flow (e.g., /reset-password)
-  useEffect(() => {
-    const handleRouteChange = () => {
-      if (window.location.pathname === '/reset-password') {
-        setView('reset');
-        setRedirectToQuiz(false);
-      } else if (view === 'reset') {
-        setView('login');
-      }
-    };
-    handleRouteChange();
-    window.addEventListener('popstate', handleRouteChange);
-    return () => window.removeEventListener('popstate', handleRouteChange);
-  }, [view]);
+  const [view, setView] = useState('login');
+  const [isQuizCompleted, setIsQuizCompleted] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('looseleaf_quiz_completed') === 'true';
+    }
+    return false;
+  });
+  const [activePage, setActivePage] = useState('home');
+  const [skipQuiz] = useState(false);
+  const [currentBook, setCurrentBook] = useState(null);
+
+  const handleRememberMeChange = (checked) => {
+    setRememberMe(checked);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('looseleaf_remember_me', String(checked));
+    }
+  };
+
+  // Only persistSession is a parameter now. No restoreSession.
+  const { user, login, logout, loading, savePreferences } = useAuth(rememberMe);
+
+  // Handle recovery link before anything else.
+  if (typeof window !== 'undefined' && window.location.pathname === '/reset-password') {
+    return (
+      <main>
+        <ResetPassword />
+      </main>
+    );
+  }
 
   if (loading) {
     return (
       <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#fdf8f3' }}>
         <p style={{ color: '#5b3113', fontFamily: 'Georgia, serif' }}>Loading LooseLeaf...</p>
-      </main>
-    );
-  }
-
-  if (view === 'reset') {
-    return (
-      <main>
-        <ResetPassword />
       </main>
     );
   }
@@ -111,46 +67,30 @@ function App() {
             onNavigateToCreateAccount={() => setView('create')}
             onNavigateToForgotPassword={() => setView('forgot')}
             rememberMe={rememberMe}
-            setRememberMe={setRememberMeState}
-            onLogin={() => {
-              setIsLoggedIn(true);
-              setHasLoggedInState(true);
-            }}
+            setRememberMe={handleRememberMeChange}
+            onSuccess={() => setView('home')}
+            signIn={login}
+            loading={loading}
           />
         )}
       </main>
     );
   }
 
-  // If there is incomplete quiz progress, redirect to the quiz
-  if (redirectToQuiz) {
-    return (
-      <main>
-        <Quiz
-          user={user}
-          onSkip={() => {}}
-          onComplete={() => setRedirectToQuiz(false)}
-          userId={user.id}
-          supabaseClient={appSupabase}
-        />
-      </main>
-    );
-  }
-
   const handleQuizComplete = async (quizAnswers) => {
     try {
-      if (savePreferences) {
-        await savePreferences(quizAnswers);
-      }
+      if (savePreferences) await savePreferences(quizAnswers);
     } catch (err) {
       console.error('Error saving quiz results:', err);
     } finally {
       setIsQuizCompleted(true);
+      localStorage.setItem('looseleaf_quiz_completed', 'true');
     }
   };
 
-  const handleQuizSkip = () => {
+  const handleQuizSkip = async () => {
     setIsQuizCompleted(true);
+    localStorage.setItem('looseleaf_quiz_completed', 'true');
   };
 
   if (!isQuizCompleted) {
@@ -166,7 +106,7 @@ function App() {
             background: '#fdf8f3',
             fontSize: '12px',
             fontWeight: '400',
-            color: '#b69b8d'
+            color: '#b69b8d',
           }}
         >
           <span>
@@ -183,36 +123,40 @@ function App() {
               fontSize: '12px',
               fontWeight: '400',
               textDecoration: 'underline',
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}
           >
             Sign out
           </button>
         </div>
-
-        <Quiz
-          user={user}
-          onSkip={handleQuizSkip}
-          onComplete={handleQuizComplete}
-          supabaseClient={appSupabase}
-        />
+        <Quiz user={user} onSkip={handleQuizSkip} onComplete={handleQuizComplete} />
       </main>
     );
   }
 
   return (
     <main>
-      <Home
-        user={user}
-        logout={logout}
-        currentBook={null}
-        onRetakeQuiz={() => {
-          setRedirectToQuiz(true);
-          setIsQuizCompleted(false);
-        }}
-        onNavigateToSearch={() => {}}
-        onSelectBook={() => {}}
-      />
+      {activePage === 'search' ? (
+        <>
+          <button type="button" onClick={() => setActivePage('home')} style={{ margin: '16px', padding: '10px 16px', cursor: 'pointer' }}>
+            ← Back to Home
+          </button>
+          <Search onSelectBook={(book) => setCurrentBook(book)} />
+        </>
+      ) : (
+        <Home
+          user={user}
+          logout={logout}
+          currentBook={currentBook}
+          onRetakeQuiz={() => {
+            setActivePage('home');
+            setIsQuizCompleted(false);
+          }}
+          onNavigateToSearch={() => setActivePage('search')}
+          onSelectBook={(book) => setCurrentBook(book)}
+          skipQuiz={skipQuiz}
+        />
+      )}
     </main>
   );
 }

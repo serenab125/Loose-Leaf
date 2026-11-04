@@ -1,16 +1,15 @@
 import { useState } from 'react';
 import styles from './Login.module.css';
-import { useAuth } from './useAuth';
 
 export function Login({
-  onNavigateToCreateAccount = () => {},
-  onNavigateToForgotPassword = () => {},
-  rememberMe = false,
-  setRememberMe = () => {},
-  onLogin = () => {},
+  onNavigateToCreateAccount,
+  onNavigateToForgotPassword,
+  rememberMe,
+  setRememberMe,
+  onSuccess,
+  signIn,
+  loading,
 }) {
-  const { signIn, loading } = useAuth(rememberMe, false);
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
@@ -25,7 +24,7 @@ export function Login({
     setFormError('');
     try {
       await signIn(email.trim(), password);
-      onLogin?.();
+      onSuccess?.();
     } catch (err) {
       setFormError(err.message || 'Failed to sign in. Please try again.');
     }
@@ -55,6 +54,7 @@ export function Login({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
+              autoComplete="email"
             />
           </div>
 
@@ -69,22 +69,24 @@ export function Login({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              />
-              </div>
+              autoComplete="current-password"
+            />
+          </div>
 
-              <div className={styles.fieldGroup}>
-              <label className={styles.checkboxLabel}>
+          <div className={styles.fieldGroup}>
+            <label className={styles.checkboxLabel}>
               <input
                 type="checkbox"
                 className={styles.checkbox}
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
+                disabled={loading}
               />
               <span>Remember me</span>
-              </label>
-              </div>
+            </label>
+          </div>
 
-              {formError && <p className={styles.error}>{formError}</p>}
+          {formError && <p className={styles.error}>{formError}</p>}
 
           <button type="submit" className={styles.buttonPrimary} disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}

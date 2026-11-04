@@ -1,7 +1,10 @@
 
 import { useState, useCallback } from 'react';
-import { TASTE_SECTIONS, GOAL_SECTIONS, MIN_TASTE_ANSWERS } from './quizData';
-import { getIncompleteQuizProgress } from '../services/quizService';
+import {
+  TASTE_SECTIONS,
+  GOAL_SECTIONS,
+  MIN_TASTE_ANSWERS,
+} from './quizData';
 
 export function useQuiz() {
   // 0 = introduction
@@ -10,36 +13,10 @@ export function useQuiz() {
   // 3 = loading / complete
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [isRestoring, setIsRestoring] = useState(true);
 
-  // Restore saved progress when a user ID is provided
-  const restoreProgress = useCallback(async (userId = null) => {
-    if (!userId) {
-      setAnswers({});
-      setCurrentStep(0);
-      setIsRestoring(false);
-      return;
-    }
-
-    setIsRestoring(true);
-    try {
-      const progress = await getIncompleteQuizProgress(userId);
-      if (progress) {
-        // Resume from saved answers and step
-        setAnswers(progress.answers || {});
-        setCurrentStep(progress.current_step ?? 1);
-      } else {
-        // No saved progress; start fresh
-        setAnswers({});
-        setCurrentStep(0);
-      }
-    } catch (error) {
-      console.error('Failed to restore quiz progress:', error);
-      setAnswers({});
-      setCurrentStep(0);
-    } finally {
-      setIsRestoring(false);
-    }
+  const goToIntro = useCallback(() => {
+    setCurrentStep(0);
+    setAnswers({});
   }, []);
 
   const answerQuestion = useCallback((sectionId, selectedIds) => {
@@ -47,11 +24,6 @@ export function useQuiz() {
       ...previous,
       [sectionId]: selectedIds,
     }));
-  }, []);
-
-  const goToIntro = useCallback(() => {
-    setCurrentStep(0);
-    setAnswers({});
   }, []);
 
   const goToNext = useCallback(() => {
@@ -124,9 +96,13 @@ export function useQuiz() {
     ((tasteAnsweredCount + goalAnsweredCount) / totalQuestions) * 100
   );
 
+  const restoreProgress = useCallback(({ step, answers: answersToRestore }) => {
+    setCurrentStep(step);
+    setAnswers({ ...answersToRestore });
+  }, []);
+
   return {
     currentStep,
-    isRestoring,
     answers,
     answerQuestion,
     goToIntro,
@@ -134,6 +110,7 @@ export function useQuiz() {
     goToGoals,
     goBackToTaste,
     completeQuiz,
+    restoreProgress,
     isIntro,
     isTaste,
     isGoals,
@@ -142,6 +119,5 @@ export function useQuiz() {
     tasteAnsweredCount,
     goalAnsweredCount,
     progress,
-    restoreProgress,
   };
 }

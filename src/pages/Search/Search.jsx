@@ -1,160 +1,439 @@
-import { useState } from "react";
-import { searchBooksByTitle } from "../../services/bookService";
+import { useRef, useState, useEffect } from "react";
+import BookRow from "./BookRow";
+import BookCover from "./BookCover";
+import { categoryData } from "./categoryData";
+import {
+  searchBooksByCategory,
+  searchBooksByTitle,
+  fetchPopularSearchTerms,
+  recordPopularSearchTerm,
+} from "../../services/bookService";
 import "./Search.css";
 
-const TOP_SEARCHES = [
-    {
-        id: 1,
-        title: "A Court of Thorns and Roses",
-        author: "Sarah J. Maas",
-        coverUrl: "https://covers.openlibrary.org/b/id/12818862-L.jpg"
-    },
-    {
-        id: 2,
-        title: "Project Hail Mary",
-        author: "Andy Weir",
-        coverUrl: "https://covers.openlibrary.org/b/id/10521270-L.jpg"
-    },
-    {
-        id: 3,
-        title: "The Calamity Club",
-        author: "Kathryn Stockett",
-        coverUrl: "https://covers.openlibrary.org/b/id/14589201-L.jpg"
-    }
+const CATEGORIES = [
+  "Movies",
+  "TV Shows",
+  "< 300 Pages",
+  "> 300 Pages",
+  "Series",
+  "Slow Burn",
+  "Romance",
+  "Thriller",
 ];
 
-const CATEGORIES = [
-    "Movies",
-    "TV Shows",
-    "<300 pages",
-    ">300 pages",
-    "Series",
-    "Slow Burn"
+const TOP_SEARCHES = [
+  {
+    id: "acotar",
+    title: "A Court of Thorns and Roses",
+    author: "Sarah J. Maas",
+    coverUrl: "https://covers.openlibrary.org/b/id/12818862-L.jpg?default=false",
+  },
+  {
+    id: "project-hail-mary",
+    title: "Project Hail Mary",
+    author: "Andy Weir",
+    coverUrl: "https://covers.openlibrary.org/b/id/10521270-L.jpg?default=false",
+  },
+  {
+    id: "calamity-club",
+    title: "The Calamity Club",
+    author: "Kathryn Stockett",
+    coverUrl: "https://covers.openlibrary.org/b/id/14589201-L.jpg?default=false",
+  },
 ];
+
+const normalize = (text) =>
+  (text ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const coverCache = new Map();
+
+async function findBookCover(bookInfo) {
+  if (bookInfo.coverUrl) {
+    return { ...bookInfo, bookId: bookInfo.title };
+  }
+
+  const cacheKey = `${bookInfo.title}|${bookInfo.author}`;
+  if (coverCache.has(cacheKey)) {
+    return coverCache.get(cacheKey);
+  }
+
+  let book = {
+    bookId: bookInfo.title,
+    title: bookInfo.title,
+    author: bookInfo.author,
+    coverUrl: null,
+  };
+
+  try {
+    const results = await searchBooksByTitle(bookInfo.title);
+    const exactMatches = results.filter(
+      (result) =>
+        normalize(result.title) === normalize(bookInfo.title) &&
+        normalize(result.author).includes(normalize(bookInfo.author))
+    );
+
+    const match =
+      exactMatches.find((result) => result.coverUrl) ?? exactMatches[0];
+
+    if (match) {
+      book = {
+        ...book,
+        bookId: match.bookId ?? bookInfo.title,
+        coverUrl: match.coverUrl ?? null,
+      };
+    }
+  } catch (error) {
+    console.warn(`Could not load cover for ${bookInfo.title}`, error);
+  }
+
+  if (book.coverUrl) {
+    coverCache.set(cacheKey, book);
+  }
+
+  return book;
+}
 
 export default function Search({ onSelectBook }) {
-    const [query, setQuery] = useState("");
-    const [searchResults, setSearchResults] = useState([]);
-    const [searchLoading, setSearchLoading] = useState(false);
-    const [searchError, setSearchError] = useState("");
+  // Live Typing Search state
+  const [query, setQuery] = useState("");
+  const [popularSearches, setPopularSearches] = useState([]);
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
 
-    const handleSearchInput = async (e) => {
-        const val = e.target.value;
-        setQuery(val);
+  // Refs for tracking search requests and timers
+  const requestNumber = useRef(0);
+  const searchTimer = useRef(null);
+  const popularSearchTimer = useRef(null);
+  const isMounted = useRef(false);
 
-        const cleanedQuery = val.replace(/[?/@]/g, "").trim();
+  // Category view state (Michaela's features)
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [bookRows, setBookRows] = useState([]);
+  const [loadingCategoryBooks, setLoadingCategoryBooks] = useState(false);
 
-        if (!cleanedQuery) {
-            setSearchResults([]);
-            setSearchError("");
-            return;
-        }
+  // Fetch initial popular search terms from Austin's backend service
+  useEffect(() => {
+    let active = true;
+    isMounted.current = true;
 
-        setSearchLoading(true);
-        setSearchError("");
+    fetchPopularSearchTerms()
+      .then((books) => {
+        if (active && books && books.length > 0) setPopularSearches(books);
+      })
+      .catch(() => {
+        setPopularSearches(TOP_SEARCHES);
+      });
 
-        try {
-            const results = await searchBooksByTitle(cleanedQuery);
-            if (results && results.length > 0) {
-                setSearchResults(results);
-            } else {
-                setSearchResults([]);
-                setSearchError("No book titles found matching your search.");
-            }
-        } catch {
-            setSearchError("Unable to retrieve book results. Please try again.");
-        } finally {
-            setSearchLoading(false);
-        }
+    return () => {
+      active = false;
+      isMounted.current = false;
+      clearTimeout(searchTimer.current);
+      clearTimeout(popularSearchTimer.current);
     };
+  }, []);
 
-    const clearSearch = () => {
-        setQuery("");
-        setSearchResults([]);
-        setSearchError("");
+  const schedulePopularSearchSave = (searchTerm, books) => {
+    const recommendation = books.find((book) => book.coverUrl) || books[0];
+    if (!recommendation) return;
+
+    clearTimeout(popularSearchTimer.current);
+    popularSearchTimer.current = setTimeout(async () => {
+      try {
+        await recordPopularSearchTerm(searchTerm, recommendation);
+        const updatedSearches = await fetchPopularSearchTerms();
+
+        if (isMounted.current && updatedSearches && updatedSearches.length > 0) {
+          setPopularSearches(updatedSearches);
+        }
+      } catch {
+        // Ignore errors when saving popular searches
+      }
+    }, 500);
+  };
+
+  // Execute Live API Title Search
+  const runSearch = async ({ title = "", category = null }) => {
+    const currentRequest = ++requestNumber.current;
+    setSearchLoading(true);
+    setSearchError("");
+    setSearchResults([]);
+
+    try {
+      const results = category
+        ? await searchBooksByCategory(category)
+        : await searchBooksByTitle(title);
+
+      if (currentRequest !== requestNumber.current) return;
+      setSearchResults(results);
+
+      if (!category && title.trim() && results.length > 0) {
+        schedulePopularSearchSave(title, results);
+      }
+    } catch {
+      if (currentRequest !== requestNumber.current) return;
+      setSearchError("Unable to retrieve book results. Please try again.");
+    } finally {
+      if (currentRequest === requestNumber.current) {
+        setSearchLoading(false);
+      }
+    }
+  };
+
+  const handleSearchInput = (event) => {
+    const value = event.target.value;
+    setQuery(value);
+    setSelectedCategory(null);
+    setActiveCategory(null);
+    requestNumber.current += 1;
+    clearTimeout(searchTimer.current);
+    clearTimeout(popularSearchTimer.current);
+    setSearchResults([]);
+    setSearchError("");
+
+    if (!value.trim()) {
+      setSearchLoading(false);
+      return;
+    }
+
+    setSearchLoading(true);
+    const pendingRequest = requestNumber.current;
+
+    // Debounce search by 350ms to prevent rapid API requests while typing
+    searchTimer.current = setTimeout(() => {
+      if (pendingRequest === requestNumber.current) {
+        runSearch({ title: value });
+      }
+    }, 350);
+  };
+
+  const clearSearch = () => {
+    clearTimeout(searchTimer.current);
+    clearTimeout(popularSearchTimer.current);
+    requestNumber.current += 1;
+    setQuery("");
+    setSelectedCategory(null);
+    setActiveCategory(null);
+    setSearchResults([]);
+    setSearchError("");
+    setSearchLoading(false);
+  };
+
+  // Load Michaela's category rows & covers
+  useEffect(() => {
+    const category = categoryData[selectedCategory];
+
+    if (!category) {
+      setBookRows([]);
+      setLoadingCategoryBooks(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadBooks() {
+      setLoadingCategoryBooks(true);
+
+      setBookRows(
+        category.rows.map((row) => ({
+          title: row.title,
+          books: row.books.map((book) => ({
+            ...book,
+            bookId: book.title,
+            coverUrl: book.coverUrl ?? null,
+          })),
+        }))
+      );
+
+      const tasks = category.rows.flatMap((row, rowIndex) =>
+        row.books.map((bookInfo, bookIndex) => ({
+          bookInfo,
+          rowIndex,
+          bookIndex,
+        }))
+      );
+
+      const worker = async () => {
+        while (tasks.length > 0 && !cancelled) {
+          const task = tasks.shift();
+          if (!task) break;
+
+          const book = await findBookCover(task.bookInfo);
+          if (cancelled) return;
+
+          setBookRows((previousRows) =>
+            previousRows.map((row, rowIndex) =>
+              rowIndex !== task.rowIndex
+                ? row
+                : {
+                    ...row,
+                    books: row.books.map((existing, bookIndex) =>
+                      bookIndex === task.bookIndex ? book : existing
+                    ),
+                  }
+            )
+          );
+        }
+      };
+
+      await Promise.all(Array.from({ length: 4 }, () => worker()));
+      if (!cancelled) setLoadingCategoryBooks(false);
+    }
+
+    loadBooks();
+
+    return () => {
+      cancelled = true;
     };
+  }, [selectedCategory]);
 
-    return (
-        <main className="search-page">
-            <h1 className="search-logo">LooseLeaf</h1>
+  const showingSearchResults = Boolean(query.trim());
 
-            <div className="search-bar-container">
-                <span className="search-icon">🔍</span>
-                <input
-                    type="text"
-                    className="search-input"
-                    placeholder="Search for a book title, genre, etc."
-                    value={query}
-                    onChange={handleSearchInput}
-                />
-                {query && (
-                    <button type="button" className="search-clear-btn" onClick={clearSearch}>
-                        ✕
-                    </button>
-                )}
-            </div>
+  return (
+    <main className="search-page">
+      {selectedCategory ? (
+        /* Michaela's Category View */
+        <>
+          <button
+            type="button"
+            className="search-back-button"
+            onClick={() => setSelectedCategory(null)}
+          >
+            ← Back
+          </button>
 
-            {query.trim().length > 0 ? (
-                <section className="suggested-section">
-                    <h2 className="section-title">Suggested Titles</h2>
+          <h1 className="search-results-title">
+            {categoryData[selectedCategory]?.heading}
+          </h1>
 
-                    {searchLoading && <p className="search-status-msg">Searching for books...</p>}
-                    {searchError && <p className="search-status-msg">{searchError}</p>}
+          {loadingCategoryBooks && (
+            <p className="search-results-message">Loading book covers...</p>
+          )}
 
-                    <div className="suggested-list">
-                        {searchResults.map((book, idx) => (
-                            <div
-                                key={book.bookId || idx}
-                                className="suggested-card"
-                                onClick={() => onSelectBook?.(book)}
-                            >
-                                {book.coverUrl ? (
-                                    <img src={book.coverUrl} alt={book.title} className="suggested-cover" />
-                                ) : (
-                                    <div className="suggested-no-cover">{book.title}</div>
-                                )}
-                                <div className="suggested-info">
-                                    <h3 className="suggested-title">{book.title}</h3>
-                                    <p className="suggested-author">by {book.author || "Unknown"}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            ) : (
-                <>
-                    <section className="top-searches-section">
-                        <h2 className="section-title">Top Searches</h2>
-                        <div className="top-searches-row">
-                            {TOP_SEARCHES.map((book) => (
-                                <div
-                                    key={book.id}
-                                    className="top-search-card"
-                                    onClick={() => onSelectBook?.(book)}
-                                >
-                                    <img src={book.coverUrl} alt={book.title} className="top-search-cover" />
-                                </div>
-                            ))}
-                        </div>
-                    </section>
+          {bookRows.map((row) => (
+            <BookRow key={row.title} title={row.title} books={row.books} />
+          ))}
+        </>
+      ) : (
+        /* Main Search Landing Page */
+        <>
+          <h1 className="search-logo">LooseLeaf</h1>
 
-                    <section className="categories-grid">
-                        {CATEGORIES.map((cat) => (
-                            <button
-                                key={cat}
-                                type="button"
-                                className="category-btn"
-                                onClick={() => {
-                                    setQuery(cat);
-                                    handleSearchInput({ target: { value: cat } });
-                                }}
-                            >
-                                {cat}
-                            </button>
-                        ))}
-                    </section>
-                </>
+          {/* Search Bar Component */}
+          <div className="search-bar-container">
+            <span className="search-icon" aria-hidden="true">
+              🔍
+            </span>
+            <input
+              type="search"
+              className="search-input"
+              placeholder="Search for a book title, genre, etc."
+              value={query}
+              onChange={handleSearchInput}
+              aria-label="Search books by title"
+            />
+            {showingSearchResults && (
+              <button
+                type="button"
+                className="search-clear-btn"
+                onClick={clearSearch}
+                aria-label="Clear search"
+              >
+                ✕
+              </button>
             )}
-        </main>
-    );
+          </div>
+
+          {showingSearchResults ? (
+            /* Live Search Results List */
+            <section className="suggested-section" aria-live="polite">
+              <h2 className="section-title">Suggested Titles</h2>
+
+              {searchLoading && (
+                <p className="search-status-msg">Searching for books...</p>
+              )}
+
+              {searchError && (
+                <div className="search-error" role="alert">
+                  <p className="search-status-msg">{searchError}</p>
+                  <button type="button" onClick={() => runSearch({ title: query })}>
+                    Retry
+                  </button>
+                </div>
+              )}
+
+              {!searchLoading && !searchError && searchResults.length === 0 && (
+                <p className="search-status-msg">
+                  No books found for “{query.trim()}”.
+                </p>
+              )}
+
+              <div className="suggested-list">
+                {searchResults.map((book, index) => (
+                  <button
+                    type="button"
+                    key={book.bookId || `${book.title}-${index}`}
+                    className="suggested-card"
+                    onClick={() => onSelectBook?.(book)}
+                  >
+                    <BookCover
+                      book={book}
+                      imageClassName="suggested-cover"
+                      placeholderClassName="suggested-no-cover"
+                    />
+                    <span className="suggested-info">
+                      <span className="suggested-title">
+                        {book.title || "Title unavailable"}
+                      </span>
+                      <span className="suggested-author">
+                        by {book.author || "Unknown author"}
+                      </span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : (
+            /* Default View: Top Searches + Category Grid */
+            <>
+              <section className="top-searches-section">
+                <h2 className="section-title">Top Searches</h2>
+                <div className="top-searches-row">
+                  {(popularSearches.length > 0 ? popularSearches : TOP_SEARCHES).map((book) => (
+                    <button
+                      type="button"
+                      key={book.bookId || book.id || book.title}
+                      className="top-search-card"
+                      onClick={() => onSelectBook?.(book)}
+                      aria-label={`Popular search recommendation: ${book.title}`}
+                    >
+                      <BookCover
+                        book={book}
+                        imageClassName="top-search-cover"
+                        placeholderClassName="top-search-no-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <div className="search-categories">
+                {CATEGORIES.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    className="search-category-button"
+                    onClick={() => setSelectedCategory(category)}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </main>
+  );
 }
