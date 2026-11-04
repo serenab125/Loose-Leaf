@@ -1,21 +1,41 @@
 import { supabase } from "../supabaseClient";
 
 export async function searchBooksByTitle(title) {
-    const { data, error } = await supabase.functions.invoke(
-        "search-books", {
-            body: { query: title },
-        }
-    );
+  const { data, error } = await supabase.functions.invoke(
+    "search-books", {
+    body: { query: title },
+  }
+  );
 
-    if (error) {
-        throw new Error("Book search failed. Please try again.");
+  if (error) {
+    throw new Error("Book search failed. Please try again.");
+  }
+
+  if (data?.error) {
+    throw new Error(data.error);
+  }
+
+  return data?.books ?? [];
+}
+
+export async function searchBooksBySubject(subject) {
+  const { data, error } = await supabase.functions.invoke(
+    "search-books",
+    {
+      body: {
+        query: subject,
+        searchType: "subject",
+      },
     }
+  );
 
-    if (data?.error) {
-        throw new Error(data.error);
-    }
+  if (error || data?.error) {
+    throw new Error(data?.error || "Book subject search failed.");
+  }
 
-    return data?.books ?? [];
+  return (data?.books ?? []).filter(
+    (book) => book.title && book.author && book.coverUrl
+  );
 }
 
 export const DEFAULT_BOOKS = [
@@ -162,9 +182,15 @@ export async function fetchMultiPersonalizedRecommendations(userId) {
 
     if (Array.isArray(prefs.vibe) && prefs.vibe.length > 0) {
       const vibeId = prefs.vibe[0];
+
       if (VIBE_MAP[vibeId]) {
         const { label, search } = VIBE_MAP[vibeId];
-        const books = await searchBooksByTitle(search);
+
+        const subject =
+          vibeId === 'funny' ? 'humorous fiction' : search;
+
+        const books = await searchBooksBySubject(subject);
+
         if (books.length > 0) {
           sections.push({
             title: `Match Your Mood: ${label}`,
@@ -185,6 +211,79 @@ export async function fetchMultiPersonalizedRecommendations(userId) {
           title: `Explore Genre: ${storyGenre}`,
           books,
         });
+      }
+    }
+    // Additional recommendations based on quiz preferences
+    const extraPreferences = [
+      {
+        values: prefs['movies-tv']?.slice(1),
+        map: SHOW_MAP,
+        prefix: 'More Like',
+      },
+      {
+        values: prefs.vibe?.slice(1),
+        map: VIBE_MAP,
+        prefix: 'Another Mood',
+      },
+    ];
+
+    for (const group of extraPreferences) {
+      for (const id of group.values ?? []) {
+        const match = group.map[id];
+        if (!match) continue;
+
+        const books = await searchBooksByTitle(match.search);
+
+        if (books.length > 0) {
+          sections.push({
+            title: `${group.prefix}: ${match.label}`,
+            books,
+          });
+        }
+      }
+    }
+
+    // Generate additional shelves from existing quiz answers
+    const additionalSearches = [];
+
+    const genre = prefs.stories?.find((value) => value !== 'not-sure');
+
+    if (genre) {
+      const genreName = genre.replace(/-/g, ' ');
+      additionalSearches.push({
+        title: `More ${genreName} to Explore`,
+        search: `${genreName} novel`,
+      });
+    }
+
+    const selectedVibe = prefs.vibe?.[0];
+    if (selectedVibe && VIBE_MAP[selectedVibe]) {
+      additionalSearches.push({
+        title: `More ${VIBE_MAP[selectedVibe].label} Reads`,
+        search: `${VIBE_MAP[selectedVibe].search} novel`,
+      });
+    }
+
+    const selectedShow = prefs['movies-tv']?.[0];
+    if (selectedShow && SHOW_MAP[selectedShow]) {
+      additionalSearches.push({
+        title: `If You Loved ${SHOW_MAP[selectedShow].label}`,
+        search: `${SHOW_MAP[selectedShow].search} fiction`,
+      });
+    }
+
+    for (const shelf of additionalSearches) {
+      try {
+        const books = await searchBooksBySubject(shelf.search);
+
+        if (books.length > 0) {
+          sections.push({
+            title: shelf.title,
+            books,
+          });
+        }
+      } catch (error) {
+        console.warn('Could not load additional shelf:', shelf.title, error);
       }
     }
 

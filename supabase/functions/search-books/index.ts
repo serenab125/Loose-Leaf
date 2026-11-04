@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { query } = await req.json();
+    const { query, searchType = "title" } = await req.json();
 
     if (typeof query !== "string" || !query.trim()) {
       return Response.json(
@@ -28,9 +28,9 @@ Deno.serve(async (req) => {
     }
 
     const params = new URLSearchParams({
-      title: query.trim(),
+      [searchType === "subject" ? "subject" : "title"]: query.trim(),
       fields: "key,title,author_name,cover_i",
-      limit: "10",
+      limit: "20",
     });
 
     const response = await fetch(

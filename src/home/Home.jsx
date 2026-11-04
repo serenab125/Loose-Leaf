@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { fetchMultiPersonalizedRecommendations, DEFAULT_BOOKS } from '../services/bookService';
-import styles from './Home.module.css';
+import { fetchMultiPersonalizedRecommendations } from '../services/bookService';
+import { fetchDefaultRecommendationShelves } from '../services/defaultRecommendations';
 import HomeCarousel from './HomeCarousel';
+import styles from './Home.module.css';
 
 export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, onNavigateToSearch, skippedQuiz = false }) {
   const [userShelves, setUserShelves] = useState([]);
@@ -15,16 +16,12 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, onNavigate
         return;
       }
 
-      const shelves = await fetchMultiPersonalizedRecommendations(user.id);
+      const shelves = skippedQuiz
+        ? await fetchDefaultRecommendationShelves()
+        : await fetchMultiPersonalizedRecommendations(user.id);
 
       if (!cancelled) {
-        setUserShelves(
-          shelves.length > 0
-            ? shelves
-            : skippedQuiz
-              ? [{ title: 'Discover Your Next Read', books: DEFAULT_BOOKS }]
-              : []
-        );
+        setUserShelves(shelves);
       }
     }
 
