@@ -51,19 +51,16 @@ async function findBookCover(bookInfo) {
   if (bookInfo.coverUrl) {
     return { ...bookInfo, bookId: bookInfo.title };
   }
-
   const cacheKey = `${bookInfo.title}|${bookInfo.author}`;
   if (coverCache.has(cacheKey)) {
     return coverCache.get(cacheKey);
   }
-
   let book = {
     bookId: bookInfo.title,
     title: bookInfo.title,
     author: bookInfo.author,
     coverUrl: null,
   };
-
   try {
     const results = await searchBooksByTitle(bookInfo.title);
     const exactMatches = results.filter(
@@ -71,10 +68,8 @@ async function findBookCover(bookInfo) {
         normalize(result.title) === normalize(bookInfo.title) &&
         normalize(result.author).includes(normalize(bookInfo.author))
     );
-
     const match =
       exactMatches.find((result) => result.coverUrl) ?? exactMatches[0];
-
     if (match) {
       book = {
         ...book,
@@ -85,11 +80,9 @@ async function findBookCover(bookInfo) {
   } catch (error) {
     console.warn(`Could not load cover for ${bookInfo.title}`, error);
   }
-
   if (book.coverUrl) {
     coverCache.set(cacheKey, book);
   }
-
   return book;
 }
 
@@ -108,16 +101,15 @@ export default function Search({ onSelectBook }) {
   const popularSearchTimer = useRef(null);
   const isMounted = useRef(false);
 
-  // Category view state (Michaela's features)
+  // Category view state
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [bookRows, setBookRows] = useState([]);
   const [loadingCategoryBooks, setLoadingCategoryBooks] = useState(false);
 
-  // Fetch initial popular search terms from Austin's backend service
+  // Load popular search terms from Supabase backend service
   useEffect(() => {
     let active = true;
     isMounted.current = true;
-
     fetchPopularSearchTerms()
       .then((books) => {
         if (active && books && books.length > 0) setPopularSearches(books);
@@ -125,7 +117,6 @@ export default function Search({ onSelectBook }) {
       .catch(() => {
         setPopularSearches(TOP_SEARCHES);
       });
-
     return () => {
       active = false;
       isMounted.current = false;
@@ -137,18 +128,16 @@ export default function Search({ onSelectBook }) {
   const schedulePopularSearchSave = (searchTerm, books) => {
     const recommendation = books.find((book) => book.coverUrl) || books[0];
     if (!recommendation) return;
-
     clearTimeout(popularSearchTimer.current);
     popularSearchTimer.current = setTimeout(async () => {
       try {
         await recordPopularSearchTerm(searchTerm, recommendation);
         const updatedSearches = await fetchPopularSearchTerms();
-
         if (isMounted.current && updatedSearches && updatedSearches.length > 0) {
           setPopularSearches(updatedSearches);
         }
       } catch {
-        // Ignore errors when saving popular searches
+        // Ignore save errors
       }
     }, 500);
   };
@@ -159,21 +148,18 @@ export default function Search({ onSelectBook }) {
     setSearchLoading(true);
     setSearchError("");
     setSearchResults([]);
-
     try {
       const results = category
         ? await searchBooksByCategory(category)
         : await searchBooksByTitle(title);
-
       if (currentRequest !== requestNumber.current) return;
       setSearchResults(results);
-
       if (!category && title.trim() && results.length > 0) {
         schedulePopularSearchSave(title, results);
       }
     } catch {
       if (currentRequest !== requestNumber.current) return;
-      setSearchError("Unable to retrieve book results. Please try again.");
+      setSearchError("Unable to retrieve book results. A general error has occurred.");
     } finally {
       if (currentRequest === requestNumber.current) {
         setSearchLoading(false);
@@ -192,18 +178,18 @@ export default function Search({ onSelectBook }) {
     setSearchResults([]);
     setSearchError("");
 
-    if (!value.trim()) {
+    // Technical Subtask: Term needs to be more than 1 character (length >= 2)
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.length < 2) {
       setSearchLoading(false);
       return;
     }
 
     setSearchLoading(true);
     const pendingRequest = requestNumber.current;
-
-    // Debounce search by 350ms to prevent rapid API requests while typing
     searchTimer.current = setTimeout(() => {
       if (pendingRequest === requestNumber.current) {
-        runSearch({ title: value });
+        runSearch({ title: trimmed });
       }
     }, 350);
   };
@@ -220,21 +206,27 @@ export default function Search({ onSelectBook }) {
     setSearchLoading(false);
   };
 
-  // Load Michaela's category rows & covers
+  // Handle clicking a Top Search card
+  const handleSelectPopularSearch = (book) => {
+    if (book?.title) {
+      setQuery(book.title);
+      runSearch({ title: book.title });
+    } else {
+      onSelectBook?.(book);
+    }
+  };
+
+  // Load category rows & covers
   useEffect(() => {
     const category = categoryData[selectedCategory];
-
     if (!category) {
       setBookRows([]);
       setLoadingCategoryBooks(false);
       return;
     }
-
     let cancelled = false;
-
     async function loadBooks() {
       setLoadingCategoryBooks(true);
-
       setBookRows(
         category.rows.map((row) => ({
           title: row.title,
@@ -245,7 +237,6 @@ export default function Search({ onSelectBook }) {
           })),
         }))
       );
-
       const tasks = category.rows.flatMap((row, rowIndex) =>
         row.books.map((bookInfo, bookIndex) => ({
           bookInfo,
@@ -253,15 +244,12 @@ export default function Search({ onSelectBook }) {
           bookIndex,
         }))
       );
-
       const worker = async () => {
         while (tasks.length > 0 && !cancelled) {
           const task = tasks.shift();
           if (!task) break;
-
           const book = await findBookCover(task.bookInfo);
           if (cancelled) return;
-
           setBookRows((previousRows) =>
             previousRows.map((row, rowIndex) =>
               rowIndex !== task.rowIndex
@@ -276,41 +264,35 @@ export default function Search({ onSelectBook }) {
           );
         }
       };
-
       await Promise.all(Array.from({ length: 4 }, () => worker()));
       if (!cancelled) setLoadingCategoryBooks(false);
     }
-
     loadBooks();
-
     return () => {
       cancelled = true;
     };
   }, [selectedCategory]);
 
-  const showingSearchResults = Boolean(query.trim());
+  const showingSearchResults = Boolean(query.trim() && query.trim().length >= 2);
 
   return (
     <main className="search-page">
       {selectedCategory ? (
-        /* Michaela's Category View */
+        /* Category View */
         <>
           <button
             type="button"
             className="search-back-button"
             onClick={() => setSelectedCategory(null)}
           >
-            ← Back
+            Back
           </button>
-
           <h1 className="search-results-title">
             {categoryData[selectedCategory]?.heading}
           </h1>
-
           {loadingCategoryBooks && (
             <p className="search-results-message">Loading book covers...</p>
           )}
-
           {bookRows.map((row) => (
             <BookRow key={row.title} title={row.title} books={row.books} />
           ))}
@@ -319,7 +301,6 @@ export default function Search({ onSelectBook }) {
         /* Main Search Landing Page */
         <>
           <h1 className="search-logo">LooseLeaf</h1>
-
           {/* Search Bar Component */}
           <div className="search-bar-container">
             <span className="search-icon" aria-hidden="true">
@@ -333,7 +314,7 @@ export default function Search({ onSelectBook }) {
               onChange={handleSearchInput}
               aria-label="Search books by title"
             />
-            {showingSearchResults && (
+            {Boolean(query) && (
               <button
                 type="button"
                 className="search-clear-btn"
@@ -344,16 +325,13 @@ export default function Search({ onSelectBook }) {
               </button>
             )}
           </div>
-
           {showingSearchResults ? (
             /* Live Search Results List */
             <section className="suggested-section" aria-live="polite">
               <h2 className="section-title">Suggested Titles</h2>
-
               {searchLoading && (
                 <p className="search-status-msg">Searching for books...</p>
               )}
-
               {searchError && (
                 <div className="search-error" role="alert">
                   <p className="search-status-msg">{searchError}</p>
@@ -362,13 +340,11 @@ export default function Search({ onSelectBook }) {
                   </button>
                 </div>
               )}
-
               {!searchLoading && !searchError && searchResults.length === 0 && (
                 <p className="search-status-msg">
-                  No books found for “{query.trim()}”.
+                  No books found for "{query.trim()}"
                 </p>
               )}
-
               <div className="suggested-list">
                 {searchResults.map((book, index) => (
                   <button
@@ -405,7 +381,7 @@ export default function Search({ onSelectBook }) {
                       type="button"
                       key={book.bookId || book.id || book.title}
                       className="top-search-card"
-                      onClick={() => onSelectBook?.(book)}
+                      onClick={() => handleSelectPopularSearch(book)}
                       aria-label={`Popular search recommendation: ${book.title}`}
                     >
                       <BookCover
@@ -417,7 +393,6 @@ export default function Search({ onSelectBook }) {
                   ))}
                 </div>
               </section>
-
               <div className="search-categories">
                 {CATEGORIES.map((category) => (
                   <button
