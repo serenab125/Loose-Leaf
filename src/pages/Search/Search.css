@@ -20,7 +20,7 @@
     color: #5a321a;
 }
 
-/* Search Bar Input */
+/* Search Bar Styling */
 .search-bar-container {
     position: relative;
     display: flex;
@@ -71,7 +71,7 @@
     margin: 0 0 16px;
 }
 
-/* Top Searches Horizontal Row */
+/* Top Searches Row */
 .top-searches-section {
     margin-bottom: 28px;
 }
@@ -95,6 +95,9 @@
     overflow: hidden;
     box-shadow: 0 4px 10px rgba(90, 50, 26, 0.1);
     cursor: pointer;
+    padding: 0;
+    border: 0;
+    background: #ebe5d5;
 }
 
 .top-search-cover {
@@ -103,14 +106,28 @@
     object-fit: cover;
 }
 
-/* Categories Grid */
-.categories-grid {
+.top-search-no-cover {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 8px;
+    background-color: #ebe5d5;
+    color: #5a321a;
+    font-size: 11px;
+    text-align: center;
+}
+
+/* Category Grid Buttons */
+.search-categories {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px 12px;
 }
 
-.category-btn {
+.search-category-button {
     height: 56px;
     padding: 12px;
     border-radius: 18px;
@@ -124,12 +141,16 @@
     text-align: center;
 }
 
-.category-btn:nth-child(even) {
+.search-category-button:nth-child(even) {
     background-color: #fcece9;
     border-color: #f6dbd6;
 }
 
-/* Suggested Titles Cards View */
+.search-category-button:hover {
+    filter: brightness(0.97);
+}
+
+/* Suggested Titles Live List View */
 .suggested-section {
     display: flex;
     flex-direction: column;
@@ -157,6 +178,10 @@
     padding: 12px 16px;
     cursor: pointer;
     transition: transform 0.15s ease;
+    width: 100%;
+    font: inherit;
+    color: inherit;
+    text-align: left;
 }
 
 .suggested-card:active {
@@ -204,4 +229,89 @@
     font-size: 13px;
     color: #8c7365;
     margin: 0;
+}
+
+/* Category Detail View (Michaela's Horizontal Rows) */
+.search-page:has(.search-back-button) {
+    padding-top: 16px;
+}
+
+.search-back-button {
+    background: none;
+    border: none;
+    color: #b59b88;
+    font-size: 14px;
+    padding: 4px 0;
+    margin-bottom: 10px;
+    cursor: pointer;
+    display: block;
+    text-align: left;
+}
+
+.search-results-title {
+    font-family: 'Georgia', serif;
+    font-size: 28px;
+    font-style: italic;
+    color: #5a321a;
+    text-align: center;
+    margin: 0 0 18px;
+}
+
+.search-results-message {
+    color: #a48d7c;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.search-book-section {
+    margin-top: 22px;
+}
+
+.search-book-section-title {
+    font-family: 'Georgia', serif;
+    font-size: 19px;
+    font-weight: normal;
+    color: #5a321a;
+    text-align: left;
+    margin: 0 0 12px;
+}
+
+.search-book-row {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 2px 0 12px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.search-book-row::-webkit-scrollbar {
+    display: none;
+}
+
+.search-book-item {
+    flex: 0 0 105px;
+    height: 155px;
+    border-radius: 14px;
+    overflow: hidden;
+    background-color: #f5f3e9;
+    box-shadow: 0 3px 6px rgba(60, 35, 20, 0.12);
+}
+
+.search-book-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.search-book-no-cover {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 12px;
+    color: #5a321a;
 }
