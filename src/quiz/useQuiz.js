@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   TASTE_SECTIONS,
   GOAL_SECTIONS,
@@ -11,12 +11,47 @@ export function useQuiz() {
   // 1 = reading taste
   // 2 = reading goals
   // 3 = loading / complete
-  const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState({});
+  const [currentStep, setCurrentStep] = useState(() => {
+    try {
+      const savedStep = Number(localStorage.getItem('looseleaf_quiz_step'));
+      return savedStep === 1 || savedStep === 2 ? savedStep : 0;
+    } catch {
+      return 0;
+    }
+  });
+  const [answers, setAnswers] = useState(() => {
+    try {
+      const savedAnswers = localStorage.getItem('looseleaf_quiz_answers');
+      return savedAnswers ? JSON.parse(savedAnswers) : {};
+    } catch (error) {
+      console.warn('Could not restore quiz answers:', error);
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    if (Object.keys(answers).length > 0) {
+      localStorage.setItem('looseleaf_quiz_answers', JSON.stringify(answers));
+    }
+  }, [answers]);
+
+  useEffect(() => {
+    if (currentStep === 1 || currentStep === 2) {
+      localStorage.setItem('looseleaf_quiz_step', String(currentStep));
+    }
+  }, [currentStep]);
 
   const goToIntro = useCallback(() => {
     setCurrentStep(0);
+  }, []);
+
+  const startOver = useCallback(() => {
+    localStorage.removeItem('looseleaf_quiz_answers');
+    localStorage.removeItem('looseleaf_quiz_step');
+  
     setAnswers({});
+    setCurrentStep(0);
+    window.scrollTo(0, 0);
   }, []);
 
   const answerQuestion = useCallback((sectionId, selectedIds) => {
@@ -96,21 +131,16 @@ export function useQuiz() {
     ((tasteAnsweredCount + goalAnsweredCount) / totalQuestions) * 100
   );
 
-  const restoreProgress = useCallback(({ step, answers: answersToRestore }) => {
-    setCurrentStep(step);
-    setAnswers({ ...answersToRestore });
-  }, []);
-
   return {
     currentStep,
     answers,
     answerQuestion,
     goToIntro,
+    startOver,
     goToNext,
     goToGoals,
     goBackToTaste,
     completeQuiz,
-    restoreProgress,
     isIntro,
     isTaste,
     isGoals,

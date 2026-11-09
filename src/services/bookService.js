@@ -1,195 +1,87 @@
-import { supabase } from '../supabaseClient';
+import { supabase } from "../supabaseClient";
 
-async function requestBookSearch(body) {
-  const { data, error } = await supabase.functions.invoke('search-books', {
-    body,
-  });
+export async function searchBooksByTitle(title) {
+  const { data, error } = await supabase.functions.invoke(
+    "search-books", {
+    body: { query: title },
+  }
+  );
 
   if (error) {
-    throw new Error(data?.error || error.message || 'Book search failed.');
+    throw new Error("Book search failed. Please try again.");
   }
 
   if (data?.error) {
     throw new Error(data.error);
   }
 
-  return Array.isArray(data?.books) ? data.books : [];
+  return data?.books ?? [];
 }
 
-export function searchBooks(query, searchType = 'all') {
-  const cleanQuery = typeof query === 'string' ? query.trim() : '';
+export async function searchBooksBySubject(subject) {
+  const { data, error } = await supabase.functions.invoke(
+    "search-books",
+    {
+      body: {
+        query: subject,
+        searchType: "subject",
+      },
+    }
+  );
 
-  if (!cleanQuery) {
-    return Promise.resolve([]);
+  if (error || data?.error) {
+    throw new Error(data?.error || "Book subject search failed.");
   }
 
-  const allowedSearchTypes = ['all', 'title', 'author', 'genre', 'isbn'];
-  if (!allowedSearchTypes.includes(searchType)) {
-    return Promise.reject(new Error('Book search type is not supported.'));
-  }
-
-  return requestBookSearch({ query: cleanQuery, searchType });
+  return (data?.books ?? []).filter(
+    (book) => book.title && book.author && book.coverUrl
+  );
 }
 
-export function searchBooksByTitle(title) {
-  const cleanTitle = typeof title === 'string' ? title.trim() : '';
+export async function fetchTrendingBooks() {
+  const response = await fetch(
+    "https://openlibrary.org/trending/daily.json?limit=20"
+  );
 
-  if (!cleanTitle) {
-    return Promise.resolve([]);
+  if (!response.ok) {
+    throw new Error("Failed to load trending books.");
   }
 
-  return requestBookSearch({ query: cleanTitle });
-}
+  const data = await response.json();
 
-export function searchBooksByCategory(category) {
-  if (typeof category !== 'string' || !category) {
-    return Promise.reject(new Error('Choose a search category.'));
-  }
-
-  return requestBookSearch({ category });
-}
-
-/**
- * Record one settled, successful search for an authenticated user.
- * The database stores search terms.
- */
-export async function recordPopularSearchTerm(searchTerm, book) {
-  if (typeof searchTerm !== 'string' || !searchTerm.trim() || !book?.title) {
-    return;
-  }
-
-  const { error } = await supabase.rpc('record_popular_search_term', {
-    p_search_term: searchTerm.trim(),
-    p_book_id: String(book.bookId || book.title).slice(0, 100),
-    p_title: String(book.title).slice(0, 500),
-    p_author: book.author ? String(book.author).slice(0, 600) : null,
-    p_cover_url: book.coverUrl || null,
-  });
-  if (error) throw error;
-}
-
-export async function fetchPopularSearchTerms(limit = 8) {
-  const { data, error } = await supabase.rpc('get_popular_search_terms', {
-    p_limit: limit,
-  });
-
-  if (error) throw error;
-
-  const seenBookIds = new Set();
-  return (Array.isArray(data) ? data : []).reduce((books, row) => {
-    if (seenBookIds.has(row.book_id)) return books;
-    seenBookIds.add(row.book_id);
-
-    books.push({
-      bookId: row.book_id,
-      title: row.title,
-      author: row.author,
-      coverUrl: row.cover_url,
-      searchCount: row.search_count,
-    });
-    return books;
-  }, []);
+  return (data.works ?? [])
+    .filter((book) => book.title && book.author_name?.length && book.cover_i)
+    .slice(0, 10)
+    .map((book) => ({
+      bookId: book.key.split("/").pop(),
+      title: book.title,
+      author: book.author_name.join(", "),
+      coverUrl: `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg?default=false`,
+    }));
 }
 
 export const DEFAULT_BOOKS = [
   {
     bookId: '1',
-    id: '1',
     title: 'The Great Gatsby',
     author: 'F. Scott Fitzgerald',
-    cover: 'https://covers.openlibrary.org/b/id/8311267-L.jpg',
     coverUrl: 'https://covers.openlibrary.org/b/id/8311267-L.jpg',
   },
   {
     bookId: '2',
-    id: '2',
     title: 'The Hunger Games',
     author: 'Suzanne Collins',
-    cover: 'https://covers.openlibrary.org/b/id/13254928-L.jpg',
     coverUrl: 'https://covers.openlibrary.org/b/id/13254928-L.jpg',
   },
   {
     bookId: '3',
-    id: '3',
     title: 'The Hobbit',
     author: 'J.R.R. Tolkien',
-    cover: 'https://covers.openlibrary.org/b/id/8406786-L.jpg',
     coverUrl: 'https://covers.openlibrary.org/b/id/8406786-L.jpg',
   },
 ];
 
-export const POPULAR_BOOKTOK_BOOKS = [
-  {
-    id: "it-ends-with-us",
-    title: "It Ends with Us",
-    author: "Colleen Hoover",
-    cover: "https://covers.openlibrary.org/b/id/12818862-L.jpg?default=false",
-    coverUrl: "https://covers.openlibrary.org/b/id/12818862-L.jpg?default=false",
-  },
-  {
-    id: "evelyn-hugo",
-    title: "The Seven Husbands of Evelyn Hugo",
-    author: "Taylor Jenkins Reid",
-    cover: "https://covers.openlibrary.org/b/id/10521270-L.jpg?default=false",
-    coverUrl: "https://covers.openlibrary.org/b/id/10521270-L.jpg?default=false",
-  },
-  {
-    id: "fourth-wing",
-    title: "Fourth Wing",
-    author: "Rebecca Yarros",
-    cover: "https://covers.openlibrary.org/b/id/14589201-L.jpg?default=false",
-    coverUrl: "https://covers.openlibrary.org/b/id/14589201-L.jpg?default=false",
-  },
-];
-
-export const RECOMMENDED_FOR_YOU = [
-  {
-    id: "acotar",
-    title: "A Court of Thorns and Roses",
-    author: "Sarah J. Maas",
-    cover: "https://covers.openlibrary.org/b/id/12818862-L.jpg?default=false",
-    coverUrl: "https://covers.openlibrary.org/b/id/12818862-L.jpg?default=false",
-  },
-  {
-    id: "project-hail-mary",
-    title: "Project Hail Mary",
-    author: "Andy Weir",
-    cover: "https://covers.openlibrary.org/b/id/10521270-L.jpg?default=false",
-    coverUrl: "https://covers.openlibrary.org/b/id/10521270-L.jpg?default=false",
-  },
-  {
-    id: "silent-patient",
-    title: "The Silent Patient",
-    author: "Alex Michaelides",
-    cover: "https://covers.openlibrary.org/b/id/14589201-L.jpg?default=false",
-    coverUrl: "https://covers.openlibrary.org/b/id/14589201-L.jpg?default=false",
-  },
-];
-
-export const SHORT_EASY_READS = [
-  {
-    id: "every-heart",
-    title: "Every Heart a Doorway",
-    author: "Seanan McGuire",
-    cover: "https://covers.openlibrary.org/b/id/8311267-L.jpg",
-    coverUrl: "https://covers.openlibrary.org/b/id/8311267-L.jpg",
-  },
-  {
-    id: "giver",
-    title: "The Giver",
-    author: "Lois Lowry",
-    cover: "https://covers.openlibrary.org/b/id/13254928-L.jpg",
-    coverUrl: "https://covers.openlibrary.org/b/id/13254928-L.jpg",
-  },
-  {
-    id: "outsiders",
-    title: "The Outsiders",
-    author: "S. E. Hinton",
-    cover: "https://covers.openlibrary.org/b/id/8406786-L.jpg",
-    coverUrl: "https://covers.openlibrary.org/b/id/8406786-L.jpg",
-  },
-];
-
+// Mapping for specific TV shows / Movies from quiz option IDs to Open Library search keywords and display labels
 const SHOW_MAP = {
   'walking-dead': { label: 'The Walking Dead', search: 'World War Z' },
   'stranger-things': { label: 'Stranger Things', search: 'Stranger Things' },
@@ -204,6 +96,7 @@ const SHOW_MAP = {
   'maze-runner': { label: 'The Maze Runner', search: 'Maze Runner' },
 };
 
+// Mapping for Moods/Vibes from quiz option IDs
 const VIBE_MAP = {
   cozy: { label: 'Cozy & Comforting', search: 'Cozy Mystery' },
   funny: { label: 'Funny & Light', search: 'Humorous Fiction' },
@@ -232,6 +125,7 @@ export async function fetchPersonalizedRecommendations(userId) {
 
     const prefs = profile.reading_preferences;
 
+    // 1. Check if user picked favorite Movies/TV Shows (Priority 1 in Figma design)
     if (Array.isArray(prefs['movies-tv']) && prefs['movies-tv'].length > 0) {
       const showId = prefs['movies-tv'][0];
       if (SHOW_MAP[showId]) {
@@ -244,6 +138,7 @@ export async function fetchPersonalizedRecommendations(userId) {
       }
     }
 
+    // 2. Check if user picked a Vibe (Priority 2 in Figma design)
     if (Array.isArray(prefs.vibe) && prefs.vibe.length > 0) {
       const vibeId = prefs.vibe[0];
       if (VIBE_MAP[vibeId]) {
@@ -256,6 +151,7 @@ export async function fetchPersonalizedRecommendations(userId) {
       }
     }
 
+    // 3. Check if user picked specific Story types/genres (Priority 3)
     if (Array.isArray(prefs.stories) && prefs.stories.length > 0 && prefs.stories[0] !== 'not-sure') {
       const storyGenre = prefs.stories[0]
         .replace(/-/g, ' ')
@@ -268,6 +164,7 @@ export async function fetchPersonalizedRecommendations(userId) {
       };
     }
 
+    // 4. Default Fallback
     return { category: 'Popular Reads', books: DEFAULT_BOOKS };
   } catch (err) {
     console.error('Failed to fetch personalized recommendations:', err);
@@ -276,20 +173,145 @@ export async function fetchPersonalizedRecommendations(userId) {
 }
 
 export async function fetchMultiPersonalizedRecommendations(userId) {
+  const sections = [];
+
   try {
-    const singleRec = await fetchPersonalizedRecommendations(userId);
-    return [
+    if (!userId) return sections;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('reading_preferences')
+      .eq('id', userId)
+      .single();
+
+    if (!profile?.reading_preferences) return sections;
+
+    const prefs = profile.reading_preferences;
+
+    if (Array.isArray(prefs['movies-tv']) && prefs['movies-tv'].length > 0) {
+      const showId = prefs['movies-tv'][0];
+      if (SHOW_MAP[showId]) {
+        const { label, search } = SHOW_MAP[showId];
+        const books = await searchBooksByTitle(search);
+        if (books.length > 0) {
+          sections.push({
+            title: `Because You Like: ${label}`,
+            books,
+          });
+        }
+      }
+    }
+
+    if (Array.isArray(prefs.vibe) && prefs.vibe.length > 0) {
+      const vibeId = prefs.vibe[0];
+
+      if (VIBE_MAP[vibeId]) {
+        const { label, search } = VIBE_MAP[vibeId];
+
+        const subject =
+          vibeId === 'funny' ? 'humorous fiction' : search;
+
+        const books = await searchBooksBySubject(subject);
+
+        if (books.length > 0) {
+          sections.push({
+            title: `Match Your Mood: ${label}`,
+            books,
+          });
+        }
+      }
+    }
+
+    if (Array.isArray(prefs.stories) && prefs.stories.length > 0 && prefs.stories[0] !== 'not-sure') {
+      const storyGenre = prefs.stories[0]
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+
+      const books = await searchBooksByTitle(storyGenre);
+      if (books.length > 0) {
+        sections.push({
+          title: `Explore Genre: ${storyGenre}`,
+          books,
+        });
+      }
+    }
+    // Additional recommendations based on quiz preferences
+    const extraPreferences = [
       {
-        title: singleRec.category,
-        books: singleRec.books,
+        values: prefs['movies-tv']?.slice(1),
+        map: SHOW_MAP,
+        prefix: 'More Like',
+      },
+      {
+        values: prefs.vibe?.slice(1),
+        map: VIBE_MAP,
+        prefix: 'Another Mood',
       },
     ];
-  } catch {
-    return [
-      {
-        title: 'Popular Reads',
-        books: DEFAULT_BOOKS,
-      },
-    ];
+
+    for (const group of extraPreferences) {
+      for (const id of group.values ?? []) {
+        const match = group.map[id];
+        if (!match) continue;
+
+        const books = await searchBooksByTitle(match.search);
+
+        if (books.length > 0) {
+          sections.push({
+            title: `${group.prefix}: ${match.label}`,
+            books,
+          });
+        }
+      }
+    }
+
+    // Generate additional shelves from existing quiz answers
+    const additionalSearches = [];
+
+    const genre = prefs.stories?.find((value) => value !== 'not-sure');
+
+    if (genre) {
+      const genreName = genre.replace(/-/g, ' ');
+      additionalSearches.push({
+        title: `More ${genreName} to Explore`,
+        search: `${genreName} novel`,
+      });
+    }
+
+    const selectedVibe = prefs.vibe?.[0];
+    if (selectedVibe && VIBE_MAP[selectedVibe]) {
+      additionalSearches.push({
+        title: `More ${VIBE_MAP[selectedVibe].label} Reads`,
+        search: `${VIBE_MAP[selectedVibe].search} novel`,
+      });
+    }
+
+    const selectedShow = prefs['movies-tv']?.[0];
+    if (selectedShow && SHOW_MAP[selectedShow]) {
+      additionalSearches.push({
+        title: `If You Loved ${SHOW_MAP[selectedShow].label}`,
+        search: `${SHOW_MAP[selectedShow].search} fiction`,
+      });
+    }
+
+    for (const shelf of additionalSearches) {
+      try {
+        const books = await searchBooksBySubject(shelf.search);
+
+        if (books.length > 0) {
+          sections.push({
+            title: shelf.title,
+            books,
+          });
+        }
+      } catch (error) {
+        console.warn('Could not load additional shelf:', shelf.title, error);
+      }
+    }
+
+    return sections;
+  } catch (err) {
+    console.error('Failed to fetch multi-recommendations:', err);
+    return [];
   }
 }
