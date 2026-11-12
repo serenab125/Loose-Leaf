@@ -1,55 +1,82 @@
-import './App.css';
-import { useState } from 'react';
-import { useAuth } from './account/useAuth';
-import { CreateAccount } from './account/CreateAccount';
-import ForgotPassword from './account/ForgotPassword';
-import ResetPassword from './account/ResetPassword';
-import { Login } from './account/Login';
-import { Quiz } from './quiz/Quiz';
-import { Home } from './home/Home';
-import Search from './pages/Search/Search';
+import './App.css'
+import { useEffect, useState } from 'react'
+import { useAuth } from './account/useAuth'
+import { CreateAccount } from './account/CreateAccount'
+import ForgotPassword from './account/ForgotPassword'
+import ResetPassword from './account/ResetPassword'
+import { Login } from './account/Login'
+import { Quiz } from './quiz/Quiz'
+import Search from './pages/Search/Search'
+import { Home } from './home/Home'
+import { Profile } from './pages/Profile/Profile'
+import { supabase } from './supabaseClient'
 
 function App() {
-  const [rememberMe, setRememberMe] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('looseleaf_remember_me') === 'true';
+  const { user, logout, loading, savePreferences } = useAuth()
+  const [checkingQuiz, setCheckingQuiz] = useState(true)
+  const [view, setView] = useState(() =>
+    window.location.pathname === '/reset-password' ? 'reset' : 'login') // Possible views: 'login', 'create', 'forgot', 'reset'
+  useEffect(() => {
+    if (loading) return;
+
+    if (!user?.id) {
+      setCheckingQuiz(false);
+      return;
     }
-    return false;
-  });
 
-  const { user, login, logout, loading, savePreferences } = useAuth(rememberMe);
+    let cancelled = false;
+    setCheckingQuiz(true);
 
-  const [currentBook, setCurrentBook] = useState(null);
-  const [view, setView] = useState(() => {
-    if (typeof window !== 'undefined' && window.location.pathname === '/reset-password') {
-      return 'reset';
+    async function checkQuizHistory() {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('reading_preferences')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error('Could not check quiz history:', error);
+        setCheckingQuiz(false);
+        return;
+      }
+
+      const completedQuiz =
+        data?.reading_preferences &&
+        Object.keys(data.reading_preferences).length > 0;
+
+      const skippedQuiz =
+        localStorage.getItem(`looseleaf_quiz_skipped_${user.id}`) === 'true';
+
+        const savedQuizStep = localStorage.getItem('looseleaf_quiz_step');
+
+        const hasUnfinishedQuiz =
+          savedQuizStep === '1' || savedQuizStep === '2';
+        
+        setView(
+          hasUnfinishedQuiz
+            ? 'quiz'
+            : completedQuiz || skippedQuiz
+              ? 'home'
+              : 'quiz'
+        );
+      setCheckingQuiz(false);
     }
-    return 'login';
-  });
 
-  const [isQuizCompleted, setIsQuizCompleted] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('looseleaf_quiz_completed') === 'true';
-    }
-    return false;
-  });
+    checkQuizHistory();
 
-  const [activePage, setActivePage] = useState('home');
-  const [skipQuiz] = useState(false);
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, loading]);
 
-  const handleRememberMeChange = (checked) => {
-    setRememberMe(checked);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('looseleaf_remember_me', String(checked));
-    }
-  };
-
-  if (loading) {
+  if (loading || (user && checkingQuiz && view !== 'reset')) {
     return (
       <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#fdf8f3' }}>
         <p style={{ color: '#5b3113', fontFamily: 'Georgia, serif' }}>Loading LooseLeaf...</p>
       </main>
-    );
+    )
   }
 
   if (view === 'reset') {
@@ -57,7 +84,7 @@ function App() {
       <main>
         <ResetPassword />
       </main>
-    );
+    )
   }
 
   if (!user) {
@@ -65,113 +92,108 @@ function App() {
       <main>
         {view === 'create' ? (
           <CreateAccount onNavigateToLogin={() => setView('login')} />
-        ) : view === 'forgot' ? (
+        ) : view === 'forgot' ? ( //Forgot password fucntion
           <ForgotPassword onNavigateToLogin={() => setView('login')} />
         ) : (
           <Login
             onNavigateToCreateAccount={() => setView('create')}
-            onNavigateToForgotPassword={() => setView('forgot')}
-            rememberMe={rememberMe}
-            setRememberMe={handleRememberMeChange}
-            onSuccess={() => setView('home')}
-            signIn={login}
-            loading={loading}
-          />
+            onNavigateToForgotPassword={() => setView('forgot')} />
         )}
       </main>
-    );
-  }
-
-  const handleQuizComplete = async (quizAnswers) => {
-    try {
-      if (savePreferences) await savePreferences(quizAnswers);
-    } catch (err) {
-      console.error('Error saving quiz results:', err);
-    } finally {
-      setIsQuizCompleted(true);
-      localStorage.setItem('looseleaf_quiz_completed', 'true');
-    }
-  };
-
-  const handleQuizSkip = async () => {
-    setIsQuizCompleted(true);
-    localStorage.setItem('looseleaf_quiz_completed', 'true');
-  };
-
-  if (!isQuizCompleted) {
-    return (
-      <main>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '12px 20px',
-            background: '#fdf8f3',
-            fontSize: '12px',
-            fontWeight: '400',
-            color: '#b69b8d',
-          }}
-        >
-          <span>
-            Welcome, {user.user_metadata?.full_name?.split(' ')[0] || user.email}!
-          </span>
-          <button
-            type="button"
-            onClick={logout}
-            style={{
-              padding: 0,
-              border: 'none',
-              background: 'transparent',
-              color: '#b69b8d',
-              fontSize: '12px',
-              fontWeight: '400',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-            }}
-          >
-            Sign out
-          </button>
-        </div>
-        <Quiz user={user} onSkip={handleQuizSkip} onComplete={handleQuizComplete} />
-      </main>
-    );
+    )
   }
 
   return (
     <main>
-      {activePage === 'search' ? (
-        <>
-          <button
-            type="button"
-            onClick={() => setActivePage('home')}
-            style={{
-              margin: '16px',
-              padding: '10px 16px',
-              cursor: 'pointer',
+
+      <div className="app-content">
+        {view === 'home' ? (
+          <Home
+            user={user}
+            skippedQuiz={localStorage.getItem(`looseleaf_quiz_skipped_${user.id}`) === 'true'}
+            onRetakeQuiz={() => {
+              localStorage.setItem('looseleaf_quiz_step', '0')
+              setView('quiz')
             }}
-          >
-            Back to Home
-          </button>
-          <Search onSelectBook={(book) => setCurrentBook(book)} />
-        </>
-      ) : (
-        <Home
-          user={user}
-          logout={logout}
-          currentBook={currentBook}
-          onRetakeQuiz={() => {
-            setActivePage('home');
-            setIsQuizCompleted(false);
-          }}
-          onNavigateToSearch={() => setActivePage('search')}
-          onSelectBook={(book) => setCurrentBook(book)}
-          skipQuiz={skipQuiz}
-        />
-      )}
+            onNavigateToSearch={() => setView('search')}
+          />
+        ) : view === 'search' ? (
+          <Search />
+        ) : view === 'profile' ? (
+          <Profile user={user} logout={logout} />
+        ) : (
+          <Quiz
+  user={user}
+  onBackToHome={() => setView('home')}
+  onSkip={() => {
+              localStorage.setItem(`looseleaf_quiz_skipped_${user.id}`, 'true')
+              setView('home')
+            }}
+            onComplete={async (answers) => {
+              try {
+                localStorage.removeItem(`looseleaf_quiz_skipped_${user.id}`)
+                if (savePreferences) {
+                  await savePreferences(answers)
+                }
+              } catch (error) {
+                console.error('Could not save quiz preferences:', error)
+              } finally {
+                setView('home')
+              }
+            }}
+          />
+        )}
+
+        {view !== 'quiz' && (
+          <nav className="bottom-nav" aria-label="Main navigation">
+            <button
+              type="button"
+              className={view === 'home' ? 'active' : ''}
+              onClick={() => setView('home')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              <span>Home</span>
+            </button>
+
+            <button type="button" disabled aria-label="Timer coming soon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span>Timer</span>
+            </button>
+
+            <button
+              type="button"
+              className={view === 'search' ? 'active' : ''}
+              onClick={() => setView('search')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <span>Search</span>
+            </button>
+
+            <button
+              type="button"
+              className={view === 'profile' ? 'active' : ''}
+              onClick={() => setView('profile')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span>Profile</span>
+            </button>
+          </nav>
+        )}
+      </div>
     </main>
-  );
+  )
 }
 
-export default App;
+export default App
