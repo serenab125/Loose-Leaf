@@ -7,52 +7,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Missing Supabase environment variables...');
 }
 
-/**
- * Returns a Supabase auth client configured with the requested session persistence.
- *
- * `persistSession = true`  -> the session is saved to localStorage, so a signed-in user
- *                           stays signed in after the browser is closed and reopened.
- *                           ("Remember me" on)
- * `persistSession = false` -> the session lives only in memory and is cleared when the
- *                           tab closes, so the user signs out again on their next visit.
- *                           ("Remember me" off)
- */
-const clients = new Map();
-
-export function supabaseFor(persistSession = true) {
-  if (!clients.has(persistSession)) {
-    clients.set(
-      persistSession,
-      createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-          persistSession,
-          storage: persistSession ? window.localStorage : memoryStorage(),
-          autoRefreshToken: persistSession,
-          detectSessionInUrl: true,
-          flowType: 'pkce',
-        },
-      })
-    );
-  }
-  return clients.get(persistSession);
-}
-
-function memoryStorage() {
-  const store = new Map();
-  return {
-    getItem: (k) => (store.has(k) ? store.get(k) : null),
-    setItem: (k, v) => store.set(k, v),
-    removeItem: (k) => store.delete(k),
-  };
-}
-
-export async function signOutEverywhere() {
-  await Promise.all(
-    Array.from(clients.values()).map((c) =>
-      c.auth.signOut({ scope: 'local' }).catch(() => {})
-    )
-  );
-}
-
-// Default client: "Remember me" is on (the session survives browser restarts).
-export const supabase = supabaseFor(true);
+// One persistent client (Remember me ON), one ephemeral (OFF).
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { persistSession: true, storage: localStorage, autoRefreshToken: true },
+});

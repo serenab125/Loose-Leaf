@@ -45,6 +45,9 @@ export function useQuiz() {
   const tasteAnsweredCount = TASTE_SECTIONS.filter(hasAnswer).length;
   const goalAnsweredCount = GOAL_SECTIONS.filter(hasAnswer).length;
 
+  // Remaining taste questions to answer
+  const remainingAnswers = TASTE_SECTIONS.length - tasteAnsweredCount;
+
   const canContinue = tasteAnsweredCount >= MIN_TASTE_ANSWERS;
 
   const goToGoals = useCallback(() => {

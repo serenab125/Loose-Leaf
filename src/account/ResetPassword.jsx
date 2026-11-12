@@ -1,10 +1,10 @@
+// ResetPassword.jsx
 import { useState } from 'react';
 import { useAuth } from './useAuth';
-import { signOutEverywhere } from '../supabaseClient';
 import styles from './Login.module.css';
 
 export default function ResetPassword() {
-  const { updatePassword, loading } = useAuth(true);
+  const { updatePassword, logout, loading } = useAuth(true);
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,7 +21,6 @@ export default function ResetPassword() {
       setError('Passwords do not match.');
       return;
     }
-
     if (password.length < 6) {
       setError('Password must be at least 6 characters long.');
       return;
@@ -29,15 +28,15 @@ export default function ResetPassword() {
 
     try {
       await updatePassword(password, confirmPassword);
-
       setSuccess(
         'Password updated successfully! You can now sign in with your new password.'
       );
-
       setPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setError(err.message || 'Unable to update password. Please try again.');
+      setError(
+        err.message || 'Unable to update password. Please try again.'
+      );
     }
   };
 
@@ -45,10 +44,13 @@ export default function ResetPassword() {
     setIsReturning(true);
     setError('');
     try {
-      await signOutEverywhere();
+      // logout() also clears the manually-persisted "Remember me" session.
+      await logout();
       window.location.assign('/');
     } catch (err) {
-      setError(err.message || 'Unable to return to sign in. Please try again.');
+      setError(
+        err.message || 'Unable to return to sign in. Please try again.'
+      );
       setIsReturning(false);
     }
   };
@@ -61,10 +63,21 @@ export default function ResetPassword() {
 
         {success ? (
           <div className={styles.form}>
-            <p className={styles.status} role="status">{success}</p>
+            <p
+              role="status"
+              style={{
+                textAlign: 'center',
+                color: '#5b3113',
+                lineHeight: '1.6',
+              }}
+            >
+              {success}
+            </p>
 
             {error && (
-              <p className={styles.error} role="alert">{error}</p>
+              <p className={styles.error} role="alert">
+                {error}
+              </p>
             )}
 
             <button
@@ -73,16 +86,16 @@ export default function ResetPassword() {
               onClick={handleReturnToLogin}
               disabled={isReturning}
             >
-              {isReturning
-                ? 'Returning...'
-                : 'Return to Sign In'}
+              {isReturning ? 'Returning...' : 'Return to Sign In'}
             </button>
           </div>
         ) : (
           <>
             <form className={styles.form} onSubmit={handleSubmit}>
               <div className={styles.fieldGroup}>
-                <label htmlFor="new-password">NEW PASSWORD</label>
+                <label className={styles.label} htmlFor="new-password">
+                  NEW PASSWORD
+                </label>
                 <input
                   id="new-password"
                   className={styles.input}
@@ -96,7 +109,12 @@ export default function ResetPassword() {
               </div>
 
               <div className={styles.fieldGroup}>
-                <label htmlFor="confirm-new-password">CONFIRM NEW PASSWORD</label>
+                <label
+                  className={styles.label}
+                  htmlFor="confirm-new-password"
+                >
+                  CONFIRM NEW PASSWORD
+                </label>
                 <input
                   id="confirm-new-password"
                   className={styles.input}
@@ -109,7 +127,9 @@ export default function ResetPassword() {
               </div>
 
               {error && (
-                <p className={styles.error} role="alert">{error}</p>
+                <p className={styles.error} role="alert">
+                  {error}
+                </p>
               )}
 
               <button
@@ -117,9 +137,7 @@ export default function ResetPassword() {
                 className={styles.buttonPrimary}
                 disabled={loading}
               >
-                {loading
-                  ? 'Updating Password...'
-                  : 'Update Password'}
+                {loading ? 'Updating Password...' : 'Update Password'}
               </button>
             </form>
 

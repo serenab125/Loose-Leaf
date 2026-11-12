@@ -291,3 +291,253 @@
   text-align: center;
   cursor: pointer;
 }
+
+/* Shelf Management Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(91, 49, 19, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modalContent {
+  background: #fdf8f3;
+  border-radius: 20px;
+  padding: 24px;
+  width: 100%;
+  max-width: 393px;
+  max-height: 852px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.modalTitle {
+  font-family: 'Georgia', serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: #5b3113;
+  margin: 0 0 16px 0;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.shelvesView {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 30px;
+}
+
+.shelvesPageTitle {
+  font-family: 'Georgia', serif;
+  font-size: 24px;
+  font-weight: 500;
+  color: #5b3113;
+  margin: 0 0 8px 0;
+}
+
+.shelvesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shelfCard {
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.shelfHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.shelfName {
+  font-family: 'Georgia', serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: #5b3113;
+  margin: 0;
+  cursor: pointer;
+  flex: 1;
+  text-align: left;
+}
+
+.shelfActions {
+  display: flex;
+  gap: 8px;
+}
+
+.shelfActionBtn {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #5b3113;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.shelfActionBtn:hover {
+  background: #ede8e0;
+}
+
+.shelfDescription {
+  font-size: 13px;
+  color: #8c7365;
+  margin: 8px 0;
+  line-height: 1.4;
+}
+
+.bookRow {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 10px 0;
+}
+
+.bookRow::-webkit-scrollbar {
+  display: none;
+}
+
+.bookCover {
+  width: 72px;
+  height: 106px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.emptyBook {
+  font-size: 12px;
+  color: #a0826d;
+  font-style: italic;
+}
+
+.addBookBtn {
+  background-color: #5b3113;
+  color: #fdf8f3;
+  border: none;
+  border-radius: 24px;
+  padding: 10px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(91, 49, 19, 0.15);
+}
+
+.addShelfBar {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 16px;
+}
+
+.addShelfBtn {
+  background-color: #5b3113;
+  color: #fdf8f3;
+  border: none;
+  border-radius: 24px;
+  padding: 14px 28px;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(91, 49, 19, 0.2);
+}
+
+.shelvesView .addShelfBtn {
+  width: 100%;
+}
+
+.errorText {
+  color: #b91c1c;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.modalContent .fieldGroup:last-child {
+  margin-bottom: 0;
+}
+
+.shelfNameInput {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(91, 49, 19, 0.2);
+  background: #f7f0e6;
+  font-family: 'Georgia', serif;
+  font-size: 18px;
+  color: #5b3113;
+  box-sizing: border-box;
+}
+
+.shelfNameInput:focus {
+  outline: none;
+  border-color: #5b3113;
+}
+
+.emptyShelves {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 16px;
+  background: #f7f0e6;
+  border-radius: 20px;
+  text-align: center;
+}
+
+.emptyText {
+  font-size: 14px;
+  color: #8c7365;
+  margin: 0;
+}
+
+.newShelfBtn {
+  background-color: #5b3113;
+  color: #fdf8f3;
+  border: none;
+  border-radius: 24px;
+  padding: 12px 24px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(91, 49, 19, 0.2);
+}
+
+.cancelBtn {
+  background: transparent;
+  border: none;
+  border-radius: 20px;
+  padding: 12px 20px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #5b3113;
+  cursor: pointer;
+}
+
+.cancelBtn:hover {
+  background: #ede8e0;
+}

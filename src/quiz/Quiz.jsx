@@ -9,7 +9,7 @@ import { QuizIntroduction } from './QuizIntroduction';
 import { QuizQuestion } from './QuizQuestion';
 import { QuizLoading } from './QuizLoading';
 import './quiz.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
 export function Quiz({ onSkip, user }) {
@@ -20,6 +20,7 @@ export function Quiz({ onSkip, user }) {
   const {
     answers,
     answerQuestion,
+    currentStep,
     isIntro,
     isTaste,
     isGoals,
@@ -31,6 +32,7 @@ export function Quiz({ onSkip, user }) {
     completeQuiz,
     canContinue,
     tasteAnsweredCount,
+    restoreProgress,
   } = useQuiz();
 
   const [saveError, setSaveError] = useState('');
