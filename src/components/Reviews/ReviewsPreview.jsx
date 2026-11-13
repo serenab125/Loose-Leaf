@@ -12,7 +12,6 @@ const sampleReviews = [
       authorName: 'Michaela',
       classification: 'Analytical',
       rating: 5,
-      matchPercentage: 100,
       text: "Collins uses the first-person present tense to create an almost cinematic immediacy that mirrors the Capitol's own broadcast. The world-building is economical but effective.",
     },
     {
@@ -21,7 +20,6 @@ const sampleReviews = [
         authorName: 'Maya R.',
         classification: 'Analytical',
         rating: 5,
-        matchPercentage: 92,
         includesSpoilers: true,
         text: "Katniss is one of the most compelling YA narrators I've ever read. The pacing of the Games is relentless.",
       },
@@ -31,7 +29,6 @@ const sampleReviews = [
       authorName: 'Jordan T.',
       classification: 'Analytical',
       rating: 4,
-      matchPercentage: 87,
       text: 'A sharp critique of spectacle culture wrapped in a survival story.',
     },
     {
@@ -40,7 +37,6 @@ const sampleReviews = [
       authorName: 'Ryan K.',
       classification: 'Casual',
       rating: 1,
-      matchPercentage: 88,
       includesSpoilers: true,
       text: 'This book kinda sucks ngl',
     },
@@ -50,7 +46,6 @@ const sampleReviews = [
       authorName: 'Leina R.',
       classification: 'Casual',
       rating: 2,
-      matchPercentage: 88,
       text: 'Katniss was cool but the author had to add the love triangle.',
     },
     {
@@ -59,7 +54,6 @@ const sampleReviews = [
       authorName: 'Riley W.',
       classification: 'Casual',
       rating: 4,
-      matchPercentage: 88,
       text: "Rue's scene broke me. That's it. That's the review.",
     },
   ];
@@ -68,7 +62,6 @@ const sampleReviews = [
   
 
 export default function ReviewsPreview() {
-  const [mode, setMode] = useState('sample');
 
   const [reviews, setReviews] = useState(sampleReviews);
 
@@ -115,26 +108,14 @@ export default function ReviewsPreview() {
     />
   ) : (
     <>
-      <h1>Reviews Preview</h1>
-
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {['sample', 'empty', 'error', 'loading'].map((option) => (
-          <button
-            key={option}
-            type="button"
-            onClick={() => setMode(option)}
-          >
-            {option}
-          </button>
-        ))}
-      </div>
+      
 
       <BookReviews
-  reviews={mode === 'sample' ? reviews : []}
+  reviews={reviews}
   onEdit={handleEdit}
   onDelete={handleDelete}
-  loading={mode === 'loading'}
-  error={mode === 'error' ? new Error('Test error') : null}
+  loading={false}
+error={null}
   currentUserId="demo-user"
 />
 
