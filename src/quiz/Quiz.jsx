@@ -12,15 +12,17 @@ import './quiz.css';
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
-export function Quiz({ onSkip, user }) {
+export function Quiz({ onSkip, onComplete, onBackToHome, user }) {
 
   //setting the pop up for skip quiz as false
   const [showSkipPopup, setShowSkipPopup] = useState(false);
+  const [showStartOverPopup, setShowStartOverPopup] = useState(false);
 
   const {
+    currentStep,
     answers,
     answerQuestion,
-    currentStep,
+    startOver,
     isIntro,
     isTaste,
     isGoals,
@@ -32,14 +34,59 @@ export function Quiz({ onSkip, user }) {
     completeQuiz,
     canContinue,
     tasteAnsweredCount,
-    restoreProgress,
   } = useQuiz();
 
   const [saveError, setSaveError] = useState('');
-  const [saveStatus, setSaveStatus] = useState('');
-  const [hasSavedProgress, setHasSavedProgress] = useState(false);
-  const [restoreMessage, setRestoreMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [quizSaved, setQuizSaved] = useState(false);
+
+  useEffect(() => {
+    if (!quizSaved) return;
+  
+    const timeout = setTimeout(() => {
+      setQuizSaved(false);
+    }, 3000);
+  
+    return () => clearTimeout(timeout);
+  }, [quizSaved]);
+
+
+  const handleSaveQuiz = async () => {
+    if (isSaving) return;
+  
+    setQuizSaved(false);
+    setSaveError('');
+    setIsSaving(true);
+  
+    try {
+      if (!user?.id) {
+        throw new Error('You must be signed in to save your quiz.');
+      }
+  
+      const { error } = await supabase
+        .from('quiz_progress')
+        .upsert(
+          {
+            user_id: user.id,
+            answers,
+            current_step: currentStep,
+            completed_at: null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' }
+        );
+  
+      if (error) throw error;
+  
+      setQuizSaved(true);
+    } catch (error) {
+      console.error('Error saving quiz progress:', error);
+      setSaveError(error.message || 'Unable to save quiz.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
 
   const handleComplete = async () => {
     if (isSaving) return;
@@ -68,8 +115,11 @@ export function Quiz({ onSkip, user }) {
       if (error) throw error;
 
       console.log('Quiz answers saved successfully!', answers);
-      // Notify parent that quiz is complete
-      onComplete?.();
+
+localStorage.removeItem('looseleaf_quiz_answers');
+localStorage.removeItem('looseleaf_quiz_step');
+
+onComplete?.(answers);
     } catch (error) {
       console.error('Error saving quiz answers:', error);
       setSaveError(error.message || 'Unable to save quiz answers.');
@@ -78,44 +128,10 @@ export function Quiz({ onSkip, user }) {
     }
   };
 
-  const saveProgress = () => {
-    if (isSaving) return;
-    setIsSaving(true);
-    setSaveStatus('');
-    setSaveError('');
-    try {
-      const progress = {
-        step: currentStep,
-        answers: { ...answers },
-      };
-      localStorage.setItem('looseleaf_quiz_progress', JSON.stringify(progress));
-      setSaveStatus('Progress saved — you can close and come back later.');
-      setTimeout(() => setSaveStatus(''), 3000);
-    } catch (err) {
-      setSaveStatus(err.message || 'Unable to save progress.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('looseleaf_quiz_progress');
-      if (raw) {
-        const progress = JSON.parse(raw);
-        if (progress && progress.step !== undefined) {
-          restoreProgress(progress);
-          setHasSavedProgress(true);
-          setRestoreMessage('Your quiz progress has been restored — you can continue from where you left off.');
-          const timer = setTimeout(() => setRestoreMessage(''), 5000);
-          return () => clearTimeout(timer);
-        }
-      }
-    } catch (err) {
-      // ignore malformed progress
-    }
-  }, []);
-
+  const remainingAnswers = Math.max(
+    0,
+    MIN_TASTE_ANSWERS - tasteAnsweredCount
+  );
 
   return (
     <div className="quiz-container">
@@ -124,17 +140,22 @@ export function Quiz({ onSkip, user }) {
           {saveError}
         </p>
       )}
-      {restoreMessage && (
-        <p role="alert" style={{ color: '#603417', padding: '12px' }}>
-          {restoreMessage}
-        </p>
-      )}
       {isIntro ? (
-        //introduction page to take quiz or skip quiz
-        <QuizIntroduction
-          onGetStarted={goToNext}
-          onSkipQuiz={() => setShowSkipPopup(true)} />
-      ) : isComplete ? (
+  <>
+    <button
+      type="button"
+      className="quiz-back"
+      onClick={onBackToHome}
+    >
+      ← Back to Home
+    </button>
+
+    <QuizIntroduction
+      onGetStarted={goToNext}
+      onSkipQuiz={() => setShowSkipPopup(true)}
+    />
+  </>
+) : isComplete ? (
         <QuizLoading
           onComplete={handleComplete}
           onRetake={goToIntro}
@@ -142,13 +163,51 @@ export function Quiz({ onSkip, user }) {
       ) : (
         <main className="quiz-scroll-page">
           <div className="quiz-content">
-            <button
-              type="button"
-              className="quiz-back"
-              onClick={isGoals ? goBackToTaste : goToIntro}
-            >
-              ← Back
-            </button>
+          <div className="quiz-top-actions">
+  <button
+    type="button"
+    className="quiz-back"
+    onClick={isGoals ? goBackToTaste : goToIntro}
+  >
+    ← Back
+  </button>
+
+
+
+  <div className="quiz-action-buttons">
+    <button
+      type="button"
+      className="quiz-save-button"
+      onClick={() => {
+        localStorage.setItem(
+          'looseleaf_quiz_answers',
+          JSON.stringify(answers)
+        );
+        localStorage.setItem(
+          'looseleaf_quiz_step',
+          String(currentStep)
+        );
+        setQuizSaved(true);
+      }}
+    >
+      Save Quiz
+    </button>
+
+    <button
+      type="button"
+      className="quiz-start-over-button"
+      onClick={() => setShowStartOverPopup(true)}
+    >
+      Start Over
+    </button>
+  </div>
+</div>
+
+{quizSaved && (
+  <p className="quiz-saved-message" role="status">
+    ✓ Quiz saved! You can come back anytime.
+  </p>
+)}
 
             <div
               className="quiz-progress-track"
@@ -201,28 +260,11 @@ export function Quiz({ onSkip, user }) {
 
                   <button
                     type="button"
-                    className="quiz-skip-button"
-                    onClick={() => setShowSkipPopup(true)}
-                  >
-                    Skip Quiz
-                  </button>
-
-                  <button
-                    type="button"
                     className="quiz-finish-button"
                     onClick={goToGoals}
                     disabled={!canContinue}
                   >
                     Continue →
-                  </button>
-
-                  <button
-                    type="button"
-                    className="quiz-save-resume"
-                    onClick={saveProgress}
-                    disabled={isSaving}
-                  >
-                    Save &amp; Resume
                   </button>
                 </div>
               </>
@@ -270,21 +312,54 @@ export function Quiz({ onSkip, user }) {
                   >
                     Skip goal setting for now
                   </button>
-
-                  <button
-                    type="button"
-                    className="quiz-save-resume"
-                    onClick={saveProgress}
-                    disabled={isSaving}
-                  >
-                    Save &amp; Resume
-                  </button>
                 </div>
               </>
             )}
           </div>
         </main>
       )}
+
+{/* Pop-up for starting the quiz over */}
+{showStartOverPopup && (
+  <div className="skip-popup-overlay">
+    <div
+      className="skip-popup"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="start-over-title"
+    >
+      <h2 id="start-over-title">Start Fresh?</h2>
+
+      <p>
+        This will clear your current quiz answers
+        and let you start again from the beginning.
+      </p>
+
+      <p>Are you sure you want to start over?</p>
+
+      <div className="skip-popup-buttons">
+        <button
+          type="button"
+          className="skip-cancel-button"
+          onClick={() => setShowStartOverPopup(false)}
+        >
+          Keep My Answers
+        </button>
+
+        <button
+          type="button"
+          className="skip-confirm-button"
+          onClick={() => {
+            startOver();
+            setShowStartOverPopup(false);
+          }}
+        >
+          Yes, Start Over
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Pop-up for skipping the quiz */}
       {showSkipPopup && (

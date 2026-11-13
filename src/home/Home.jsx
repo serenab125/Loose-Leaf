@@ -1,197 +1,85 @@
-import React, { useState, useEffect } from 'react';
-import styles from './Home.module.css';
-import Search from '../pages/Search/Search';
-import { Profile } from '../pages/Profile/Profile';
-import {
-  fetchMultiPersonalizedRecommendations,
-  POPULAR_BOOKTOK_BOOKS,
-  RECOMMENDED_FOR_YOU,
-  SHORT_EASY_READS,
-} from '../services/bookService';
+import { useEffect, useState } from 'react';
+import { fetchMultiPersonalizedRecommendations } from '../services/bookService';
+import { fetchDefaultRecommendationShelves } from '../services/defaultRecommendations';
 import HomeCarousel from './HomeCarousel';
+import styles from './Home.module.css';
 
-export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, logout, onNavigateToSearch, skipQuiz = false }) {
-  const [activeTab, setActiveTab] = useState('home');
+export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, onNavigateToSearch, skippedQuiz = false }) {
   const [userShelves, setUserShelves] = useState([]);
 
   useEffect(() => {
-    async function loadRecs() {
-      if (user?.id) {
-        const shelves = await fetchMultiPersonalizedRecommendations(user.id);
+    let cancelled = false;
+
+    async function loadRecommendations() {
+      if (!user?.id) {
+        setUserShelves([]);
+        return;
+      }
+
+      const shelves = skippedQuiz
+        ? await fetchDefaultRecommendationShelves()
+        : await fetchMultiPersonalizedRecommendations(user.id);
+
+      if (!cancelled) {
         setUserShelves(shelves);
       }
     }
-    loadRecs();
-  }, [user]);
+
+    loadRecommendations();
+    return () => { cancelled = true; };
+  }, [user?.id, skippedQuiz]);
+
 
   return (
     <div className={styles.appViewport}>
       <div className={styles.scrollableContent}>
-        {activeTab === 'home' ? (
-          <>
-            {/* Header */}
-            <header className={styles.brandHeader}>
-              <div className={styles.logoWrapper}>
-                <span className={styles.leafIcon}>🍃</span>
-                <h1 className={styles.brandTitle}>LooseLeaf</h1>
-                <span className={styles.leafIcon}>🍃</span>
-              </div>
-              <div className={styles.headerDivider} />
-            </header>
 
-            {/* Carousel */}
-            <section className={styles.bannerSection}>
-              <HomeCarousel
-                user={user}
-                currentBook={currentBook}
-                onRetakeQuiz={onRetakeQuiz}
-                onNavigateToSearch={onNavigateToSearch}
-              />
-            </section>
-
-            {/* Recommendations Shelves */}
-            <section className={styles.recommendationsSection}>
-              {/* 1. Recommended for You */}
-              <div className={styles.categoryRow}>
-                <h2 className={styles.categoryTitle}>Recommended for You</h2>
-                <div className={styles.bookScrollRow}>
-                  {RECOMMENDED_FOR_YOU.map((book) => (
-                    <div
-                      key={book.id}
-                      className={styles.bookCard}
-                      onClick={() => onSelectBook?.(book)}
-                    >
-                      <img src={book.cover} alt={book.title} className={styles.bookCover} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 2. Personalized Quiz Shelves */}
-              {userShelves.map((shelf, idx) => (
-                <div key={idx} className={styles.categoryRow}>
-                  <h2 className={styles.categoryTitle}>
-                    {skipQuiz && shelf.title.startsWith('Because You Like:')
-                      ? 'You might like...'
-                      : shelf.title}
-                  </h2>
-                  <div className={styles.bookScrollRow}>
-                    {shelf.books.map((book, bIdx) => (
-                      <div
-                        key={book.bookId || bIdx}
-                        className={styles.bookCard}
-                        onClick={() => onSelectBook?.(book)}
-                      >
-                        <img
-                          src={book.coverUrl || book.cover}
-                          alt={book.title}
-                          className={styles.bookCover}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              {/* 3. Popular Right Now */}
-              <div className={styles.categoryRow}>
-                <h2 className={styles.categoryTitle}>Popular Right Now 🔥</h2>
-                <div className={styles.bookScrollRow}>
-                  {POPULAR_BOOKTOK_BOOKS.map((book) => (
-                    <div
-                      key={book.id}
-                      className={styles.bookCard}
-                      onClick={() => onSelectBook?.(book)}
-                    >
-                      <img src={book.cover} alt={book.title} className={styles.bookCover} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 4. Short & Easy Reads */}
-              <div className={styles.categoryRow}>
-                <h2 className={styles.categoryTitle}>Short & Easy Reads</h2>
-                <div className={styles.bookScrollRow}>
-                  {SHORT_EASY_READS.map((book) => (
-                    <div
-                      key={book.id}
-                      className={styles.bookCard}
-                      onClick={() => onSelectBook?.(book)}
-                    >
-                      <img src={book.cover} alt={book.title} className={styles.bookCover} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          </>
-        ) : activeTab === 'search' ? (
-          <Search onSelectBook={onSelectBook} />
-        ) : activeTab === 'profile' ? (
-          <Profile user={user} logout={logout} />
-        ) : (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: '#5b3113', fontFamily: 'Georgia, serif' }}>
-            <h2>{activeTab.toUpperCase()}</h2>
-            <p>This tab is under construction.</p>
+        {/* Angela's LooseLeaf Homepage Header */}
+        <header className={styles.brandHeader}>
+          <div className={styles.logoWrapper}>
+            <span className={styles.leafIcon}>🍃</span>
+            <h1 className={styles.brandTitle}>LooseLeaf</h1>
+            <span className={styles.leafIcon}>🍃</span>
           </div>
-        )}
+          <div className={styles.headerDivider} />
+        </header>
+
+        {/* Serena's Sprint 2 Homepage Carousel */}
+        <section className={styles.bannerSection}>
+          <HomeCarousel
+            user={user}
+            onRetakeQuiz={onRetakeQuiz}
+            onNavigateToSearch={onNavigateToSearch}
+          />
+        </section>
+
+        <section className={styles.recommendationsSection}>
+          {userShelves.map((shelf, index) => (
+            <div key={`${shelf.title}-${index}`} className={styles.categoryRow}>
+              <h2 className={styles.categoryTitle}>{shelf.title}</h2>
+              <div className={styles.bookScrollRow}>
+                {shelf.books.map((book, bookIndex) => (
+                  <div
+                    key={book.bookId || book.id || bookIndex}
+                    className={styles.bookCard}
+                    onClick={() => onSelectBook?.(book)}
+                  >
+                    <img
+                      src={book.coverUrl || book.cover}
+                      alt={book.title}
+                      className={styles.bookCover}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+
+        </section>
       </div>
 
-      <nav className={styles.bottomNav}>
-        <button
-          type="button"
-          className={`${styles.navItem} ${activeTab === 'home' ? styles.activeNavItem : ''}`}
-          onClick={() => setActiveTab('home')}
-        >
-          <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-          <span>Home</span>
-        </button>
 
-        <button
-          type="button"
-          className={`${styles.navItem} ${activeTab === 'timer' ? styles.activeNavItem : ''}`}
-          onClick={() => setActiveTab('timer')}
-        >
-          <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 16 14" />
-          </svg>
-          <span>Timer</span>
-        </button>
-
-        <button
-          type="button"
-          className={`${styles.navItem} ${activeTab === 'search' ? styles.activeNavItem : ''}`}
-          onClick={() => {
-            setActiveTab('search');
-            onNavigateToSearch?.();
-          }}
-        >
-          <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <span>Search</span>
-        </button>
-
-        <button
-          type="button"
-          className={`${styles.navItem} ${activeTab === 'profile' ? styles.activeNavItem : ''}`}
-          onClick={() => setActiveTab('profile')}
-        >
-          <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-          <span>Profile</span>
-        </button>
-      </nav>
     </div>
   );
 }
-
-export default Home;
