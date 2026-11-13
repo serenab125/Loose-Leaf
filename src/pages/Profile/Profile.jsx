@@ -4,16 +4,17 @@ import { supabase } from '../../supabaseClient';
 
 export function Profile({ user, logout }) {
   const [view, setView] = useState('main');
-
   const [fullName, setFullName] = useState('');
-  const [bio, setBio] = useState('Book lover, tea enthusiast, and collector of dog-eared paperbacks. Always chasing a new good read. 🍵📚');
+  const [bio, setBio] = useState(
+    'Book lover, tea enthusiast, and collector of dog-eared paperbacks. Always chasing a new good read.'
+  );
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('(555) 123-4567');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
-
   const [readingReminders, setReadingReminders] = useState(true);
   const [newRecommendations, setNewRecommendations] = useState(true);
+  const [userReactions, setUserReactions] = useState([]);
 
   useEffect(() => {
     if (user) {
@@ -32,7 +33,18 @@ export function Profile({ user, logout }) {
           if (data.bio) setBio(data.bio);
           if (data.phone) setPhone(data.phone);
         }
+
+        const { data: reactionsData, error: reactionsError } = await supabase
+          .from('book_page_reactions')
+          .select('id, book_title, page_number, reaction, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (!reactionsError && reactionsData) {
+          setUserReactions(reactionsData);
+        }
       }
+
       loadProfileData();
     }
   }, [user]);
@@ -90,11 +102,12 @@ export function Profile({ user, logout }) {
 
           <div className={styles.userInfoCard}>
             <div className={styles.avatarWrapper}>
-              <div className={styles.avatarCircle}>👤</div>
+              <div className={styles.avatarCircle}>📚</div>
               <button
                 type="button"
                 className={styles.editBadge}
                 onClick={() => setView('edit')}
+                aria-label="Edit Profile"
               >
                 ✏️
               </button>
@@ -105,27 +118,85 @@ export function Profile({ user, logout }) {
 
           <section className={styles.shelfSection}>
             <div className={styles.pillTag}>
-              <span>Top 4 Favorites</span> 🍃
+              <span>Top 4 Favorites</span>
             </div>
             <div className={`${styles.shelfCard} ${styles.favoritesBg}`}>
               <div className={styles.bookRow}>
-                <img src="https://covers.openlibrary.org/b/id/12818862-L.jpg" alt="Life of Pi" className={styles.bookCover} />
-                <img src="https://covers.openlibrary.org/b/id/10521270-L.jpg" alt="The Goldfinch" className={styles.bookCover} />
-                <img src="https://covers.openlibrary.org/b/id/8381286-L.jpg" alt="Scythe" className={styles.bookCover} />
-                <img src="https://covers.openlibrary.org/b/id/8225261-L.jpg" alt="The Catcher in the Rye" className={styles.bookCover} />
+                <img
+                  src="https://covers.openlibrary.org/b/id/12818862-L.jpg"
+                  alt="Life of Pi"
+                  className={styles.bookCover}
+                />
+                <img
+                  src="https://covers.openlibrary.org/b/id/10521270-L.jpg"
+                  alt="The Goldfinch"
+                  className={styles.bookCover}
+                />
+                <img
+                  src="https://covers.openlibrary.org/b/id/8381286-L.jpg"
+                  alt="Scythe"
+                  className={styles.bookCover}
+                />
+                <img
+                  src="https://covers.openlibrary.org/b/id/8225261-L.jpg"
+                  alt="The Catcher in the Rye"
+                  className={styles.bookCover}
+                />
               </div>
             </div>
           </section>
 
           <section className={styles.shelfSection}>
             <div className={styles.pillTag}>
-              <span>Current Reads</span> 🍃
+              <span>Current Reads</span>
             </div>
             <div className={`${styles.shelfCard} ${styles.currentReadsBg}`}>
               <div className={styles.bookRow}>
-                <img src="https://covers.openlibrary.org/b/id/14589201-L.jpg" alt="Quicksilver" className={styles.bookCover} />
-                <img src="https://covers.openlibrary.org/b/id/13254928-L.jpg" alt="The Hunger Games" className={styles.bookCover} />
+                <img
+                  src="https://covers.openlibrary.org/b/id/14589201-L.jpg"
+                  alt="Quicksilver"
+                  className={styles.bookCover}
+                />
+                <img
+                  src="https://covers.openlibrary.org/b/id/13254928-L.jpg"
+                  alt="The Hunger Games"
+                  className={styles.bookCover}
+                />
               </div>
+            </div>
+          </section>
+
+          <section className={styles.shelfSection}>
+            <div className={styles.pillTag}>
+              <span>Page Reactions</span>
+            </div>
+            <div className={`${styles.shelfCard} ${styles.currentReadsBg}`}>
+              {userReactions.length === 0 ? (
+                <p style={{ fontSize: '13px', color: '#8c7365', margin: 0 }}>
+                  No page reactions yet. Open a book and select Progress Update!
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {userReactions.map((item) => (
+                    <div
+                      key={item.id}
+                      style={{
+                        background: '#fdf8f3',
+                        padding: '10px 12px',
+                        borderRadius: '12px',
+                        fontSize: '13px',
+                      }}
+                    >
+                      <strong style={{ color: '#5b3113' }}>
+                        {item.book_title} · Page {item.page_number}
+                      </strong>
+                      <p style={{ margin: '4px 0 0', color: '#6d5b4f' }}>
+                        "{item.reaction}"
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         </div>
@@ -133,12 +204,16 @@ export function Profile({ user, logout }) {
 
       {view === 'edit' && (
         <div className={styles.subView}>
-          <button type="button" className={styles.backBtn} onClick={() => setView('main')}>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={() => setView('main')}
+          >
             ← Edit Profile
           </button>
 
           <div className={styles.avatarWrapperCenter}>
-            <div className={styles.avatarCircle}>👤</div>
+            <div className={styles.avatarCircle}>📚</div>
             <div className={styles.editBadgeCenter}>✏️</div>
           </div>
 
@@ -198,19 +273,35 @@ export function Profile({ user, logout }) {
 
       {view === 'settings' && (
         <div className={styles.subView}>
-          <button type="button" className={styles.backBtn} onClick={() => setView('main')}>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={() => setView('main')}
+          >
             ← Settings
           </button>
 
           <div className={styles.settingsGroup}>
             <p className={styles.sectionHeader}>PERSONAL INFO</p>
-            <button type="button" className={styles.settingItem} onClick={() => setView('edit')}>
+            <button
+              type="button"
+              className={styles.settingItem}
+              onClick={() => setView('edit')}
+            >
               <span>Name & Bio</span> <span>›</span>
             </button>
-            <button type="button" className={styles.settingItem} onClick={() => setView('edit')}>
+            <button
+              type="button"
+              className={styles.settingItem}
+              onClick={() => setView('edit')}
+            >
               <span>Email Address</span> <span>›</span>
             </button>
-            <button type="button" className={styles.settingItem} onClick={() => setView('edit')}>
+            <button
+              type="button"
+              className={styles.settingItem}
+              onClick={() => setView('edit')}
+            >
               <span>Phone Number</span> <span>›</span>
             </button>
           </div>

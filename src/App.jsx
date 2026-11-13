@@ -9,13 +9,17 @@ import { Quiz } from './quiz/Quiz'
 import Search from './pages/Search/Search'
 import { Home } from './home/Home'
 import { Profile } from './pages/Profile/Profile'
+import BookDetail from './pages/BookDetail/BookDetail'
 import { supabase } from './supabaseClient'
 
 function App() {
   const { user, logout, loading, savePreferences } = useAuth()
   const [checkingQuiz, setCheckingQuiz] = useState(true)
+  const [currentBook, setCurrentBook] = useState(null)
   const [view, setView] = useState(() =>
-    window.location.pathname === '/reset-password' ? 'reset' : 'login') // Possible views: 'login', 'create', 'forgot', 'reset'
+    window.location.pathname === '/reset-password' ? 'reset' : 'login'
+  ) 
+
   useEffect(() => {
     if (loading) return;
 
@@ -49,18 +53,18 @@ function App() {
       const skippedQuiz =
         localStorage.getItem(`looseleaf_quiz_skipped_${user.id}`) === 'true';
 
-        const savedQuizStep = localStorage.getItem('looseleaf_quiz_step');
+      const savedQuizStep = localStorage.getItem('looseleaf_quiz_step');
 
-        const hasUnfinishedQuiz =
-          savedQuizStep === '1' || savedQuizStep === '2';
-        
-        setView(
-          hasUnfinishedQuiz
-            ? 'quiz'
-            : completedQuiz || skippedQuiz
-              ? 'home'
-              : 'quiz'
-        );
+      const hasUnfinishedQuiz =
+        savedQuizStep === '1' || savedQuizStep === '2';
+      
+      setView(
+        hasUnfinishedQuiz
+          ? 'quiz'
+          : completedQuiz || skippedQuiz
+            ? 'home'
+            : 'quiz'
+      );
       setCheckingQuiz(false);
     }
 
@@ -92,20 +96,33 @@ function App() {
       <main>
         {view === 'create' ? (
           <CreateAccount onNavigateToLogin={() => setView('login')} />
-        ) : view === 'forgot' ? ( //Forgot password fucntion
+        ) : view === 'forgot' ? (
           <ForgotPassword onNavigateToLogin={() => setView('login')} />
         ) : (
           <Login
             onNavigateToCreateAccount={() => setView('create')}
-            onNavigateToForgotPassword={() => setView('forgot')} />
+            onNavigateToForgotPassword={() => setView('forgot')}
+          />
         )}
       </main>
     )
   }
 
+  if (currentBook) {
+  return (
+    <BookDetail
+      book={currentBook}
+      user={user}
+      onBack={() => setCurrentBook(null)}
+      onUpdateStatus={(book, status) => {
+        console.log(`Updated ${book.title} to status: ${status}`)
+      }}
+    />
+  )
+}
+
   return (
     <main>
-
       <div className="app-content">
         {view === 'home' ? (
           <Home
@@ -116,16 +133,17 @@ function App() {
               setView('quiz')
             }}
             onNavigateToSearch={() => setView('search')}
+            onSelectBook={(book) => setCurrentBook(book)}
           />
         ) : view === 'search' ? (
-          <Search />
+          <Search onSelectBook={(book) => setCurrentBook(book)} />
         ) : view === 'profile' ? (
           <Profile user={user} logout={logout} />
         ) : (
           <Quiz
-  user={user}
-  onBackToHome={() => setView('home')}
-  onSkip={() => {
+            user={user}
+            onBackToHome={() => setView('home')}
+            onSkip={() => {
               localStorage.setItem(`looseleaf_quiz_skipped_${user.id}`, 'true')
               setView('home')
             }}
