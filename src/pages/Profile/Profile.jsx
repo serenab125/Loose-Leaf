@@ -168,12 +168,12 @@ export function Profile({ user, logout }) {
 
           <section className={styles.shelfSection}>
             <div className={styles.pillTag}>
-              <span>Page Reactions</span>
+              <span>Chapter Reactions</span>
             </div>
             <div className={`${styles.shelfCard} ${styles.currentReadsBg}`}>
               {userReactions.length === 0 ? (
                 <p style={{ fontSize: '13px', color: '#8c7365', margin: 0 }}>
-                  No page reactions yet. Open a book and select Progress Update!
+                  No chapter reactions yet. Open a book and select Progress Update!
                 </p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -188,7 +188,7 @@ export function Profile({ user, logout }) {
                       }}
                     >
                       <strong style={{ color: '#5b3113' }}>
-                        {item.book_title} · Page {item.page_number}
+                        {item.book_title} · Chapter {item.page_number}
                       </strong>
                       <p style={{ margin: '4px 0 0', color: '#6d5b4f' }}>
                         "{item.reaction}"

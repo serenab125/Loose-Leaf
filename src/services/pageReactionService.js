@@ -1,16 +1,16 @@
 import { supabase } from '../supabaseClient';
 
-/** Adds a reaction to a specified page of a book */
+/** Adds a reaction to a specified chapter of a book */
 export async function addBookPageReaction({
   bookId,
   bookTitle,
-  pageNumber,
+  chapterNumber,
   reaction,
 }) {
   const cleanBookId = String(bookId ?? '').trim();
   const cleanBookTitle = String(bookTitle ?? '').trim();
   const cleanReaction = String(reaction ?? '').trim();
-  const page = Number(pageNumber);
+  const chapter = Number(chapterNumber);
 
   if (!cleanBookId || cleanBookId.length > 100) {
     throw new Error('A valid book ID is required.');
@@ -20,18 +20,19 @@ export async function addBookPageReaction({
     throw new Error('A valid book title is required.');
   }
 
-  if (!Number.isInteger(page) || page < 1) {
-    throw new Error('A valid page number is required.');
+  if (!Number.isInteger(chapter) || chapter < 1) {
+    throw new Error('A valid chapter number is required.');
   }
 
-  if (!cleanReaction || cleanReaction.length > 100) {
-    throw new Error('A reaction must be between 1 and 100 characters.');
+  if (!cleanReaction || cleanReaction.length > 300) {
+    throw new Error('A reaction must be between 1 and 300 characters.');
   }
 
+  // Maps chapterNumber to the database's p_page_number parameter
   const { data, error } = await supabase.rpc('add_book_page_reaction', {
     p_book_id: cleanBookId,
     p_book_title: cleanBookTitle,
-    p_page_number: page,
+    p_page_number: chapter,
     p_reaction: cleanReaction,
   });
 
@@ -39,7 +40,7 @@ export async function addBookPageReaction({
   return Array.isArray(data) ? data[0] ?? null : data;
 }
 
-/** Fetches all saved page reactions for a specific book */
+/** Fetches all saved chapter reactions for a specific book */
 export async function fetchBookPageReactions(bookId) {
   const cleanBookId = String(bookId ?? '').trim();
   if (!cleanBookId) return [];

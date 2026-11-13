@@ -6,23 +6,6 @@ import {
 } from '../../services/pageReactionService';
 import './BookDetail.css';
 
-const DEFAULT_REVIEWS = [
-  {
-    id: 1,
-    reviewer: 'Maya R.',
-    match: 92,
-    rating: 5,
-    text: 'Katniss is one of the most compelling YA narrators I have ever read. The pacing of the Games themselves is relentless—I finished this in two sittings!',
-  },
-  {
-    id: 2,
-    reviewer: 'Jordan T.',
-    match: 87,
-    rating: 4,
-    text: 'A sharp critique of spectacle culture wrapped in a survival story. The arena scenes are brutal and brilliant.',
-  },
-];
-
 export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [currentStatus, setCurrentStatus] = useState('Currently Reading');
@@ -30,15 +13,21 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [analysisMode, setAnalysisMode] = useState('analytical');
   const [sortOrder, setSortOrder] = useState('highest');
 
-  // Page Reaction Modal state
+  // Chapter Reaction Modal state (RR-06)
   const [showReactionModal, setShowReactionModal] = useState(false);
-  const [reactionPage, setReactionPage] = useState('1');
+  const [reactionChapter, setReactionChapter] = useState('1');
   const [reactionText, setReactionText] = useState('');
   const [reactionError, setReactionError] = useState('');
   const [isSubmittingReaction, setIsSubmittingReaction] = useState(false);
 
+  // Reactions & Reading Position state (RR-07 & RR-08)
   const [allBookReactions, setAllBookReactions] = useState([]);
-  const [reviewsList, setReviewsList] = useState(DEFAULT_REVIEWS);
+  const [reactionsLoading, setReactionsLoading] = useState(false);
+  const [reactionsLoadError, setReactionsLoadError] = useState('');
+  const [selectedChapterFilter, setSelectedChapterFilter] = useState('all');
+
+  // Reviews state (populated strictly from Supabase)
+  const [reviewsList, setReviewsList] = useState([]);
 
   const coverUrl = book?.coverUrl || book?.cover || book?.cover_url;
   const resolvedBookId = String(
@@ -46,22 +35,43 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   ).trim();
   const resolvedBookTitle = String(book?.title || 'Untitled Book').trim();
 
-  // Determine the highest page the current user has reacted to for this book
+  // RR-08: Determine the highest chapter the current user has reached/reacted on
   const userReactionsForBook = allBookReactions.filter(
     (row) => row.userId === user?.id
   );
-  const maxUnlockedPage = userReactionsForBook.reduce(
-    (max, row) => Math.max(max, Number(row.pageNumber) || 0),
+  const maxUnlockedChapter = userReactionsForBook.reduce(
+    (max, row) => Math.max(max, Number(row.chapterNumber) || 0),
     0
   );
 
-  // Only show reactions up to the page the user has reached/reacted on
+  // RR-08: Only reactions at or before user's reading progress are visible
   const unlockedReactions =
-    maxUnlockedPage > 0
+    !reactionsLoadError && maxUnlockedChapter > 0
       ? allBookReactions.filter(
-          (row) => Number(row.pageNumber) <= maxUnlockedPage
+          (row) => Number(row.chapterNumber) <= maxUnlockedChapter
         )
       : [];
+
+  // Count of reactions beyond user's current reading progress (hidden spoilers)
+  const hiddenSpoilerCount =
+    !reactionsLoadError && maxUnlockedChapter > 0
+      ? allBookReactions.filter(
+          (row) => Number(row.chapterNumber) > maxUnlockedChapter
+        ).length
+      : 0;
+
+  // RR-07: Available chapters up to user's progress
+  const availableChapters = Array.from(
+    new Set(unlockedReactions.map((r) => Number(r.chapterNumber)))
+  ).sort((a, b) => a - b);
+
+  // RR-07: Filter unlocked reactions by selected chapter
+  const displayedReactions =
+    selectedChapterFilter === 'all'
+      ? unlockedReactions
+      : unlockedReactions.filter(
+          (r) => Number(r.chapterNumber) === Number(selectedChapterFilter)
+        );
 
   // Load saved reactions and reviews for this book from Supabase
   useEffect(() => {
@@ -69,6 +79,9 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     let cancelled = false;
 
     async function loadCommunityData() {
+      setReactionsLoading(true);
+      setReactionsLoadError('');
+
       try {
         const dbReactions = await fetchBookPageReactions(resolvedBookId);
         if (!cancelled) {
@@ -79,13 +92,23 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
               row.user_id === user?.id
                 ? 'You'
                 : row.reviewer_name || 'Reader',
-            pageNumber: Number(row.page_number),
+            chapterNumber: Number(row.page_number),
             text: row.reaction,
           }));
           setAllBookReactions(formatted);
         }
       } catch (err) {
-        console.warn('Could not load page reactions:', err);
+        if (!cancelled) {
+          console.error('Could not load chapter reactions:', err);
+          setAllBookReactions([]);
+          setReactionsLoadError(
+            'Unable to retrieve reading progress and reactions right now. Potential spoilers remain hidden.'
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setReactionsLoading(false);
+        }
       }
 
       try {
@@ -95,18 +118,21 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
           .eq('book_id', resolvedBookId)
           .order('created_at', { ascending: false });
 
-        if (!cancelled && !error && dbReviews?.length > 0) {
-          const formattedReviews = dbReviews.map((row) => ({
+        if (!cancelled && !error) {
+          const formattedReviews = (dbReviews || []).map((row) => ({
             id: row.id,
             reviewer:
               row.user_id === user?.id
                 ? 'You'
                 : row.reviewer_name || 'Reader',
             match: row.user_id === user?.id ? 100 : 90,
-            rating: Math.max(1, Math.min(5, Math.round((row.rating_out_of_10 || 8) / 2))),
+            rating: Math.max(
+              1,
+              Math.min(5, Math.round((row.rating_out_of_10 || 8) / 2))
+            ),
             text: row.review_text,
           }));
-          setReviewsList([...formattedReviews, ...DEFAULT_REVIEWS]);
+          setReviewsList(formattedReviews);
         }
       } catch (err) {
         console.warn('Could not load book reviews:', err);
@@ -130,9 +156,29 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     }
   };
 
+  // RR-06: Validate and submit chapter reaction
   const handleAddReaction = async (e) => {
     e.preventDefault();
     if (isSubmittingReaction) return;
+
+    const trimmedText = reactionText.trim();
+    const parsedChapter = Number(reactionChapter);
+
+    // AC 2: Explicit validation message for empty/whitespace-only reactions
+    if (!trimmedText) {
+      setReactionError('Please enter a reaction before posting.');
+      return;
+    }
+
+    if (trimmedText.length > 300) {
+      setReactionError('Reaction must be 300 characters or fewer.');
+      return;
+    }
+
+    if (!Number.isInteger(parsedChapter) || parsedChapter < 1) {
+      setReactionError('Please enter a valid chapter number (1 or higher).');
+      return;
+    }
 
     setReactionError('');
     setIsSubmittingReaction(true);
@@ -141,25 +187,29 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       const savedRow = await addBookPageReaction({
         bookId: resolvedBookId,
         bookTitle: resolvedBookTitle,
-        pageNumber: Number(reactionPage),
-        reaction: reactionText.trim(),
+        chapterNumber: parsedChapter,
+        reaction: trimmedText,
       });
 
       const newReaction = {
         id: savedRow?.id || Date.now(),
         userId: user?.id,
         reviewer: 'You',
-        pageNumber: Number(savedRow?.page_number ?? reactionPage),
-        text: savedRow?.reaction ?? reactionText.trim(),
+        chapterNumber: Number(savedRow?.page_number ?? parsedChapter),
+        text: savedRow?.reaction ?? trimmedText,
       };
 
       setAllBookReactions((prev) => [newReaction, ...prev]);
+      setSelectedChapterFilter('all');
       setReactionText('');
       setShowReactionModal(false);
       setActiveTab('reactions');
     } catch (err) {
-      console.error('Failed to save page reaction:', err);
-      setReactionError(err.message || 'Could not save reaction.');
+      // AC 3: Preserve entered reaction text when saving fails
+      console.error('Failed to save chapter reaction:', err);
+      setReactionError(
+        err.message || 'Could not save reaction. Your text has been preserved.'
+      );
     } finally {
       setIsSubmittingReaction(false);
     }
@@ -184,9 +234,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
               className="book-detail-cover"
             />
           ) : (
-            <div className="book-detail-no-cover">
-              {resolvedBookTitle}
-            </div>
+            <div className="book-detail-no-cover">{resolvedBookTitle}</div>
           )}
         </div>
 
@@ -245,7 +293,9 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
               <button
                 type="button"
                 className="status-dropdown-item danger"
-                onClick={() => handleSelectStatusOption('Remove Book From Shelf')}
+                onClick={() =>
+                  handleSelectStatusOption('Remove Book From Shelf')
+                }
               >
                 Remove Book From Shelf
               </button>
@@ -325,33 +375,56 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
               </div>
             </div>
 
-            <div className="cards-list">
-              {reviewsList.map((rev) => (
-                <article key={rev.id} className="review-card">
-                  <div className="review-card-header">
-                    <div className="reviewer-profile">
-                      <div className="reviewer-avatar">{rev.reviewer.charAt(0)}</div>
-                      <div>
-                        <h4 className="reviewer-name">{rev.reviewer}</h4>
-                        <span className="reviewer-match">{rev.match}% Match</span>
+            {reviewsList.length === 0 ? (
+              <div className="reactions-locked-card">
+                <p className="reactions-locked-text" style={{ margin: 0 }}>
+                  No reviews yet for this book.
+                </p>
+              </div>
+            ) : (
+              <div className="cards-list">
+                {reviewsList.map((rev) => (
+                  <article key={rev.id} className="review-card">
+                    <div className="review-card-header">
+                      <div className="reviewer-profile">
+                        <div className="reviewer-avatar">
+                          {rev.reviewer.charAt(0)}
+                        </div>
+                        <div>
+                          <h4 className="reviewer-name">{rev.reviewer}</h4>
+                          <span className="reviewer-match">{rev.match}% Match</span>
+                        </div>
                       </div>
+                      <div className="star-rating">{'★'.repeat(rev.rating)}</div>
                     </div>
-                    <div className="star-rating">{'★'.repeat(rev.rating)}</div>
-                  </div>
-                  <p className="review-text">{rev.text}</p>
-                </article>
-              ))}
-            </div>
+                    <p className="review-text">{rev.text}</p>
+                  </article>
+                ))}
+              </div>
+            )}
           </>
-        ) : unlockedReactions.length === 0 ? (
-          /* Locked State: No reactions shown until the user logs a page reaction */
+        ) : reactionsLoading ? (
+          <p style={{ textAlign: 'center', color: '#8c7365', fontSize: '14px' }}>
+            Loading reactions...
+          </p>
+        ) : reactionsLoadError ? (
+          /* RR-07 AC 3 & RR-08 AC 3: Error state keeping spoilers hidden */
+          <div className="reactions-locked-card" role="alert">
+            <div className="reactions-lock-icon" aria-hidden="true">
+              ⚠️
+            </div>
+            <h3 className="reactions-locked-title">Reactions unavailable</h3>
+            <p className="reactions-locked-text">{reactionsLoadError}</p>
+          </div>
+        ) : maxUnlockedChapter === 0 ? (
+          /* RR-08 AC 2: Locked state until user establishes a reading position */
           <div className="reactions-locked-card">
             <div className="reactions-lock-icon" aria-hidden="true">
               🔒
             </div>
             <h3 className="reactions-locked-title">Reactions are locked</h3>
             <p className="reactions-locked-text">
-              Log a page reaction to unlock spoiler-free reactions up to the page you've reached.
+              Log a chapter reaction to set your reading position and unlock spoiler-free reactions up to that chapter.
             </p>
             <button
               type="button"
@@ -361,30 +434,87 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
                 setShowReactionModal(true);
               }}
             >
-              Add a Page Reaction
+              Add a Chapter Reaction
             </button>
           </div>
         ) : (
-          <div className="cards-list">
-            {unlockedReactions.map((react) => (
-              <article key={react.id} className="review-card">
-                <span className="reaction-chapter-badge">Page {react.pageNumber}</span>
-                <div className="review-card-header">
-                  <div className="reviewer-profile">
-                    <div className="reviewer-avatar">{react.reviewer.charAt(0)}</div>
-                    <div>
-                      <h4 className="reviewer-name">{react.reviewer}</h4>
+          /* RR-07 & RR-08 AC 1: Unlocked reactions organized by chapter */
+          <div>
+            {/* Chapter Filter Pills */}
+            <div
+              className="sort-pills-row"
+              style={{ flexWrap: 'wrap', marginBottom: '14px' }}
+            >
+              <button
+                type="button"
+                className={`sort-pill-btn ${selectedChapterFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setSelectedChapterFilter('all')}
+              >
+                All Unlocked (Up to Chapter {maxUnlockedChapter})
+              </button>
+              {availableChapters.map((chapterNum) => (
+                <button
+                  key={chapterNum}
+                  type="button"
+                  className={`sort-pill-btn ${Number(selectedChapterFilter) === chapterNum ? 'active' : ''}`}
+                  onClick={() => setSelectedChapterFilter(chapterNum)}
+                >
+                  Chapter {chapterNum}
+                </button>
+              ))}
+            </div>
+
+            {/* RR-07 AC 2: Empty-state message if selected chapter has no reactions */}
+            {displayedReactions.length === 0 ? (
+              <div className="reactions-locked-card">
+                <p className="reactions-locked-text" style={{ margin: 0 }}>
+                  No reactions posted at Chapter {selectedChapterFilter} yet.
+                </p>
+              </div>
+            ) : (
+              <div className="cards-list">
+                {displayedReactions.map((react) => (
+                  <article key={react.id} className="review-card">
+                    <span className="reaction-chapter-badge">
+                      Chapter {react.chapterNumber}
+                    </span>
+                    <div className="review-card-header">
+                      <div className="reviewer-profile">
+                        <div className="reviewer-avatar">
+                          {react.reviewer.charAt(0)}
+                        </div>
+                        <div>
+                          <h4 className="reviewer-name">{react.reviewer}</h4>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <p className="review-text">{react.text}</p>
-              </article>
-            ))}
+                    <p className="review-text">{react.text}</p>
+                  </article>
+                ))}
+              </div>
+            )}
+
+            {/* RR-08: Spoiler-hidden notice for restricted reactions beyond user progress */}
+            <div
+              style={{
+                marginTop: '16px',
+                padding: '12px 14px',
+                borderRadius: '14px',
+                backgroundColor: '#f7f1e5',
+                textAlign: 'center',
+                fontSize: '12px',
+                color: '#8c7365',
+              }}
+            >
+              {hiddenSpoilerCount > 0
+                ? `🔒 ${hiddenSpoilerCount} reaction${hiddenSpoilerCount === 1 ? '' : 's'} beyond Chapter ${maxUnlockedChapter} hidden to prevent spoilers.`
+                : `🔒 Reactions beyond Chapter ${maxUnlockedChapter} are hidden until you update your progress.`}
+            </div>
           </div>
         )}
       </section>
 
-      {/* Page Reaction Modal */}
+      {/* Chapter Reaction Modal (RR-06) */}
       {showReactionModal && (
         <div className="reaction-modal-overlay">
           <div className="reaction-modal" role="dialog" aria-modal="true">
@@ -395,29 +525,29 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
             >
               ← Back to Book
             </button>
-            <h3 className="modal-title">What page are you reacting to?</h3>
-            <form onSubmit={handleAddReaction}>
+            <h3 className="modal-title">What chapter are you reacting to?</h3>
+            <form onSubmit={handleAddReaction} noValidate>
               <div className="chapter-selector">
                 <input
                   type="number"
                   className="chapter-input"
-                  value={reactionPage}
-                  onChange={(e) => setReactionPage(e.target.value)}
+                  value={reactionChapter}
+                  onChange={(e) => setReactionChapter(e.target.value)}
                   min="1"
-                  required
+                  aria-label="Chapter number"
                 />
               </div>
               <textarea
                 className="reaction-textarea"
                 placeholder="Write a reaction (max 300 characters)..."
                 value={reactionText}
-                onChange={(e) => setReactionText(e.target.value)}
+                onChange={(e) => {
+                  setReactionText(e.target.value);
+                  if (reactionError) setReactionError('');
+                }}
                 maxLength={300}
-                required
               />
-              <p className="reaction-char-count">
-                {reactionText.length}/300
-              </p>
+              <p className="reaction-char-count">{reactionText.length}/300</p>
               {reactionError && (
                 <p className="reaction-error-msg" role="alert">
                   {reactionError}
@@ -428,7 +558,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
                 className="modal-submit-btn"
                 disabled={isSubmittingReaction}
               >
-                {isSubmittingReaction ? 'Saving...' : 'Submit'}
+                {isSubmittingReaction ? 'Saving...' : 'Post'}
               </button>
             </form>
           </div>
