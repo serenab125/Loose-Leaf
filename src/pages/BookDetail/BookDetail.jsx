@@ -409,14 +409,14 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
               </div>
               <textarea
                 className="reaction-textarea"
-                placeholder="Write a reaction (max 100 characters)..."
+                placeholder="Write a reaction (max 300 characters)..."
                 value={reactionText}
                 onChange={(e) => setReactionText(e.target.value)}
-                maxLength={100}
+                maxLength={300}
                 required
               />
               <p className="reaction-char-count">
-                {reactionText.length}/100
+                {reactionText.length}/300
               </p>
               {reactionError && (
                 <p className="reaction-error-msg" role="alert">
