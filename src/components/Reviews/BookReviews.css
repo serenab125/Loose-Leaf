@@ -1,0 +1,431 @@
+
+.book-reviews {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 20px 16px 32px;
+    background: #fdf8f3;
+    color: #5b3113;
+    font-family: Arial, sans-serif;
+  }
+  
+  .review-tabs {
+    display: flex;
+    border-bottom: 1px solid #e9dfd5;
+    margin-bottom: 24px;
+  }
+  
+  .review-tabs button {
+    flex: 1;
+    padding: 14px 8px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #ad9687;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  .review-tabs button.selected {
+    color: #5b3113;
+    border-bottom-color: #c98996;
+    font-weight: 600;
+  }
+  
+  .review-tabs button:disabled {
+    cursor: default;
+  }
+  
+  .review-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .review-toggle > button:not(.toggle-switch) {
+    border: none;
+    border-radius: 22px;
+    background: transparent;
+    color: #ad9687;
+    padding: 9px 13px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  
+  .review-toggle > button.selected:not(.toggle-switch) {
+    background: #f0f0e3;
+    color: #5b3113;
+  }
+  
+  .review-toggle > button.selected:last-child {
+    background: #fdeae6;
+  }
+  
+  .toggle-switch {
+    width: 46px;
+    height: 28px;
+    border: none;
+    border-radius: 20px;
+    background: #5b3113;
+    padding: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  
+  .toggle-switch.casual {
+    background: #c98996;
+    justify-content: flex-end;
+  }
+  
+  .toggle-switch span {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: white;
+  }
+  
+  .review-sort {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  
+  .review-sort button {
+    border: none;
+    background: transparent;
+    color: #ad9687;
+    border-radius: 24px;
+    padding: 10px 12px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  
+  .review-sort button.selected {
+    background: #f0f0e3;
+    color: #5b3113;
+    font-weight: 600;
+  }
+  
+  .review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .review-card {
+    background: #f7f5ea;
+    border: 1px solid #e5dfc9;
+    border-radius: 24px;
+    padding: 18px 16px;
+    box-sizing: border-box;
+  }
+  
+  .review-card.casual {
+    background: #fff2ee;
+    border-color: #f4cfcc;
+  }
+  
+  .review-card.own-review {
+    background: #f3e8dc;
+    border-color: #d8bca5;
+}
+  
+  .review-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .review-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #edf0d9;
+    border: 1px solid #d5d8a7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #78835d;
+    flex-shrink: 0;
+  }
+  
+  .review-author {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .review-author strong {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  .review-author small {
+    font-size: 12px;
+    color: #aa998c;
+  }
+  
+  .your-review-label {
+    display: inline-block;
+    width: fit-content;
+    background: #e5e9c9;
+    color: #899343;
+    border-radius: 20px;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  
+  .review-actions {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .review-actions button {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid #e7dfd2;
+    background: #fffdf8;
+    color: #986d58;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  
+  .review-actions button:last-child {
+    color: #c98996;
+  }
+  
+  .review-actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .review-stars {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    color: #5b3113;
+    font-size: 19px;
+    margin-top: 14px;
+  }
+  
+  .review-stars small {
+    font-size: 11px;
+    margin-left: 8px;
+    color: #986d58;
+  }
+  
+  .review-text {
+    margin: 14px 0 0;
+    color: #75685c;
+    font-size: 13px;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+  }
+  
+  .review-message {
+    text-align: center;
+    padding: 32px 16px;
+    color: #8f7e70;
+    font-size: 14px;
+  }
+  
+  @media (max-width: 380px) {
+    .review-sort {
+      gap: 4px;
+    }
+  
+    .review-sort button {
+      padding: 9px 8px;
+      font-size: 11px;
+    }
+  
+    .review-card {
+      padding: 16px 14px;
+    }
+  }
+
+  /* Figma review card alignment */
+
+.book-reviews .review-card {
+    text-align: left;
+  }
+  
+  .book-reviews .review-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+  }
+  
+  .book-reviews .review-author {
+    align-items: flex-start;
+    text-align: left;
+  }
+  
+  .book-reviews .review-stars {
+    justify-content: flex-start;
+    text-align: left;
+  }
+  
+  .book-reviews .review-text {
+    text-align: left;
+    width: 100%;
+  }
+
+  /* Final Figma review card spacing */
+
+.book-reviews .review-card {
+    padding: 16px;
+  }
+  
+  .book-reviews .review-card-header {
+    gap: 12px;
+    min-height: 36px;
+  }
+  
+  .book-reviews .review-stars {
+    margin-top: 12px;
+  }
+  
+  .book-reviews .review-text {
+    margin-top: 10px;
+    line-height: 1.55;
+  }
+  
+  .book-reviews .review-list {
+    gap: 20px;
+  }
+
+  /* Figma: stars beside reviewer names */
+
+.book-reviews .review-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+  }
+  
+  .book-reviews .review-card-header {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+  
+  .book-reviews .review-stars {
+    grid-column: 2;
+    grid-row: 1;
+    margin-top: 8px;
+    white-space: nowrap;
+  }
+  
+  .book-reviews .review-text {
+    grid-column: 1 / -1;
+  }
+  
+  /* Keep your own review's stars below the header */
+  
+  .book-reviews .own-review .review-card-header {
+    grid-column: 1 / -1;
+  }
+  
+  .book-reviews .own-review .review-stars {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin-top: 12px;
+  }
+  
+  .book-reviews .own-review .review-text {
+    grid-row: 3;
+  }
+
+  /* Keep YOUR REVIEW badge beside the name */
+
+.book-reviews .own-review .review-author {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .book-reviews .own-review .your-review-label {
+    white-space: nowrap;
+  }
+
+  /* Keep username and YOUR REVIEW badge on one line */
+.book-reviews .own-review .review-author {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  
+  .book-reviews .own-review .your-review-label {
+    font-size: 9px;
+    padding: 3px 7px;
+    white-space: nowrap;
+  }
+
+
+/* Spoiler warning */
+.review-spoiler-warning {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 12px 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    text-align: center;
+  }
+  
+  .review-spoiler-warning p {
+    margin: 0;
+    color: #986d58;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  
+  .review-spoiler-warning button {
+    min-height: 40px;
+    padding: 10px 20px;
+    background: #5b3113;
+    color: #fffdf8;
+    border: none;
+    border-radius: 22px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  
+  .review-spoiler-warning button:hover {
+    background: #744523;
+  }
+  
+  .review-spoiler-warning button:focus-visible {
+    outline: 2px solid #c98996;
+    outline-offset: 3px;
+  }
+  
+  @media (max-width: 480px) {
+    .review-spoiler-warning {
+      padding: 16px 12px;
+    }
+  
+    .review-spoiler-warning button {
+      width: 100%;
+      max-width: 180px;
+    }
+  }
+  
+  
