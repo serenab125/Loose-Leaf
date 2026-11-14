@@ -4,7 +4,7 @@ import { useAuth } from './useAuth';
 import styles from './Login.module.css';
 
 export default function ForgotPassword({ onNavigateToLogin }) {
-  const { resetPassword } = useAuth(true);
+  const { resetPassword } = useAuth();
 
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');

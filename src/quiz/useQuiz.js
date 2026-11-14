@@ -1,57 +1,60 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import {
   TASTE_SECTIONS,
   GOAL_SECTIONS,
   MIN_TASTE_ANSWERS,
 } from './quizData';
 
+const PROGRESS_KEY = 'looseleaf_quiz_progress';
+
+/**
+ * Read the saved quiz progress from localStorage.
+ * Returns null when nothing usable is stored.
+ */
+const readSavedProgress = () => {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.step === undefined) return null;
+
+    return {
+      step: typeof parsed.step === 'number' ? parsed.step : 0,
+      answers:
+        parsed.answers && typeof parsed.answers === 'object'
+          ? parsed.answers
+          : {},
+    };
+  } catch {
+    return null;
+  }
+};
+
+export { PROGRESS_KEY };
+
 export function useQuiz() {
   // 0 = introduction
   // 1 = reading taste
   // 2 = reading goals
   // 3 = loading / complete
-  const [currentStep, setCurrentStep] = useState(() => {
-    try {
-      const savedStep = Number(localStorage.getItem('looseleaf_quiz_step'));
-      return savedStep === 1 || savedStep === 2 ? savedStep : 0;
-    } catch {
-      return 0;
-    }
-  });
-  const [answers, setAnswers] = useState(() => {
-    try {
-      const savedAnswers = localStorage.getItem('looseleaf_quiz_answers');
-      return savedAnswers ? JSON.parse(savedAnswers) : {};
-    } catch (error) {
-      console.warn('Could not restore quiz answers:', error);
-      return {};
-    }
-  });
+  const [initialProgress] = useState(() => readSavedProgress());
+  const [currentStep, setCurrentStep] = useState(
+    initialProgress?.step ?? 0
+  );
+  const [answers, setAnswers] = useState(initialProgress?.answers ?? {});
 
-  useEffect(() => {
-    if (Object.keys(answers).length > 0) {
-      localStorage.setItem('looseleaf_quiz_answers', JSON.stringify(answers));
-    }
-  }, [answers]);
-
-  useEffect(() => {
-    if (currentStep === 1 || currentStep === 2) {
-      localStorage.setItem('looseleaf_quiz_step', String(currentStep));
-    }
-  }, [currentStep]);
+  // Restored once, on mount, straight from the saved progress.
+  const [restoreMessage] = useState(() =>
+    initialProgress
+      ? 'Your quiz progress has been restored — you can continue from where you left off.'
+      : ''
+  );
 
   const goToIntro = useCallback(() => {
     setCurrentStep(0);
-  }, []);
-
-  const startOver = useCallback(() => {
-    localStorage.removeItem('looseleaf_quiz_answers');
-    localStorage.removeItem('looseleaf_quiz_step');
-  
     setAnswers({});
-    setCurrentStep(0);
-    window.scrollTo(0, 0);
   }, []);
 
   const answerQuestion = useCallback((sectionId, selectedIds) => {
@@ -81,7 +84,10 @@ export function useQuiz() {
   const goalAnsweredCount = GOAL_SECTIONS.filter(hasAnswer).length;
 
   // Remaining taste questions to answer
-  const remainingAnswers = TASTE_SECTIONS.length - tasteAnsweredCount;
+  const remainingAnswers = Math.max(
+    0,
+    TASTE_SECTIONS.length - tasteAnsweredCount
+  );
 
   const canContinue = tasteAnsweredCount >= MIN_TASTE_ANSWERS;
 
@@ -139,7 +145,6 @@ export function useQuiz() {
     answers,
     answerQuestion,
     goToIntro,
-    startOver,
     goToNext,
     goToGoals,
     goBackToTaste,
@@ -151,6 +156,8 @@ export function useQuiz() {
     canContinue,
     tasteAnsweredCount,
     goalAnsweredCount,
+    remainingAnswers,
     progress,
+    restoreMessage,
   };
 }

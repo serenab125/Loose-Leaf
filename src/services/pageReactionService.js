@@ -55,3 +55,23 @@ export async function fetchBookPageReactions(bookId) {
   if (error) throw error;
   return data ?? [];
 }
+
+/** Fetches the signed-in user's own chapter reactions (profile page). */
+export async function fetchMyBookPageReactions() {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError) throw authError;
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('book_page_reactions')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
+}

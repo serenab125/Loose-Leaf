@@ -114,36 +114,59 @@
   top: 110%;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #fcf8f2;
-  border: 1px solid #ebdcc5;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(91, 49, 19, 0.15);
-  width: 220px;
-  padding: 8px 0;
+  width: 300px;
+  padding: 10px;
+  background-color: #fdf8f3;
+  border: 1px solid rgba(91, 49, 19, 0.1);
+  border-radius: 18px;
+  box-shadow:
+    0 8px 5px rgba(91, 49, 19, 0.2),
+    0 20px 12.5px rgba(91, 49, 19, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   z-index: 100;
+  box-sizing: border-box;
+}
+
+/* Flipped above the trigger when there isn't room below */
+.status-dropdown-menu.above {
+  top: auto;
+  bottom: 110%;
 }
 
 .status-dropdown-item {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
-  padding: 12px 18px;
+  height: 52px;
+  padding: 0 16px;
   border: none;
-  background: transparent;
+  border-radius: 17px;
+  background-color: rgba(234, 238, 216, 0.5);
   color: #5b3113;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   text-align: left;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
-  transition: background-color 0.15s ease;
+  box-sizing: border-box;
 }
 
 .status-dropdown-item:hover {
-  background-color: #f3e9d7;
+  filter: brightness(0.97);
 }
 
+/* "Create a New Shelf" — muted olive-green text, same pale-green row */
+.status-dropdown-item.shelf {
+  color: #706c3e;
+}
+
+/* "Remove Book From Shelf" — destructive, taller pale-pink row */
 .status-dropdown-item.danger {
-  color: #b94a48;
+  background-color: rgba(255, 222, 221, 0.5);
+  color: #5b3113;
+  height: 74px;
 }
 
 /* Overview Section */
@@ -407,6 +430,12 @@
   outline: none;
 }
 
+.chapter-input:focus,
+.reaction-textarea:focus {
+  border-color: #5b3113;
+  box-shadow: 0 0 0 2px rgba(91, 49, 19, 0.25);
+}
+
 .reaction-textarea {
   width: 100%;
   height: 100px;
@@ -502,4 +531,237 @@
   font-size: 13px;
   margin: 0 0 12px;
   text-align: center;
+}
+
+/* Status feedback + Figma bottom sheets */
+.status-error-msg {
+  color: #b91c1c;
+  font-size: 13px;
+  text-align: center;
+  margin: 10px 0 0;
+}
+
+.status-ok-msg {
+  color: #2e7d32;
+  font-size: 13px;
+  text-align: center;
+  margin: 10px 0 0;
+}
+
+/* Bottom sheet (Create a new shelf / Remove from shelf) — centered dialog */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(45, 30, 20, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+  box-sizing: border-box;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 361px;
+  background-color: #fdf8f3;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+  max-height: 852px;
+  overflow-y: auto;
+}
+
+.sheet-title {
+  font-family: Georgia, serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: #5b3113;
+  margin: 0 0 8px 0;
+  text-align: center;
+}
+
+.sheet-subtitle {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #8c7365;
+  margin: 0 0 20px 0;
+  text-align: center;
+}
+
+.sheet-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #a0826d;
+  margin: 0 0 8px 0;
+}
+
+.sheet-input {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 16px;
+  border: 1px solid #ebdcc5;
+  background-color: #f9f6ed;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #5b3113;
+  outline: none;
+  box-sizing: border-box;
+  margin-bottom: 14px;
+}
+
+.sheet-input:focus {
+  border-color: #5b3113;
+  box-shadow: 0 0 0 2px rgba(91, 49, 19, 0.25);
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.chip {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid #ebdcc5;
+  background-color: #f9f6ed;
+  color: #5b3113;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background-color: #f4f3e6;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #5b3113;
+  margin-bottom: 18px;
+  cursor: pointer;
+}
+
+.toggle-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: #5b3113;
+  cursor: pointer;
+}
+
+.sheet-error {
+  color: #b91c1c;
+  font-size: 13px;
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.sheet-footnote {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #8c7365;
+  text-align: center;
+  margin: 16px 0 0 0;
+}
+
+.sheet-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn-outline {
+  flex: 1;
+  padding: 13px;
+  border-radius: 22px;
+  border: 1px solid #ebdcc5;
+  background-color: transparent;
+  color: #5b3113;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-outline:hover {
+  background-color: #f7f1e5;
+}
+
+.btn-primary {
+  flex: 1;
+  padding: 13px;
+  border-radius: 22px;
+  border: none;
+  background-color: #5b3113;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary:not(:disabled):hover {
+  background-color: #754522;
+}
+
+/* Remove-from-shelf list */
+.remove-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.remove-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-radius: 16px;
+  border: 1px solid #ebdcc5;
+  background-color: #f9f6ed;
+  cursor: pointer;
+}
+
+.remove-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: #5b3113;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.remove-shelf-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5b3113;
+}
+
+.remove-shelf-count {
+  font-size: 12px;
+  color: #8c7365;
+}
+
+.remove-empty {
+  font-size: 13px;
+  color: #8c7365;
+  text-align: center;
+  padding: 16px 0;
+  margin: 0;
 }

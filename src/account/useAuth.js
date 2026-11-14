@@ -1,5 +1,5 @@
 // useAuth.js — single Supabase client, no persistSession toggle
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 
 const SESSION_KEY = 'looseleaf_session';
@@ -62,7 +62,7 @@ export function useAuth() {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, []);
 
   const createAccount = useCallback(
     async (email, password, fullName) => {
@@ -86,7 +86,7 @@ export function useAuth() {
         setLoading(false);
       }
     },
-    [supabase]
+    []
   );
 
   const login = useCallback(
@@ -116,7 +116,7 @@ export function useAuth() {
         setLoading(false);
       }
     },
-    [supabase]
+    []
   );
 
   const resetPassword = useCallback(
@@ -141,7 +141,7 @@ export function useAuth() {
         setLoading(false);
       }
     },
-    [supabase]
+    []
   );
 
   const updatePassword = useCallback(
@@ -176,7 +176,7 @@ export function useAuth() {
         setLoading(false);
       }
     },
-    [supabase]
+    []
   );
 
   const logout = useCallback(async () => {
@@ -193,7 +193,7 @@ export function useAuth() {
       setUser(null);
       setLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   return {
     user,

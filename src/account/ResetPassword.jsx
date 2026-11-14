@@ -4,7 +4,7 @@ import { useAuth } from './useAuth';
 import styles from './Login.module.css';
 
 export default function ResetPassword() {
-  const { updatePassword, logout, loading } = useAuth(true);
+  const { updatePassword, logout, loading } = useAuth();
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

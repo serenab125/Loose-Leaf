@@ -1,56 +1,32 @@
 // HS-03: Top Recommendation Card
 // Displays one recommended book or a fallback message.
 
-function TopRecommendationCard({ book, onStartReading }) {
+import styles from './Home.module.css';
+
+export default function TopRecommendationCard({ book, onStartReading }) {
   return (
-    <section className="top-recommendation-card">
-      <p className="top-recommendation-label">
-        OUR TOP PICK FOR YOU
-      </p>
-
-      {book ? (
-        <>
-          <div className="top-recommendation-content">
-            {(book.coverUrl || book.cover_url) ? (
-              <img
-                src={book.coverUrl || book.cover_url}
-                alt={`Cover of ${book.title}`}
-                className="top-recommendation-cover"
-              />
-            ) : (
-              <div className="top-recommendation-placeholder">
-                📖
-              </div>
-            )}
-
-            <div className="top-recommendation-info">
-              <h2>{book.title}</h2>
-              <p>{book.author || 'Unknown author'}</p>
-              <span>Based on your reading preferences</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="top-recommendation-button"
-            onClick={() => onStartReading?.(book)}
-          >
-            Start Reading
-          </button>
-        </>
-      ) : (
-        <>
-          <div className="top-recommendation-empty">
-            <h2>Your next favorite book is waiting!</h2>
-            <p>
-              We're still finding the perfect recommendation
-              for you.
-            </p>
-          </div>
-        </>
-      )}
-    </section>
-  )
+    <div className={`${styles.card} ${styles.topPickCard}`}>
+      <p className={styles.eyebrow}>OUR TOP PICK FOR YOU</p>
+      <div className={styles.topPickContent}>
+        <img
+          src={book?.coverUrl || book?.cover || "https://covers.openlibrary.org/b/id/8225261-L.jpg"}
+          alt={book?.title || "Recommended book"}
+          className={styles.topPickCover}
+        />
+        <div>
+          <h3 className={styles.cardHeader}>{book?.title || "World War Z"}</h3>
+          <p className={styles.cardSubtext}>
+            {book?.author ? `by ${book.author}` : "Based on your quiz answers."}
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        className={styles.primaryBtn}
+        onClick={() => onStartReading?.(book)}
+      >
+        Start reading
+      </button>
+    </div>
+  );
 }
-
-export default TopRecommendationCard

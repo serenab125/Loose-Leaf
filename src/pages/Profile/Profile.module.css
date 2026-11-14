@@ -195,6 +195,14 @@
   box-sizing: border-box;
 }
 
+.fieldInput:focus,
+.textArea:focus,
+.countrySelect:focus,
+.shelfNameInput:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(91, 49, 19, 0.35);
+}
+
 .textArea {
   height: 80px;
   resize: none;
@@ -292,29 +300,29 @@
   cursor: pointer;
 }
 
-/* Shelf Management Styles */
+/* Shelf Management Styles — centered dialogs */
 .modalOverlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(91, 49, 19, 0.4);
+  inset: 0;
+  background-color: rgba(45, 30, 20, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
   z-index: 100;
+  box-sizing: border-box;
 }
 
 .modalContent {
   background: #fdf8f3;
-  border-radius: 20px;
+  border-radius: 24px;
   padding: 24px;
   width: 100%;
-  max-width: 393px;
+  max-width: 361px;
   max-height: 852px;
   overflow-y: auto;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
 }
 
 .modalTitle {
@@ -322,14 +330,112 @@
   font-size: 22px;
   font-weight: 500;
   color: #5b3113;
-  margin: 0 0 16px 0;
+  margin: 0 0 8px 0;
+  text-align: center;
+}
+
+.modalSubtitle {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #8c7365;
+  margin: 0 0 20px 0;
+  text-align: center;
 }
 
 .modalActions {
   display: flex;
-  justify-content: flex-end;
   gap: 12px;
   margin-top: 20px;
+}
+
+.modalActions .cancelBtn,
+.modalActions .saveBtn {
+  flex: 1;
+  margin-top: 0;
+  padding: 13px;
+  border-radius: 22px;
+  font-size: 15px;
+  box-shadow: none;
+}
+
+.modalActions .cancelBtn {
+  background: transparent;
+  border: 1px solid #ebdcc5;
+  color: #5b3113;
+}
+
+.modalActions .cancelBtn:hover {
+  background: #f7f1e5;
+}
+
+.modalActions .saveBtn {
+  background: #5b3113;
+  color: #ffffff;
+  border: none;
+}
+
+.modalActions .saveBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.modalDivider {
+  height: 1px;
+  background: #ebe2d3;
+  margin: 20px 0 16px;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.chip {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid #ebdcc5;
+  background-color: #f9f6ed;
+  color: #5b3113;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background-color: #f4f3e6;
+}
+
+.addBookResults {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.addBookResultRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 13px 16px;
+  background: #f9f6ed;
+  border: 1px solid #ebdcc5;
+  border-radius: 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5b3113;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.addBookResultSelected,
+.addBookResultRow:hover {
+  background: #f4f3e6;
+  border-color: #5b3113;
 }
 
 .shelvesView {

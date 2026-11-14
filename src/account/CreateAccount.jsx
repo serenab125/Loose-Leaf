@@ -4,7 +4,7 @@ import styles from './CreateAccount.module.css';
 import { useAuth } from './useAuth';
 
 export function CreateAccount({ onNavigateToLogin }) {
-  const { createAccount, loading } = useAuth(true);
+  const { createAccount, loading } = useAuth();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');

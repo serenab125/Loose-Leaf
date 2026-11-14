@@ -7,9 +7,10 @@ import ResetPassword from './account/ResetPassword'
 import { Login } from './account/Login'
 import { Quiz } from './quiz/Quiz'
 import { Home } from './home/Home'
+import BookDetail from './pages/BookDetail/BookDetail'
 
 function App() {
-  const { user, logout, loading, savePreferences } = useAuth()
+  const { user, logout, loading } = useAuth()
 
   const [currentBook, setCurrentBook] = useState(null)
   const [view, setView] = useState(() => {
@@ -52,16 +53,8 @@ function App() {
     )
   }
 
-  const handleQuizComplete = async (quizAnswers) => {
-    try {
-      if (savePreferences) {
-        await savePreferences(quizAnswers)
-      }
-    } catch (err) {
-      console.error('Error saving quiz results:', err)
-    } finally {
-      setIsQuizCompleted(true)
-    }
+  const handleQuizComplete = () => {
+    setIsQuizCompleted(true)
   }
 
   const handleQuizSkip = () => {
@@ -115,12 +108,26 @@ function App() {
     )
   }
 
+  if (currentBook) {
+    return (
+      <BookDetail
+        book={currentBook}
+        user={user}
+        onBack={() => setCurrentBook(null)}
+        onUpdateStatus={(book, status) => {
+          console.log(`Updated ${book?.title} to status: ${status}`)
+        }}
+      />
+    )
+  }
+
   return (
     <main>
       <Home
         user={user}
         logout={logout}
         currentBook={currentBook}
+        onSelectBook={(book) => setCurrentBook(book)}
         onRetakeQuiz={() => setIsQuizCompleted(false)}
       />
     </main>

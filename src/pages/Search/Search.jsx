@@ -133,11 +133,7 @@ export default function Search({ onSelectBook }) {
     useEffect(() => {
         const category = categoryData[selectedCategory];
 
-        if (!category) {
-            setBookRows([]);
-            setLoadingBooks(false);
-            return;
-        }
+        if (!category) return;
 
         let cancelled = false;
 
@@ -206,22 +202,16 @@ export default function Search({ onSelectBook }) {
     useEffect(() => {
         const trimmedQuery = query.trim();
 
-        if (!trimmedQuery) {
-            requestNumber.current += 1;
-            setSearchResults([]);
-            setSearchError("");
-            setSearchLoading(false);
-            return;
-        }
+        if (!trimmedQuery) return;
 
         const currentRequest = ++requestNumber.current;
 
-        setSearchLoading(true);
-        setSearchError("");
-        setSearchResults([]);
-
         // Wait briefly so we don't request books on every keystroke.
         const timeout = setTimeout(async () => {
+            setSearchLoading(true);
+            setSearchError("");
+            setSearchResults([]);
+
             try {
                 const results = await searchBooksByTitle(trimmedQuery);
 
@@ -260,7 +250,11 @@ export default function Search({ onSelectBook }) {
                     <button
                         type="button"
                         className="search-back-button"
-                        onClick={() => setSelectedCategory(null)}
+                        onClick={() => {
+                            setSelectedCategory(null);
+                            setBookRows([]);
+                            setLoadingBooks(false);
+                        }}
                     >
                         ← Back
                     </button>
@@ -313,7 +307,17 @@ export default function Search({ onSelectBook }) {
                             className="search-input"
                             placeholder="Search for a book title..."
                             value={query}
-                            onChange={(event) => setQuery(event.target.value)}
+                            onChange={(event) => {
+                                const value = event.target.value;
+                                setQuery(value);
+
+                                if (!value.trim()) {
+                                    requestNumber.current += 1;
+                                    setSearchResults([]);
+                                    setSearchError("");
+                                    setSearchLoading(false);
+                                }
+                            }}
                             onKeyDown={async (event) => {
                                 if (event.key !== "Enter" || !query.trim()) return;
                               
@@ -330,7 +334,7 @@ export default function Search({ onSelectBook }) {
                                   if (currentRequest === requestNumber.current) {
                                     setSearchResults(results);
                                   }
-                                } catch (error) {
+                                } catch {
                                   if (currentRequest === requestNumber.current) {
                                     setSearchError("Unable to retrieve books. Please try again.");
                                   }

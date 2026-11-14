@@ -35,3 +35,18 @@ export async function saveBookReview({
   if (error) throw error;
   return Array.isArray(data) ? data[0] : data;
 }
+
+/** Fetches all saved reviews for one book (community reviews tab). */
+export async function fetchBookReviews(bookId) {
+  const cleanBookId = String(bookId ?? '').trim();
+  if (!cleanBookId) return [];
+
+  const { data, error } = await supabase
+    .from('book_reviews')
+    .select('*')
+    .eq('book_id', cleanBookId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
+}

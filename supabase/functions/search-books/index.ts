@@ -29,7 +29,8 @@ Deno.serve(async (req) => {
 
     const params = new URLSearchParams({
       [searchType === "subject" ? "subject" : "title"]: query.trim(),
-      fields: "key,title,author_name,cover_i",
+      fields:
+        "key,title,author_name,cover_i,number_of_pages_median,first_sentence",
       limit: "20",
     });
 
@@ -52,6 +53,8 @@ Deno.serve(async (req) => {
       title?: string;
       author_name?: string[];
       cover_i?: number;
+      number_of_pages_median?: number;
+      first_sentence?: string[];
     }) => ({
       // Example: /works/OL123W becomes OL123W
       bookId: book.key?.split("/").pop() ?? null,
@@ -59,6 +62,10 @@ Deno.serve(async (req) => {
       author: book.author_name?.join(", ") ?? null,
       coverUrl: book.cover_i
         ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg?default=false`
+        : null,
+      pageCount: book.number_of_pages_median ?? null,
+      description: Array.isArray(book.first_sentence)
+        ? book.first_sentence.join(" ")
         : null,
     }));
 

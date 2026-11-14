@@ -13,6 +13,15 @@
 import { supabase } from '../supabaseClient';
 
 /**
+ * PostgREST returns a single JSON object for RPCs that return a composite
+ * (table) type, but an array for RPCs that return SETOF. Normalize both.
+ */
+const firstRow = (data) => {
+  if (data === null || data === undefined) return null;
+  return Array.isArray(data) ? (data[0] ?? null) : data;
+};
+
+/**
  * Create a new shelf for the current user.
  * @param {string} userId - The authenticated user's Supabase ID
  * @param {string} name - Shelf name (1-200 chars)
@@ -33,7 +42,7 @@ export async function createShelf(userId, name, description = '', { client } = {
     });
 
     if (error) throw error;
-    return data && data.length > 0 ? data[0] : null;
+    return firstRow(data);
   } catch (error) {
     console.error('Error creating shelf:', error);
     throw error;
@@ -62,7 +71,7 @@ export async function updateShelf(userId, shelfId, name, description, { client }
     });
 
     if (error) throw error;
-    return data && data.length > 0 ? data[0] : null;
+    return firstRow(data);
   } catch (error) {
     console.error('Error updating shelf:', error);
     throw error;
@@ -131,7 +140,7 @@ export async function addBookToShelf(
     });
 
     if (error) throw error;
-    return data && data.length > 0 ? data[0] : null;
+    return firstRow(data);
   } catch (error) {
     console.error('Error adding book to shelf:', error);
     throw error;
@@ -289,12 +298,12 @@ export async function fetchUserShelvesWithBooks(userId, { client } = {}) {
   if (!userId) return [];
 
   // Fetch shelves first
-  const shelves = await fetchUserShelves(userId);
+  const shelves = await fetchUserShelves(userId, { client });
 
   // Fetch books for each shelf in parallel
   const shelvesWithBooks = await Promise.all(
     shelves.map(async (shelf) => {
-      const books = await fetchShelfBooks(userId, shelf.id);
+      const books = await fetchShelfBooks(userId, shelf.id, { client });
       return {
         ...shelf,
         books,

@@ -1,21 +1,17 @@
 // Login.jsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import styles from './Login.module.css';
 import { useAuth } from './useAuth';
 
 export function Login({
   onNavigateToCreateAccount,
   onNavigateToForgotPassword,
-  rememberMe,
-  setRememberMe,
-  onSuccess,
-  signIn,
-  loading,
 }) {
   const { signIn: signInAuth, loading: authLoading, initializing } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -88,7 +84,7 @@ export function Login({
                 className={styles.checkbox}
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                disabled={loading}
+                disabled={busy}
               />
               <span>Remember me</span>
             </label>
@@ -101,7 +97,7 @@ export function Login({
             className={styles.buttonPrimary}
             disabled={busy}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {busy ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
