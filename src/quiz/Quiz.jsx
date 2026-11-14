@@ -17,10 +17,12 @@ export function Quiz({ onSkip, onComplete, onBackToHome, user }) {
   //setting the pop up for skip quiz as false
   const [showSkipPopup, setShowSkipPopup] = useState(false);
   const [showStartOverPopup, setShowStartOverPopup] = useState(false);
+  const [isStartingOver, setIsStartingOver] = useState(false);
 
   const {
     currentStep,
     answers,
+    loadingProgress,
     answerQuestion,
     startOver,
     isIntro,
@@ -34,7 +36,7 @@ export function Quiz({ onSkip, onComplete, onBackToHome, user }) {
     completeQuiz,
     canContinue,
     tasteAnsweredCount,
-  } = useQuiz();
+  } = useQuiz(user?.id);
 
   const [saveError, setSaveError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -114,10 +116,16 @@ export function Quiz({ onSkip, onComplete, onBackToHome, user }) {
 
       if (error) throw error;
 
+      const { error: deleteError } = await supabase
+  .from('quiz_progress')
+  .delete()
+  .eq('user_id', user.id);
+
+if (deleteError) throw deleteError;
+
       console.log('Quiz answers saved successfully!', answers);
 
-localStorage.removeItem('looseleaf_quiz_answers');
-localStorage.removeItem('looseleaf_quiz_step');
+
 
 onComplete?.(answers);
     } catch (error) {
@@ -132,6 +140,14 @@ onComplete?.(answers);
     0,
     MIN_TASTE_ANSWERS - tasteAnsweredCount
   );
+
+  if (loadingProgress) {
+    return (
+      <div className="quiz-container">
+        <p>Loading your quiz...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="quiz-container">
@@ -178,17 +194,7 @@ onComplete?.(answers);
     <button
       type="button"
       className="quiz-save-button"
-      onClick={() => {
-        localStorage.setItem(
-          'looseleaf_quiz_answers',
-          JSON.stringify(answers)
-        );
-        localStorage.setItem(
-          'looseleaf_quiz_step',
-          String(currentStep)
-        );
-        setQuizSaved(true);
-      }}
+      onClick={handleSaveQuiz}
     >
       Save Quiz
     </button>
@@ -336,6 +342,11 @@ onComplete?.(answers);
       </p>
 
       <p>Are you sure you want to start over?</p>
+      {saveError && (
+  <p role="alert" style={{ color: '#b91c1c' }}>
+    {saveError}
+  </p>
+)}
 
       <div className="skip-popup-buttons">
         <button
@@ -347,15 +358,30 @@ onComplete?.(answers);
         </button>
 
         <button
-          type="button"
-          className="skip-confirm-button"
-          onClick={() => {
-            startOver();
-            setShowStartOverPopup(false);
-          }}
-        >
-          Yes, Start Over
-        </button>
+  type="button"
+  className="skip-confirm-button"
+  disabled={isStartingOver}
+  onClick={async () => {
+    if (isStartingOver) return;
+
+    setIsStartingOver(true);
+    setSaveError('');
+
+    try {
+      await startOver();
+      setQuizSaved(false);
+      setShowStartOverPopup(false);
+    } catch (error) {
+      console.error('Error restarting quiz:', error);
+      setSaveError(error.message || 'Unable to restart quiz.');
+    } finally {
+      setIsStartingOver(false);
+    }
+  }}
+>
+  {isStartingOver ? 'Starting Over...' : 'Yes, Start Over'}
+</button>
+
       </div>
     </div>
   </div>

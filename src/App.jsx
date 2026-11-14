@@ -55,18 +55,31 @@ function App() {
       const skippedQuiz =
         localStorage.getItem(`looseleaf_quiz_skipped_${user.id}`) === 'true';
 
-      const savedQuizStep = localStorage.getItem('looseleaf_quiz_step');
-
+        const { data: savedQuiz, error: quizError } = await supabase
+        .from('quiz_progress')
+        .select('current_step')
+        .eq('user_id', user.id)
+        .is('completed_at', null)
+        .maybeSingle();
+      
+      if (cancelled) return;
+      
+      if (quizError) {
+        console.error('Could not check saved quiz:', quizError);
+      }
+      
       const hasUnfinishedQuiz =
-        savedQuizStep === '1' || savedQuizStep === '2';
+        !quizError &&
+        savedQuiz &&
+        (savedQuiz.current_step === 1 || savedQuiz.current_step === 2);
 
-      setView(
-        hasUnfinishedQuiz
-          ? 'quiz'
-          : completedQuiz || skippedQuiz
-            ? 'home'
-            : 'quiz'
-      );
+        setView(
+          hasUnfinishedQuiz
+            ? 'quiz'
+            : completedQuiz || skippedQuiz
+              ? 'home'
+              : 'quiz'
+        );
 
       setCheckingQuiz(false);
     }
@@ -132,7 +145,7 @@ function App() {
             user={user}
             skippedQuiz={localStorage.getItem(`looseleaf_quiz_skipped_${user.id}`) === 'true'}
             onRetakeQuiz={() => {
-              localStorage.setItem('looseleaf_quiz_step', '0')
+              
               setView('quiz')
             }}
             onNavigateToSearch={() => setView('search')}

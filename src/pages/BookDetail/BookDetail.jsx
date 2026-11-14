@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import {
   addBookPageReaction,
@@ -14,7 +14,27 @@ import ReviewModal from '../../components/Reviews/ReviewModal';
 
 export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [showDropdown, setShowDropdown] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState('Currently Reading');
+  const dropdownRef = useRef(null);
+  useEffect(() => {
+    if (!showDropdown) return;
+  
+    function handleClickOutside(event) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setShowDropdown(false);
+      }
+    }
+  
+    document.addEventListener('pointerdown', handleClickOutside);
+  
+    return () => {
+      document.removeEventListener('pointerdown', handleClickOutside);
+    };
+  }, [showDropdown]);
+
+  const [currentStatus, setCurrentStatus] = useState('Update');
   const [activeTab, setActiveTab] = useState('reviews');
   const [analysisMode, setAnalysisMode] = useState('analytical');
   const [sortOrder, setSortOrder] = useState('highest');
@@ -279,7 +299,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
         </p>
 
         {/* Status Dropdown */}
-        <div className="status-dropdown-container">
+        <div className="status-dropdown-container" ref={dropdownRef}>
           <button
             type="button"
             className="status-dropdown-btn"
@@ -417,6 +437,16 @@ setCreatingReview(false);
   ) : (
 
     <>
+
+<button
+  type="button"
+  onClick={() => {
+    setEditingReview(null);
+    setCreatingReview(true);
+  }}
+>
+  Test Write a Review
+</button>
 
 
 
