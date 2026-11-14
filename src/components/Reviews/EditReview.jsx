@@ -39,7 +39,7 @@ export default function EditReview({ review, onSave, onBack }) {
         ‹ Back to Reviews
       </button>
 
-      <h2>Edit Your Review</h2>
+      <h2>{review ? 'Edit Your Review' : 'Write a Review'}</h2>
 
       <form onSubmit={handleSubmit}>
         <fieldset className="edit-review-rating">
@@ -151,7 +151,7 @@ export default function EditReview({ review, onSave, onBack }) {
           className="edit-review-save"
           disabled={!text.trim() || rating === 0}
         >
-          Save Changes
+          {review ? 'Save Changes' : 'Post Review'}
         </button>
       </form>
     </div>

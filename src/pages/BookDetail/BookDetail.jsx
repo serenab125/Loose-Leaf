@@ -5,6 +5,12 @@ import {
   fetchBookPageReactions,
 } from '../../services/pageReactionService';
 import './BookDetail.css';
+import BookReviews from '../../components/Reviews/BookReviews';
+import EditReview from '../../components/Reviews/EditReview';
+import { saveBookReview, deleteBookReview } from '../../services/reviewService';
+import ReviewModal from '../../components/Reviews/ReviewModal';
+
+
 
 export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -28,6 +34,9 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
 
   // Reviews state (populated strictly from Supabase)
   const [reviewsList, setReviewsList] = useState([]);
+  const [editingReview, setEditingReview] = useState(null);
+  const [deletingReview, setDeletingReview] = useState(null);
+  const [creatingReview, setCreatingReview] = useState(false);
 
   const coverUrl = book?.coverUrl || book?.cover || book?.cover_url;
   const resolvedBookId = String(
@@ -85,6 +94,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       try {
         const dbReactions = await fetchBookPageReactions(resolvedBookId);
         if (!cancelled) {
+          
           const formatted = dbReactions.map((row) => ({
             id: row.id,
             userId: row.user_id,
@@ -119,19 +129,40 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
           .order('created_at', { ascending: false });
 
         if (!cancelled && !error) {
+          const reviewerIds = [...new Set(
+            (dbReviews || []).map((row) => row.user_id)
+          )];
+          
+          const { data: reviewerProfiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', reviewerIds);
+          
+          if (profilesError) {
+            console.warn('Could not load reviewer names:', profilesError);
+          }
+          
+          const namesById = new Map(
+            (reviewerProfiles || []).map((profile) => [
+              profile.id,
+              profile.full_name,
+            ])
+          );
+          
           const formattedReviews = (dbReviews || []).map((row) => ({
             id: row.id,
-            reviewer:
-              row.user_id === user?.id
-                ? 'You'
-                : row.reviewer_name || 'Reader',
-            match: row.user_id === user?.id ? 100 : 90,
-            rating: Math.max(
-              1,
-              Math.min(5, Math.round((row.rating_out_of_10 || 8) / 2))
-            ),
+            userId: row.user_id,
+            authorName:
+  row.user_id === user?.id
+    ? 'You'
+    : namesById.get(row.user_id) || 'Reader',
+            rating: row.rating_out_of_10 / 2,
+            ratingOutOf10: row.rating_out_of_10,
             text: row.review_text,
+            classification: row.review_type ?? row.classification ?? 'Analytical',
+            includesSpoilers: row.includes_spoilers ?? false,
           }));
+
           setReviewsList(formattedReviews);
         }
       } catch (err) {
@@ -216,7 +247,11 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   };
 
   return (
-    <main className="book-detail-page">
+    <main
+  className={`book-detail-page ${
+    editingReview || creatingReview ? 'book-detail-editing' : ''
+  }`}
+>
       {/* Top Header Navigation */}
       <header className="book-detail-header">
         <button type="button" className="book-detail-back-btn" onClick={onBack}>
@@ -334,75 +369,88 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
 
         {/* Tab Content Display */}
         {activeTab === 'reviews' ? (
-          <>
-            {/* Filter Controls (Reviews tab only) */}
-            <div className="community-filter-row">
-              <div className="mode-toggle-group">
-                <span className="mode-toggle-label">Perspective</span>
-                <div className="toggle-switch-pill">
-                  <button
-                    type="button"
-                    className={`toggle-option ${analysisMode === 'analytical' ? 'active' : ''}`}
-                    onClick={() => setAnalysisMode('analytical')}
-                  >
-                    Analytical
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-option ${analysisMode === 'casual' ? 'active' : ''}`}
-                    onClick={() => setAnalysisMode('casual')}
-                  >
-                    Casual
-                  </button>
-                </div>
-              </div>
+  editingReview || creatingReview ? (
+    <EditReview
+    key={editingReview?.id ?? 'new-review'}
+    review={editingReview}
+    onBack={() => {
+      setEditingReview(null);
+      setCreatingReview(false);
+    }}
+      onSave={async (updatedReview) => {
+        try {
+          await saveBookReview({
+            bookId: resolvedBookId,
+            bookTitle: book?.title,
+            reviewText: updatedReview.text,
+            ratingOutOf10: updatedReview.ratingOutOf10,
+            classification: updatedReview.classification,
+            includesSpoilers: updatedReview.includesSpoilers,
+          });
 
-              <div className="sort-pills-row">
-                <button
-                  type="button"
-                  className={`sort-pill-btn ${sortOrder === 'highest' ? 'active' : ''}`}
-                  onClick={() => setSortOrder('highest')}
-                >
-                  Highest to Lowest
-                </button>
-                <button
-                  type="button"
-                  className={`sort-pill-btn ${sortOrder === 'lowest' ? 'active' : ''}`}
-                  onClick={() => setSortOrder('lowest')}
-                >
-                  Lowest to Highest
-                </button>
-              </div>
-            </div>
+          setReviewsList((previous) => {
+            if (editingReview) {
+              return previous.map((review) =>
+                review.id === updatedReview.id ? updatedReview : review
+              );
+            }
+          
+            return [
+              {
+                ...updatedReview,
+                id: crypto.randomUUID(),
+                userId: user?.id,
+                authorName: 'You',
+              },
+              ...previous,
+            ];
+          });
 
-            {reviewsList.length === 0 ? (
-              <div className="reactions-locked-card">
-                <p className="reactions-locked-text" style={{ margin: 0 }}>
-                  No reviews yet for this book.
-                </p>
-              </div>
-            ) : (
-              <div className="cards-list">
-                {reviewsList.map((rev) => (
-                  <article key={rev.id} className="review-card">
-                    <div className="review-card-header">
-                      <div className="reviewer-profile">
-                        <div className="reviewer-avatar">
-                          {rev.reviewer.charAt(0)}
-                        </div>
-                        <div>
-                          <h4 className="reviewer-name">{rev.reviewer}</h4>
-                          <span className="reviewer-match">{rev.match}% Match</span>
-                        </div>
-                      </div>
-                      <div className="star-rating">{'★'.repeat(rev.rating)}</div>
-                    </div>
-                    <p className="review-text">{rev.text}</p>
-                  </article>
-                ))}
-              </div>
-            )}
-          </>
+          setEditingReview(null);
+setCreatingReview(false);
+        } catch (error) {
+          console.error('Could not save review:', error);
+          alert('Could not save your review. Please try again.');
+        }
+      }}
+    />
+  ) : (
+
+    <>
+
+
+
+      <BookReviews
+        reviews={reviewsList}
+        currentUserId={user?.id}
+        onEdit={(review) => setEditingReview(review)}
+        onDelete={(review) => setDeletingReview(review)}
+      />
+
+      {deletingReview && (
+        <ReviewModal
+          review={deletingReview}
+          mode="delete"
+          onClose={() => setDeletingReview(null)}
+          onDelete={async (review) => {
+            try {
+              await deleteBookReview(resolvedBookId);
+
+              setReviewsList((previous) =>
+                previous.filter((item) => item.id !== review.id)
+              );
+
+              setDeletingReview(null);
+            } catch (error) {
+              console.error('Could not delete review:', error);
+              alert('Could not delete your review. Please try again.');
+            }
+          }}
+        />
+      )}
+    </>
+  )
+
         ) : reactionsLoading ? (
           <p style={{ textAlign: 'center', color: '#8c7365', fontSize: '14px' }}>
             Loading reactions...

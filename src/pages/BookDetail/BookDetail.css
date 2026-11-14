@@ -503,3 +503,20 @@
   margin: 0 0 12px;
   text-align: center;
 }
+
+/* Display the review editor as its own screen */
+.book-detail-editing > .book-detail-header,
+.book-detail-editing > .book-detail-hero,
+.book-detail-editing > .book-overview-section,
+.book-detail-editing .book-community-tabs {
+  display: none;
+}
+
+.book-detail-editing .book-community-section {
+  margin: 0;
+  padding: 0;
+}
+
+.book-detail-editing {
+  min-height: 100vh;
+}
