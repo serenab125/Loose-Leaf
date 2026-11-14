@@ -10,6 +10,8 @@ import Search from './pages/Search/Search'
 import { Home } from './home/Home'
 import { Profile } from './pages/Profile/Profile'
 import { supabase } from './supabaseClient'
+import ReviewsPreview from './components/Reviews/ReviewsPreview'
+import ReadingTimer from './components/Timer/Timer'
 
 function App() {
   const { user, logout, loading, savePreferences } = useAuth()
@@ -121,6 +123,10 @@ function App() {
           <Search />
         ) : view === 'profile' ? (
           <Profile user={user} logout={logout} />
+        ) : view === 'timer' ? (
+          <ReadingTimer />
+        ) : view === 'reviews-preview' ? (
+          <ReviewsPreview />
         ) : (
           <Quiz
   user={user}
@@ -158,7 +164,12 @@ function App() {
               <span>Home</span>
             </button>
 
-            <button type="button" disabled aria-label="Timer coming soon">
+            <button
+  type="button"
+  className={view === 'timer' ? 'active' : ''}
+  onClick={() => setView('timer')}
+>
+  
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
@@ -169,7 +180,7 @@ function App() {
             <button
               type="button"
               className={view === 'search' ? 'active' : ''}
-              onClick={() => setView('search')}
+              onClick={() => setView('reviews-preview')}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8" />
