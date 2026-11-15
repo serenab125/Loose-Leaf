@@ -149,6 +149,7 @@ function App() {
               setView('quiz')
             }}
             onNavigateToSearch={() => setView('search')}
+            onNavigateToTimer={() => setView('timer')}
             onSelectBook={(book) => setCurrentBook(book)}
           />
         ) : view === 'search' ? (

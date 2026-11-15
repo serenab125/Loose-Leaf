@@ -4,7 +4,7 @@ import { fetchDefaultRecommendationShelves } from '../services/defaultRecommenda
 import HomeCarousel from './HomeCarousel';
 import styles from './Home.module.css';
 
-export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, onNavigateToSearch, skippedQuiz = false }) {
+export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, onNavigateToSearch, onNavigateToTimer, skippedQuiz = false }) {
   const [userShelves, setUserShelves] = useState([]);
 
   useEffect(() => {
@@ -50,6 +50,7 @@ export function Home({ user, currentBook, onRetakeQuiz, onSelectBook, onNavigate
             user={user}
             onRetakeQuiz={onRetakeQuiz}
             onNavigateToSearch={onNavigateToSearch}
+            onNavigateToTimer={onNavigateToTimer}
           />
         </section>
 

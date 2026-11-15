@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import CurrentReadCard from './CurrentReadCard';
 
-export default function CurrentRead({ onNavigateToSearch }) {
+export default function CurrentRead({ onNavigateToSearch, onNavigateToTimer }) {
     const [book, setBook] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -60,9 +60,7 @@ export default function CurrentRead({ onNavigateToSearch }) {
                <CurrentReadCard
                     book={book}
                     onPickBook={onNavigateToSearch}
-                    onContinueReading={() => {
-                        console.log('Continue reading:', book);
-                    }}
+                    onContinueReading={() => onNavigateToTimer?.(book)}
                 />
             )}
         </div>
