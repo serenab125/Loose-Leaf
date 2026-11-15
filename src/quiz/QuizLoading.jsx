@@ -9,17 +9,26 @@ export function QuizLoading({ onComplete, onRetake }) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + 1;
-      });
-    }, 60);
+    // Drive the bar by elapsed wall-clock time rather than by counting ticks.
+    // A tick counter stalls when the tab is backgrounded and the browser
+    // throttles setInterval, which would leave the loader stuck part-way.
+    const DURATION_MS = 6000
+    const startedAt = Date.now()
 
-    return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      const next = Math.min(
+        100,
+        Math.round(((Date.now() - startedAt) / DURATION_MS) * 100)
+      )
+
+      setProgress(next)
+
+      if (next >= 100) {
+        clearInterval(interval)
+      }
+    }, 60)
+
+    return () => clearInterval(interval)
   }, []);
 
   const isFinished = progress >= 100;

@@ -47,21 +47,22 @@ const normalize = (text) =>
 const coverCache = new Map();
 
 async function findBookCover(bookInfo) {
-    if (bookInfo.coverUrl) {
-        return { ...bookInfo, bookId: bookInfo.title };
-    }
-
     const cacheKey = `${bookInfo.title}|${bookInfo.author}`;
 
     if (coverCache.has(cacheKey)) {
         return coverCache.get(cacheKey);
     }
 
+    // Keep any pre-set cover as a presentation fallback, but still resolve the
+    // real Open Library id. Without this, a book reached via a category row
+    // (pre-set cover) keeps bookId = title while the same book reached via
+    // search gets its OLID — two identities for one book, which splits statuses,
+    // shelf entries, reviews and reactions.
     let book = {
-        bookId: bookInfo.title,
+        bookId: bookInfo.bookId ?? bookInfo.title,
         title: bookInfo.title,
         author: bookInfo.author,
-        coverUrl: null,
+        coverUrl: bookInfo.coverUrl ?? null,
     };
 
     try {
@@ -80,8 +81,8 @@ async function findBookCover(bookInfo) {
         if (match) {
             book = {
                 ...book,
-                bookId: match.bookId ?? bookInfo.title,
-                coverUrl: match.coverUrl ?? null,
+                bookId: match.bookId ?? book.bookId,
+                coverUrl: book.coverUrl ?? match.coverUrl ?? null,
             };
         }
     } catch (error) {
@@ -274,6 +275,7 @@ export default function Search({ onSelectBook }) {
                             key={row.title}
                             title={row.title}
                             books={row.books}
+                            onSelectBook={onSelectBook}
                         />
                     ))}
                 </>
@@ -428,7 +430,7 @@ export default function Search({ onSelectBook }) {
                                 {trendingBooks.slice(0, 3).map((book) => (
                                         <button
                                             type="button"
-                                            key={book.id}
+                                            key={book.id ?? book.bookId ?? book.title}
                                             className="top-search-card"
                                             onClick={() => {
                                                 setQuery(book.title);

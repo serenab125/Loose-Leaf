@@ -33,7 +33,9 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [menuAbove, setMenuAbove] = useState(false);
   const statusMenuRef = useRef(null);
-  const [currentStatus, setCurrentStatus] = useState('Currently Reading');
+  // Neutral until a saved row says otherwise — defaulting to a real status
+  // made every unsaved book claim to be "Currently Reading".
+  const [currentStatus, setCurrentStatus] = useState('Set Status');
   const [activeTab, setActiveTab] = useState('reviews');
   const [analysisMode, setAnalysisMode] = useState('analytical');
   const [sortOrder, setSortOrder] = useState('highest');
@@ -189,7 +191,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
         const row = await fetchSavedBook(user.id, resolvedBookId);
         if (!cancelled && row?.reading_status) {
           setCurrentStatus(
-            STATUS_LABELS[row.reading_status] || 'Currently Reading'
+            STATUS_LABELS[row.reading_status] || 'Set Status'
           );
         }
       } catch (err) {

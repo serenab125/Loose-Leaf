@@ -83,10 +83,12 @@ export function useQuiz() {
   const tasteAnsweredCount = TASTE_SECTIONS.filter(hasAnswer).length;
   const goalAnsweredCount = GOAL_SECTIONS.filter(hasAnswer).length;
 
-  // Remaining taste questions to answer
+  // Remaining taste questions needed before the quiz can continue.
+  // MIN_TASTE_ANSWERS is the gate, so this is the shortfall — not the
+  // number of still-unanswered sections, which would overstate the ask.
   const remainingAnswers = Math.max(
     0,
-    TASTE_SECTIONS.length - tasteAnsweredCount
+    MIN_TASTE_ANSWERS - tasteAnsweredCount
   );
 
   const canContinue = tasteAnsweredCount >= MIN_TASTE_ANSWERS;
