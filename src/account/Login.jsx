@@ -1,15 +1,10 @@
 import { useState } from 'react';
 import styles from './Login.module.css';
+import { useAuth } from './useAuth';
 
-export function Login({
-  onNavigateToCreateAccount,
-  onNavigateToForgotPassword,
-  rememberMe,
-  setRememberMe,
-  onSuccess,
-  signIn,
-  loading,
-}) {
+export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword }) {
+  const { signIn, loading, error, clearError } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
@@ -24,7 +19,6 @@ export function Login({
     setFormError('');
     try {
       await signIn(email.trim(), password);
-      onSuccess?.();
     } catch (err) {
       setFormError(err.message || 'Failed to sign in. Please try again.');
     }
@@ -54,7 +48,6 @@ export function Login({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              autoComplete="email"
             />
           </div>
 
@@ -69,21 +62,7 @@ export function Login({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              autoComplete="current-password"
             />
-          </div>
-
-          <div className={styles.fieldGroup}>
-            <label className={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                className={styles.checkbox}
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                disabled={loading}
-              />
-              <span>Remember me</span>
-            </label>
           </div>
 
           {formError && <p className={styles.error}>{formError}</p>}

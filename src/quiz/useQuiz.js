@@ -1,23 +1,87 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 import {
   TASTE_SECTIONS,
   GOAL_SECTIONS,
   MIN_TASTE_ANSWERS,
 } from './quizData';
 
-export function useQuiz() {
+export function useQuiz(userId) {
   // 0 = introduction
   // 1 = reading taste
   // 2 = reading goals
   // 3 = loading / complete
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [loadingProgress, setLoadingProgress] = useState(true);
+
+  useEffect(() => {
+    if (!userId) {
+      setLoadingProgress(false);
+      return;
+    }
+  
+    let cancelled = false;
+    setLoadingProgress(true);
+    setAnswers({});
+    setCurrentStep(0);
+  
+    async function loadSavedQuiz() {
+      const { data, error } = await supabase
+        .from('quiz_progress')
+        .select('answers, current_step')
+        .eq('user_id', userId)
+        .is('completed_at', null)
+        .maybeSingle();
+  
+      if (cancelled) return;
+  
+      if (error) {
+        console.error('Could not load saved quiz:', error);
+      } else if (data) {
+        setAnswers(data.answers || {});
+        setCurrentStep(
+          data.current_step === 1 || data.current_step === 2
+            ? data.current_step
+            : 0
+        );
+      }
+  
+      setLoadingProgress(false);
+    }
+  
+    loadSavedQuiz();
+  
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  
 
   const goToIntro = useCallback(() => {
     setCurrentStep(0);
-    setAnswers({});
   }, []);
+
+  const startOver = useCallback(async () => {
+    if (!userId) {
+      throw new Error('You must be signed in to restart your quiz.');
+    }
+  
+    const { error } = await supabase
+      .from('quiz_progress')
+      .delete()
+      .eq('user_id', userId);
+  
+    if (error) {
+      throw error;
+    }
+  
+    setAnswers({});
+    setCurrentStep(0);
+    window.scrollTo(0, 0);
+  }, [userId]);
 
   const answerQuestion = useCallback((sectionId, selectedIds) => {
     setAnswers((previous) => ({
@@ -96,21 +160,17 @@ export function useQuiz() {
     ((tasteAnsweredCount + goalAnsweredCount) / totalQuestions) * 100
   );
 
-  const restoreProgress = useCallback(({ step, answers: answersToRestore }) => {
-    setCurrentStep(step);
-    setAnswers({ ...answersToRestore });
-  }, []);
-
   return {
     currentStep,
     answers,
+    loadingProgress,
     answerQuestion,
     goToIntro,
+    startOver,
     goToNext,
     goToGoals,
     goBackToTaste,
     completeQuiz,
-    restoreProgress,
     isIntro,
     isTaste,
     isGoals,
@@ -121,3 +181,5 @@ export function useQuiz() {
     progress,
   };
 }
+
+
