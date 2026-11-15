@@ -9,7 +9,7 @@ import BookReviews from '../../components/Reviews/BookReviews';
 import EditReview from '../../components/Reviews/EditReview';
 import { saveBookReview, deleteBookReview } from '../../services/reviewService';
 import ReviewModal from '../../components/Reviews/ReviewModal';
-
+import ReviewForm from '../../reviews/ReviewForm';
 
 
 export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
@@ -196,16 +196,29 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     };
   }, [resolvedBookId, user?.id]);
 
-  const handleSelectStatusOption = (option) => {
-    setShowDropdown(false);
-    if (option === 'Progress Update') {
-      setReactionError('');
-      setShowReactionModal(true);
-    } else {
-      setCurrentStatus(option);
-      onUpdateStatus?.(book, option);
-    }
-  };
+
+const handleSelectStatusOption = (option) => {
+  setShowDropdown(false);
+
+  if (option === 'Progress Update') {
+    setReactionError('');
+    setShowReactionModal(true);
+    return;
+  }
+
+  // Update the book's reading status
+  setCurrentStatus(option);
+  onUpdateStatus?.(book, option);
+
+  // RR-02, RR-03, RR-04:
+  // Open the review form when a book is finished
+  if (option === 'Finished') {
+    setActiveTab('reviews');
+    setEditingReview(null);
+    setCreatingReview(true);
+  }
+};
+
 
   // RR-06: Validate and submit chapter reaction
   const handleAddReaction = async (e) => {
@@ -387,99 +400,104 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
           </button>
         </div>
 
+
         {/* Tab Content Display */}
         {activeTab === 'reviews' ? (
-  editingReview || creatingReview ? (
-    <EditReview
-    key={editingReview?.id ?? 'new-review'}
-    review={editingReview}
-    onBack={() => {
-      setEditingReview(null);
-      setCreatingReview(false);
-    }}
-      onSave={async (updatedReview) => {
-        try {
-          await saveBookReview({
-            bookId: resolvedBookId,
-            bookTitle: book?.title,
-            reviewText: updatedReview.text,
-            ratingOutOf10: updatedReview.ratingOutOf10,
-            classification: updatedReview.classification,
-            includesSpoilers: updatedReview.includesSpoilers,
-          });
+          creatingReview ? (
+            <ReviewForm
+              bookId={resolvedBookId}
+              onBack={() => setCreatingReview(false)}
+              onSubmit={async (review) => {
+                const saved = await saveBookReview({
+                  bookId: resolvedBookId,
+                  bookTitle: resolvedBookTitle,
+                  reviewText: review.reviewText,
+                  ratingOutOf10: review.rating * 2,
+                  classification: review.reviewType,
+                  includesSpoilers: review.includesSpoilers,
+                });
 
-          setReviewsList((previous) => {
-            if (editingReview) {
-              return previous.map((review) =>
-                review.id === updatedReview.id ? updatedReview : review
-              );
-            }
-          
-            return [
-              {
-                ...updatedReview,
-                id: crypto.randomUUID(),
-                userId: user?.id,
-                authorName: 'You',
-              },
-              ...previous,
-            ];
-          });
+                const formattedReview = {
+                  id: saved.id,
+                  userId: user?.id,
+                  authorName: 'You',
+                  rating: saved.rating_out_of_10 / 2,
+                  ratingOutOf10: saved.rating_out_of_10,
+                  text: saved.review_text,
+                  classification: saved.review_type ?? review.reviewType,
+                  includesSpoilers: saved.includes_spoilers ?? review.includesSpoilers,
+                };
 
-          setEditingReview(null);
-setCreatingReview(false);
-        } catch (error) {
-          console.error('Could not save review:', error);
-          alert('Could not save your review. Please try again.');
-        }
-      }}
-    />
-  ) : (
+                setReviewsList((previous) => [
+                  formattedReview,
+                  ...previous.filter((item) => item.userId !== user?.id),
+                ]);
 
-    <>
+                setCreatingReview(false);
+              }}
+            />
+          ) : editingReview ? (
+            <EditReview
+              key={editingReview.id}
+              review={editingReview}
+              onBack={() => setEditingReview(null)}
+              onSave={async (updatedReview) => {
+                try {
+                  await saveBookReview({
+                    bookId: resolvedBookId,
+                    bookTitle: resolvedBookTitle,
+                    reviewText: updatedReview.text,
+                    ratingOutOf10: updatedReview.ratingOutOf10,
+                    classification: review.reviewType === 'casual' ? 'Casual' : 'Analytical',
+                    includesSpoilers: updatedReview.includesSpoilers,
+                  });
 
-<button
-  type="button"
-  onClick={() => {
-    setEditingReview(null);
-    setCreatingReview(true);
-  }}
->
-  Test Write a Review
-</button>
+                  setReviewsList((previous) =>
+                    previous.map((item) =>
+                      item.id === updatedReview.id ? updatedReview : item
+                    )
+                  );
 
+                  setEditingReview(null);
+                } catch (error) {
+                  console.error('Could not update review:', error);
+                  alert('Could not update your review. Please try again.');
+                }
+              }}
+            />
+          ) : (
+            <>
 
+              <BookReviews
+                reviews={reviewsList}
+                currentUserId={user?.id}
+                onEdit={(review) => setEditingReview(review)}
+                onDelete={(review) => setDeletingReview(review)}
+              />
 
-      <BookReviews
-        reviews={reviewsList}
-        currentUserId={user?.id}
-        onEdit={(review) => setEditingReview(review)}
-        onDelete={(review) => setDeletingReview(review)}
-      />
+              {deletingReview && (
+                <ReviewModal
+                  review={deletingReview}
+                  mode="delete"
+                  onClose={() => setDeletingReview(null)}
+                  onDelete={async (review) => {
+                    try {
+                      await deleteBookReview(resolvedBookId);
 
-      {deletingReview && (
-        <ReviewModal
-          review={deletingReview}
-          mode="delete"
-          onClose={() => setDeletingReview(null)}
-          onDelete={async (review) => {
-            try {
-              await deleteBookReview(resolvedBookId);
+                      setReviewsList((previous) =>
+                        previous.filter((item) => item.id !== review.id)
+                      );
 
-              setReviewsList((previous) =>
-                previous.filter((item) => item.id !== review.id)
-              );
-
-              setDeletingReview(null);
-            } catch (error) {
-              console.error('Could not delete review:', error);
-              alert('Could not delete your review. Please try again.');
-            }
-          }}
-        />
-      )}
-    </>
-  )
+                      setDeletingReview(null);
+                    } catch (error) {
+                      console.error('Could not delete review:', error);
+                      alert('Could not delete your review. Please try again.');
+                    }
+                  }}
+                />
+              )}
+            </>
+          )
 
         ) : reactionsLoading ? (
           <p style={{ textAlign: 'center', color: '#8c7365', fontSize: '14px' }}>

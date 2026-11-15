@@ -14,6 +14,10 @@ export async function saveBookReview({
   const cleanBookTitle = String(bookTitle ?? '').trim();
   const cleanReviewText = String(reviewText ?? '').trim();
   const rating = Number(ratingOutOf10);
+  const normalizedClassification =
+  String(classification).trim().toLowerCase() === 'casual'
+    ? 'Casual'
+    : 'Analytical';
 
   if (!cleanBookId || cleanBookId.length > 100) {
     throw new Error('A valid book ID is required.');
@@ -33,7 +37,7 @@ export async function saveBookReview({
   p_book_title: cleanBookTitle,
   p_review_text: cleanReviewText,
   p_rating_out_of_10: rating,
-  p_review_type: classification,
+  p_review_type: normalizedClassification,
   p_includes_spoilers: includesSpoilers,
 });
 
