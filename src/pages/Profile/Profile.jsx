@@ -7,6 +7,7 @@ import {
   updateShelf,
   deleteShelf,
   addBookToShelf,
+  removeBookFromShelf,
 } from '../../services/shelfService';
 import { searchBooksByTitle } from '../../services/bookService';
 import { fetchMyBookPageReactions } from '../../services/pageReactionService';
@@ -49,6 +50,8 @@ export function Profile({ user, logout }) {
   const [lastAddedBook, setLastAddedBook] = useState(null);
   const [addedBookKeys, setAddedBookKeys] = useState(() => new Set());
   const [savedMessage, setSavedMessage] = useState('');
+  // Book whose remove request is in flight, so its button can be disabled.
+  const [removingBookKey, setRemovingBookKey] = useState(null);
 
   // Chapter reactions shown on the profile (from BookDetail progress updates)
   const [userReactions, setUserReactions] = useState([]);
@@ -104,7 +107,7 @@ export function Profile({ user, logout }) {
     loadShelves().then((result) => {
       if (cancelled) return;
       if (result.error) {
-        setSaveMessage(result.error);
+        setSavedMessage(result.error);
       } else if (result.shelves.length > 0) {
         setShelves(result.shelves);
       }
@@ -129,12 +132,12 @@ export function Profile({ user, logout }) {
         setEditingShelfId(null);
         setNewShelfName('');
         setNewShelfDescription('');
-        setSaveMessage('Shelf saved.');
-        setTimeout(() => setSaveMessage(''), 2000);
+        setSavedMessage('Shelf saved.');
+        setTimeout(() => setSavedMessage(''), 2000);
       }
     } catch (err) {
       console.error('Save shelf error:', err);
-      setSaveMessage('Error saving shelf.');
+      setSavedMessage('Error saving shelf.');
     }
   };
 
@@ -153,12 +156,12 @@ export function Profile({ user, logout }) {
         setNewShelfName('');
         setNewShelfDescription('');
         setNewShelfNameValidation('');
-        setSaveMessage('Shelf created.');
-        setTimeout(() => setSaveMessage(''), 2000);
+        setSavedMessage('Shelf created.');
+        setTimeout(() => setSavedMessage(''), 2000);
       }
     } catch (err) {
       console.error('Create shelf error:', err);
-      setSaveMessage('Error creating shelf.');
+      setSavedMessage('Error creating shelf.');
     }
   };
 
@@ -168,11 +171,11 @@ export function Profile({ user, logout }) {
     try {
       await deleteShelf(user.id, shelfId);
       setShelves((prev) => prev.filter((s) => s.id !== shelfId));
-      setSaveMessage('Shelf deleted.');
-      setTimeout(() => setSaveMessage(''), 2000);
+      setSavedMessage('Shelf deleted.');
+      setTimeout(() => setSavedMessage(''), 2000);
     } catch (err) {
       console.error('Delete shelf error:', err);
-      setSaveMessage('Error deleting shelf.');
+      setSavedMessage('Error deleting shelf.');
     }
   };
 
@@ -202,7 +205,7 @@ export function Profile({ user, logout }) {
 
       const refreshed = await loadShelves();
       if (refreshed.error) {
-        setSaveMessage(refreshed.error);
+        setSavedMessage(refreshed.error);
       } else if (refreshed.shelves.length > 0) {
         setShelves(refreshed.shelves);
       }
@@ -210,6 +213,45 @@ export function Profile({ user, logout }) {
       console.error('Add book error:', err);
       setSavedMessage('Error adding book to shelf.');
       setTimeout(() => setSavedMessage(''), 2500);
+    }
+  };
+
+  // Remove a single book from a shelf. Kept inline on the shelf card so the
+  // user can prune a shelf without opening the book detail page.
+  const handleRemoveBookFromShelf = async (shelfId, book) => {
+    if (!user || !shelfId || !book) return;
+
+    const bookKey = book.book_id || book.id;
+    if (!bookKey) return;
+
+    if (!confirm(`Remove "${book.title}" from this shelf?`)) return;
+
+    setRemovingBookKey(bookKey);
+    try {
+      await removeBookFromShelf(user.id, shelfId, bookKey);
+
+      setShelves((prev) =>
+        prev.map((shelf) =>
+          shelf.id === shelfId
+            ? {
+                ...shelf,
+                books: (shelf.books || []).filter(
+                  (entry) => (entry.book_id || entry.id) !== bookKey
+                ),
+                bookCount: Math.max(0, (shelf.bookCount ?? 0) - 1),
+              }
+            : shelf
+        )
+      );
+
+      setSavedMessage(`Removed "${book.title}".`);
+      setTimeout(() => setSavedMessage(''), 2000);
+    } catch (err) {
+      console.error('Remove book error:', err);
+      setSavedMessage('Error removing book from shelf.');
+      setTimeout(() => setSavedMessage(''), 2500);
+    } finally {
+      setRemovingBookKey(null);
     }
   };
 
@@ -280,12 +322,23 @@ export function Profile({ user, logout }) {
   };
 
   const openAddBookModal = (shelfId) => {
+    const shelf = shelves.find((s) => s.id === shelfId);
+
     setAddBookShelfId(shelfId);
     setSearchQuery('');
     setSearchResults([]);
     setSearchError('');
     setLastAddedBook(null);
-    setAddedBookKeys(new Set());
+    // shelf_books has no unique constraint on (shelf_id, book_id), so without
+    // this seed a second tap would insert a duplicate row for a book that is
+    // already on the shelf.
+    setAddedBookKeys(
+      new Set(
+        (shelf?.books || [])
+          .map((book) => book.book_id || book.id)
+          .filter(Boolean)
+      )
+    );
     setNewShelfName('');
     setNewShelfNameValidation('');
     setShowAddBookModal(true);
@@ -318,7 +371,7 @@ export function Profile({ user, logout }) {
 
       const refreshed = await loadShelves();
       if (refreshed.error) {
-        setSaveMessage(refreshed.error);
+        setSavedMessage(refreshed.error);
       } else if (refreshed.shelves.length > 0) {
         setShelves(refreshed.shelves);
       }
@@ -412,18 +465,32 @@ export function Profile({ user, logout }) {
 
         <div className={styles.bookRow}>
           {shelf.books &&
-            shelf.books.map((book) => (
-              <img
-                key={book.book_id || book.id}
-                src={
-                  book.cover_url ||
-                  book.cover ||
-                  'https://covers.openlibrary.org/b/id/8311267-L.jpg'
-                }
-                alt={book.title}
-                className={styles.bookCover}
-              />
-            ))}
+            shelf.books.map((book) => {
+              const bookKey = book.book_id || book.id;
+              return (
+                <div key={bookKey} className={styles.shelfBookItem}>
+                  <img
+                    src={
+                      book.cover_url ||
+                      book.cover ||
+                      'https://covers.openlibrary.org/b/id/8311267-L.jpg'
+                    }
+                    alt={book.title}
+                    className={styles.bookCover}
+                  />
+                  <button
+                    type="button"
+                    className={styles.removeBookBtn}
+                    onClick={() => handleRemoveBookFromShelf(shelf.id, book)}
+                    disabled={removingBookKey === bookKey}
+                    aria-label={`Remove ${book.title} from this shelf`}
+                    title={`Remove ${book.title}`}
+                  >
+                    ✕
+                  </button>
+                </div>
+              );
+            })}
           {shelf.books && shelf.books.length === 0 && (
             <span className={styles.emptyBook}>No books yet</span>
           )}
@@ -836,8 +903,26 @@ export function Profile({ user, logout }) {
                       }
                     }}
                   >
-                    <span>{book.title}</span>
-                    <span>{isAdded ? '✓ Added' : '›'}</span>
+                  <span className={styles.addBookResultInfo}>
+                    <span className={styles.addBookResultCoverWrap}>
+                      <span className={styles.addBookResultCoverFallback}>
+                        {book.title}
+                      </span>
+                      {(book.coverUrl || book.cover) && (
+                        <img
+                          src={book.coverUrl || book.cover}
+                          alt=""
+                          loading="lazy"
+                          className={styles.addBookResultCover}
+                          onError={(e) => e.currentTarget.remove()}
+                        />
+                      )}
+                    </span>
+                    <span className={styles.addBookResultTitle}>
+                      {book.title}
+                    </span>
+                  </span>
+                  <span>{isAdded ? '✓ Added' : '›'}</span>
                   </div>
                 );
               })}
