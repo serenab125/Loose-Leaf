@@ -20,8 +20,12 @@ const SHELF_NAME_SUGGESTIONS = [
   'Book Club',
 ];
 
-export function Profile({ user, logout }) {
+export function Profile({ user, logout, onSelectBook }) {
   const [view, setView] = useState('main');
+  // Shelf whose full page is open (view === 'shelfDetail').
+  const [activeShelfId, setActiveShelfId] = useState(null);
+  // Where "back" from the shelf page should return to.
+  const [shelfDetailFrom, setShelfDetailFrom] = useState('main');
   // Initialize from the auth user; the effect below only patches in the
   // profile row when it arrives from Supabase (setState in an async callback).
   const [fullName, setFullName] = useState(
@@ -301,6 +305,25 @@ export function Profile({ user, logout }) {
     }
   };
 
+  const openShelfDetail = (shelfId) => {
+    setActiveShelfId(shelfId);
+    setShelfDetailFrom(view);
+    setView('shelfDetail');
+  };
+
+  // Shelf rows carry the shelf_books row id as `id`; BookDetail needs the
+  // book's own id, so map it explicitly rather than letting it fall back to
+  // the join row.
+  const handleSelectBook = (book) => {
+    if (!book) return;
+    onSelectBook?.({
+      ...book,
+      bookId: book.book_id || book.id,
+      id: book.book_id || book.id,
+      coverUrl: book.cover_url || book.cover,
+    });
+  };
+
   const beginEditShelf = (shelf) => {
     setEditingShelfId(shelf.id);
     setNewShelfName(shelf.name || '');
@@ -407,7 +430,14 @@ export function Profile({ user, logout }) {
               autoFocus
             />
           ) : (
-            <h3 className={styles.shelfName}>{shelf.name || 'Untitled Shelf'}</h3>
+            <button
+              type="button"
+              className={styles.shelfNameBtn}
+              onClick={() => openShelfDetail(shelf.id)}
+              aria-label={`Open ${shelf.name || 'Untitled Shelf'}`}
+            >
+              {shelf.name || 'Untitled Shelf'}
+            </button>
           )}
           <div className={styles.shelfActions}>
             {isEditing ? (
@@ -469,25 +499,40 @@ export function Profile({ user, logout }) {
               const bookKey = book.book_id || book.id;
               return (
                 <div key={bookKey} className={styles.shelfBookItem}>
-                  <img
-                    src={
-                      book.cover_url ||
-                      book.cover ||
-                      'https://covers.openlibrary.org/b/id/8311267-L.jpg'
-                    }
-                    alt={book.title}
-                    className={styles.bookCover}
-                  />
                   <button
                     type="button"
-                    className={styles.removeBookBtn}
-                    onClick={() => handleRemoveBookFromShelf(shelf.id, book)}
-                    disabled={removingBookKey === bookKey}
-                    aria-label={`Remove ${book.title} from this shelf`}
-                    title={`Remove ${book.title}`}
+                    className={styles.shelfBookCoverBtn}
+                    onClick={() => {
+                      // While editing, the cover is not a navigation target —
+                      // the remove button overlays it.
+                      if (isEditing) return;
+                      handleSelectBook(book);
+                    }}
+                    aria-label={`Open ${book.title}`}
+                    tabIndex={isEditing ? -1 : 0}
                   >
-                    ✕
+                    <img
+                      src={
+                        book.cover_url ||
+                        book.cover ||
+                        'https://covers.openlibrary.org/b/id/8311267-L.jpg'
+                      }
+                      alt={book.title}
+                      className={styles.bookCover}
+                    />
                   </button>
+                  {isEditing && (
+                    <button
+                      type="button"
+                      className={styles.removeBookBtn}
+                      onClick={() => handleRemoveBookFromShelf(shelf.id, book)}
+                      disabled={removingBookKey === bookKey}
+                      aria-label={`Remove ${book.title} from this shelf`}
+                      title={`Remove ${book.title}`}
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -506,6 +551,11 @@ export function Profile({ user, logout }) {
       </div>
     );
   };
+
+  const activeShelf =
+    view === 'shelfDetail'
+      ? shelves.find((shelf) => shelf.id === activeShelfId) || null
+      : null;
 
   return (
     <div className={styles.profileContainer}>
@@ -752,6 +802,121 @@ export function Profile({ user, logout }) {
         </div>
       )}
 
+      {/* Full shelf page */}
+      {view === 'shelfDetail' && (
+        <div className={styles.shelfDetailView}>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={() => setView('main')}
+          >
+            ← Back to Profile
+          </button>
+
+          {activeShelf ? (
+            <>
+              <div className={styles.shelfDetailNavBar}>
+                <button
+                  type="button"
+                  className={styles.shelfDetailBackBtn}
+                  onClick={() =>
+                    setView(shelfDetailFrom === 'shelves' ? 'shelves' : 'main')
+                  }
+                  aria-label="Back"
+                >
+                  ‹
+                </button>
+                <h1 className={styles.shelfDetailNavTitle}>
+                  {activeShelf.name || 'Untitled Shelf'}
+                </h1>
+              </div>
+
+              <div className={styles.shelfSummaryCard}>
+                <span className={styles.shelfSummaryTitle}>
+                  {activeShelf.name || 'Untitled Shelf'}
+                </span>
+                <span className={styles.shelfSummaryLabel}>
+                  {(activeShelf.books || []).length}{' '}
+                  {(activeShelf.books || []).length === 1 ? 'book' : 'books'}
+                </span>
+              </div>
+
+              {activeShelf.description ? (
+                <p className={styles.shelfDetailDescription}>
+                  {activeShelf.description}
+                </p>
+              ) : null}
+
+              {(activeShelf.books || []).length > 0 ? (
+                <div className={styles.shelfBookList}>
+                  {(activeShelf.books || []).map((book) => {
+                    const bookKey = book.book_id || book.id;
+                    return (
+                      <button
+                        type="button"
+                        key={bookKey}
+                        className={styles.shelfBookRow}
+                        onClick={() => handleSelectBook(book)}
+                      >
+                        <span className={styles.shelfBookCoverWrap}>
+                          <span
+                            className={styles.shelfBookCoverFallback}
+                            aria-hidden="true"
+                          >
+                            {book.title}
+                          </span>
+                          {(book.cover_url || book.cover) && (
+                            <img
+                              src={book.cover_url || book.cover}
+                              alt=""
+                              loading="lazy"
+                              className={styles.shelfBookCover}
+                              onError={(e) => e.currentTarget.remove()}
+                            />
+                          )}
+                        </span>
+
+                        <span className={styles.shelfBookInfo}>
+                          <span className={styles.shelfBookTitle}>
+                            {book.title || 'Untitled'}
+                          </span>
+                          <span className={styles.shelfBookAuthor}>
+                            {book.author || 'Unknown author'}
+                          </span>
+                        </span>
+
+                        <span
+                          className={styles.shelfBookChevron}
+                          aria-hidden="true"
+                        >
+                          ›
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className={styles.shelfDetailEmpty}>
+                  No books on this shelf yet.
+                </p>
+              )}
+
+              <button
+                type="button"
+                className={styles.addBookBtn}
+                onClick={() => openAddBookModal(activeShelf.id)}
+              >
+                + Add Books
+              </button>
+            </>
+          ) : (
+            <p className={styles.shelfDetailEmpty}>
+              This shelf isn&rsquo;t available anymore.
+            </p>
+          )}
+        </div>
+      )}
+
       {showNewShelfModal && (
         <div className={styles.modalOverlay} onClick={() => setShowNewShelfModal(false)}>
           <div
@@ -905,7 +1070,10 @@ export function Profile({ user, logout }) {
                   >
                   <span className={styles.addBookResultInfo}>
                     <span className={styles.addBookResultCoverWrap}>
-                      <span className={styles.addBookResultCoverFallback}>
+                      <span
+                        className={styles.addBookResultCoverFallback}
+                        aria-hidden="true"
+                      >
                         {book.title}
                       </span>
                       {(book.coverUrl || book.cover) && (

@@ -743,3 +743,231 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* --- Shelf card: title opens the full shelf page, covers open the book --- */
+
+/* The shelf name was an <h3>; it is a button now, so restyle the box while
+   keeping the original type treatment. */
+.shelfNameBtn {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: 'Georgia', serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: #5b3113;
+  text-align: left;
+  cursor: pointer;
+}
+
+.shelfNameBtn:hover {
+  text-decoration: underline;
+}
+
+.shelfNameBtn:focus-visible {
+  outline: 2px solid #5b3113;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.shelfBookCoverBtn {
+  display: block;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  transition: transform 120ms ease;
+}
+
+.shelfBookCoverBtn:hover {
+  transform: translateY(-2px);
+}
+
+.shelfBookCoverBtn:focus-visible {
+  outline: 2px solid #5b3113;
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+/* --- Full shelf page --- */
+
+.shelfDetailView {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 30px;
+}
+
+/* Back arrow and shelf name share the top row. */
+.shelfDetailNavBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shelfDetailBackBtn {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: 'Georgia', serif;
+  font-size: 28px;
+  line-height: 1;
+  color: #4e342e;
+  cursor: pointer;
+}
+
+.shelfDetailBackBtn:hover {
+  color: #5b3113;
+}
+
+.shelfDetailBackBtn:focus-visible {
+  outline: 2px solid #5b3113;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.shelfDetailNavTitle {
+  font-family: 'Georgia', serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: #3e2723;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Hero card: faint pink fading to white. */
+.shelfSummaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 24px;
+  border-radius: 24px;
+  background: linear-gradient(90deg, #fff5f5 0%, #ffffff 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.shelfSummaryTitle {
+  font-family: 'Georgia', serif;
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #3e2723;
+}
+
+.shelfSummaryLabel {
+  font-size: 16px;
+  color: #8d6e63;
+}
+
+.shelfBookList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shelfBookRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+  transition: box-shadow 150ms ease;
+}
+
+.shelfBookRow:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.09);
+}
+
+.shelfBookRow:focus-visible {
+  outline: 2px solid #5b3113;
+  outline-offset: 2px;
+}
+
+.shelfBookCoverWrap {
+  position: relative;
+  flex: 0 0 60px;
+  width: 60px;
+  height: 90px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f0ece1;
+  box-shadow: 0 3px 7px rgba(60, 35, 20, 0.14);
+}
+
+/* Title card shown until the cover loads, and kept if it fails. */
+.shelfBookCoverFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 5px;
+  box-sizing: border-box;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  color: #5a321a;
+}
+
+.shelfBookCover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shelfBookInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shelfBookTitle {
+  font-family: 'Georgia', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #3e2723;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shelfBookAuthor {
+  font-size: 14px;
+  color: #a1887f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shelfBookChevron {
+  flex-shrink: 0;
+  font-size: 20px;
+  line-height: 1;
+  color: #d7ccc8;
+}
+
+.shelfDetailEmpty {
+  font-size: 13px;
+  color: #8c7365;
+  text-align: center;
+  padding: 22px 0;
+  margin: 0;
+}

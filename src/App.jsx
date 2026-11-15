@@ -176,7 +176,11 @@ function App() {
         ) : view === 'search' ? (
           <Search onSelectBook={(book) => setCurrentBook(book)} />
         ) : view === 'profile' ? (
-          <Profile user={user} logout={handleLogout} />
+          <Profile
+            user={user}
+            logout={handleLogout}
+            onSelectBook={(book) => setCurrentBook(book)}
+          />
         ) : (
           <Quiz
             user={user}
