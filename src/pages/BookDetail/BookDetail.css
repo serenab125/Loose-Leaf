@@ -720,14 +720,14 @@
 }
 
 /* Remove-from-shelf list */
-.remove-list {
+.shelf-picker-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-bottom: 4px;
 }
 
-.remove-row {
+.shelf-picker-row {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -738,7 +738,7 @@
   cursor: pointer;
 }
 
-.remove-row input[type='checkbox'] {
+.shelf-picker-row input[type='checkbox'] {
   width: 18px;
   height: 18px;
   accent-color: #5b3113;
@@ -746,19 +746,19 @@
   flex-shrink: 0;
 }
 
-.remove-shelf-name {
+.shelf-picker-name {
   flex: 1;
   font-size: 14px;
   font-weight: 600;
   color: #5b3113;
 }
 
-.remove-shelf-count {
+.shelf-picker-count {
   font-size: 12px;
   color: #8c7365;
 }
 
-.remove-empty {
+.shelf-picker-empty {
   font-size: 13px;
   color: #8c7365;
   text-align: center;

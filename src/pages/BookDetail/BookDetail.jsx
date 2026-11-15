@@ -27,7 +27,7 @@ const SHELF_NAME_SUGGESTIONS = [
 ];
 
 /** Rough rendered height of the status menu, used to decide if it fits below. */
-const STATUS_MENU_HEIGHT = 380;
+const STATUS_MENU_HEIGHT = 440;
 
 export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -67,6 +67,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [shelfSaving, setShelfSaving] = useState(false);
   const [addBookToNewShelf, setAddBookToNewShelf] = useState(true);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [showAddToShelfModal, setShowAddToShelfModal] = useState(false);
   const [selectedShelves, setSelectedShelves] = useState(() => new Set());
 
   const coverUrl = book?.coverUrl || book?.cover || book?.cover_url;
@@ -252,6 +253,12 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       return;
     }
 
+    if (option === 'Add to a Shelf') {
+      setSelectedShelves(new Set());
+      setShowAddToShelfModal(true);
+      return;
+    }
+
     if (option === 'Create a New Shelf') {
       setShelfName('');
       setShelfError('');
@@ -361,6 +368,13 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     (shelf.books || []).some((b) => (b.book_id || b.id) === resolvedBookId)
   );
 
+  // Shelves that don't already hold this book — offering one that does would
+  // insert a duplicate row, since shelf_books has no unique constraint.
+  const shelvesWithoutBook = userShelves.filter(
+    (shelf) =>
+      !(shelf.books || []).some((b) => (b.book_id || b.id) === resolvedBookId)
+  );
+
   const toggleShelfSelection = (shelfId) => {
     setSelectedShelves((prev) => {
       const next = new Set(prev);
@@ -415,6 +429,60 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     } catch (err) {
       console.error('Failed to remove book from shelves:', err);
       setStatusError(err.message || 'Could not remove the book.');
+    } finally {
+      setStatusSaving(false);
+    }
+  };
+
+  // Add this book to every shelf ticked in the "Add to a Shelf" sheet.
+  const handleConfirmAddToShelves = async () => {
+    if (!user?.id || selectedShelves.size === 0) return;
+
+    setStatusSaving(true);
+    setStatusError('');
+    try {
+      await Promise.all(
+        [...selectedShelves].map((shelfId) =>
+          addBookToShelf(
+            user.id,
+            shelfId,
+            resolvedBookId,
+            resolvedBookTitle,
+            book?.author,
+            coverUrl
+          )
+        )
+      );
+
+      setUserShelves((prev) =>
+        prev.map((shelf) =>
+          selectedShelves.has(shelf.id)
+            ? {
+                ...shelf,
+                books: [
+                  ...(shelf.books || []),
+                  {
+                    id: resolvedBookId,
+                    book_id: resolvedBookId,
+                    title: resolvedBookTitle,
+                    author: book?.author,
+                    cover_url: coverUrl,
+                  },
+                ],
+                bookCount: (shelf.books || []).length + 1,
+              }
+            : shelf
+        )
+      );
+
+      const count = selectedShelves.size;
+      setSelectedShelves(new Set());
+      setShowAddToShelfModal(false);
+      setStatusMessage(`Added to ${count} ${count === 1 ? 'shelf' : 'shelves'}.`);
+      setTimeout(() => setStatusMessage(''), 2500);
+    } catch (err) {
+      console.error('Failed to add book to shelves:', err);
+      setStatusError(err.message || 'Could not add the book to your shelves.');
     } finally {
       setStatusSaving(false);
     }
@@ -547,6 +615,13 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
                 onClick={() => handleSelectStatusOption('Did Not Finish')}
               >
                 Did Not Finish
+              </button>
+              <button
+                type="button"
+                className="status-dropdown-item shelf"
+                onClick={() => handleSelectStatusOption('Add to a Shelf')}
+              >
+                Add to a Shelf
               </button>
               <button
                 type="button"
@@ -922,6 +997,82 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
         </div>
       )}
 
+      {/* Add to an existing shelf — same sheet layout as remove */}
+      {showAddToShelfModal && (
+        <div
+          className="sheet-overlay"
+          onClick={() => setShowAddToShelfModal(false)}
+        >
+          <div
+            className="sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-to-shelf-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="sheet-title" id="add-to-shelf-title">
+              Add to a shelf
+            </h2>
+            <p className="sheet-subtitle">
+              Select the{' '}
+              {shelvesWithoutBook.length === 1 ? 'shelf' : 'shelves'} you&rsquo;d
+              like to add {resolvedBookTitle} to.
+            </p>
+
+            <div className="shelf-picker-list">
+              {shelvesWithoutBook.length === 0 ? (
+                <p className="shelf-picker-empty">
+                  {userShelves.length === 0
+                    ? 'You don&rsquo;t have any shelves yet. Create one first.'
+                    : 'This book is already on all of your shelves.'}
+                </p>
+              ) : (
+                shelvesWithoutBook.map((shelf) => (
+                  <label key={shelf.id} className="shelf-picker-row">
+                    <input
+                      type="checkbox"
+                      checked={selectedShelves.has(shelf.id)}
+                      onChange={() => toggleShelfSelection(shelf.id)}
+                    />
+                    <span className="shelf-picker-name">
+                      {shelf.name || 'Untitled Shelf'}
+                    </span>
+                    <span className="shelf-picker-count">
+                      {shelf.bookCount ?? (shelf.books || []).length}
+                      {(shelf.bookCount ?? (shelf.books || []).length) === 1
+                        ? ' book'
+                        : ' books'}
+                    </span>
+                  </label>
+                ))
+              )}
+            </div>
+
+            <p className="sheet-footnote">
+              Adding a book to a shelf won&rsquo;t change its reading status.
+            </p>
+
+            <div className="sheet-actions">
+              <button
+                type="button"
+                className="btn-outline"
+                onClick={() => setShowAddToShelfModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={selectedShelves.size === 0 || statusSaving}
+                onClick={handleConfirmAddToShelves}
+              >
+                {statusSaving ? 'Adding…' : 'Add to Shelves'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Remove from shelf — Figma bottom sheet */}
       {showRemoveModal && (
         <div className="sheet-overlay" onClick={() => setShowRemoveModal(false)}>
@@ -941,23 +1092,23 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
               ones you&rsquo;d like to remove it from.
             </p>
 
-            <div className="remove-list">
+            <div className="shelf-picker-list">
               {shelvesWithBook.length === 0 ? (
-                <p className="remove-empty">
+                <p className="shelf-picker-empty">
                   This book isn&rsquo;t on any of your shelves yet.
                 </p>
               ) : (
                 shelvesWithBook.map((shelf) => (
-                  <label key={shelf.id} className="remove-row">
+                  <label key={shelf.id} className="shelf-picker-row">
                     <input
                       type="checkbox"
                       checked={selectedShelves.has(shelf.id)}
                       onChange={() => toggleShelfSelection(shelf.id)}
                     />
-                    <span className="remove-shelf-name">
+                    <span className="shelf-picker-name">
                       {shelf.name || 'Untitled Shelf'}
                     </span>
-                    <span className="remove-shelf-count">
+                    <span className="shelf-picker-count">
                       {shelf.bookCount ?? (shelf.books || []).length}
                       {(shelf.bookCount ?? (shelf.books || []).length) === 1
                         ? ' book'
