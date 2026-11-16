@@ -76,6 +76,29 @@ AS $$
   RETURNING *;
 $$;
 
+-- Default shelves keep their names. The app matches them by name to sync
+-- reading status and to pin them to the top of the list, so a rename would
+-- silently break both. Descriptions stay editable.
+CREATE OR REPLACE FUNCTION update_shelf(
+  p_shelf_id UUID,
+  p_name TEXT,
+  p_description TEXT DEFAULT NULL
+)
+RETURNS shelves
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  UPDATE shelves
+  SET
+    name = CASE WHEN is_default THEN name ELSE COALESCE(p_name, name) END,
+    description = COALESCE(p_description, description),
+    updated_at = NOW()
+  WHERE id = p_shelf_id
+  AND user_id = auth.uid()
+  RETURNING *;
+$$;
+
 -- ============================================================
 -- Reading status: allow "Did Not Finish"
 --

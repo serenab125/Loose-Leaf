@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
+import { resolveOpenLibraryCover } from "../services/bookService";
 import CurrentReadCard from './CurrentReadCard';
 
 export default function CurrentRead({ onNavigateToSearch }) {
     const [book, setBook] = useState(null);
+    const [resolvedCover, setResolvedCover] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -42,6 +44,7 @@ export default function CurrentRead({ onNavigateToSearch }) {
         loadCurrentRead().then((result) => {
             if (cancelled) return;
             setBook(result.book);
+            setResolvedCover('');
             setError(result.error);
             setLoading(false);
         });
@@ -51,11 +54,29 @@ export default function CurrentRead({ onNavigateToSearch }) {
         };
     }, [loadCurrentRead]);
 
+    // Rows saved before cover_url was populated have no cover stored. Look one
+    // up from Open Library so the card still shows the book instead of the
+    // placeholder. Display-only: the saved row is left untouched.
+    useEffect(() => {
+        if (book?.cover_url || !book?.title) return undefined;
+
+        let cancelled = false;
+
+        resolveOpenLibraryCover(book.title, book.author).then((url) => {
+            if (!cancelled && url) setResolvedCover(url);
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [book?.cover_url, book?.title, book?.author]);
+
     const handleRetry = async () => {
         setLoading(true);
         setError("");
         const result = await loadCurrentRead();
         setBook(result.book);
+        setResolvedCover('');
         setError(result.error);
         setLoading(false);
     };
@@ -74,6 +95,7 @@ export default function CurrentRead({ onNavigateToSearch }) {
             ) : (
                 <CurrentReadCard
                     book={book}
+                    coverUrl={resolvedCover}
                     onPickBook={onNavigateToSearch}
                     onContinueReading={() => {
                         console.log('Continue reading:', book);
