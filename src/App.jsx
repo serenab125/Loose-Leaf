@@ -10,6 +10,8 @@ import Search from './pages/Search/Search'
 import { Home } from './home/Home'
 import { Profile } from './pages/Profile/Profile'
 import BookDetail from './pages/BookDetail/BookDetail'
+import ReviewsPreview from './components/Reviews/ReviewsPreview'
+import ReadingTimer from './components/Timer/Timer'
 import { supabase } from './supabaseClient'
 import { PROGRESS_KEY } from './quiz/useQuiz'
 
@@ -181,6 +183,10 @@ function App() {
             logout={handleLogout}
             onSelectBook={(book) => setCurrentBook(book)}
           />
+        ) : view === 'timer' ? (
+          <ReadingTimer />
+        ) : view === 'reviews-preview' ? (
+          <ReviewsPreview />
         ) : (
           <Quiz
             user={user}
@@ -211,7 +217,11 @@ function App() {
               <span>Home</span>
             </button>
 
-            <button type="button" disabled aria-label="Timer coming soon">
+            <button
+              type="button"
+              className={view === 'timer' ? 'active' : ''}
+              onClick={() => goTo('timer')}
+            >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />

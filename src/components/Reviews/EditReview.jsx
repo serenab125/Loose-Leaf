@@ -17,7 +17,7 @@ export default function EditReview({ review, onSave, onBack }) {
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    if (rating === 0) return;
+    if (!text.trim() || rating === 0) return;
 
     onSave({
       ...review,
@@ -85,7 +85,7 @@ export default function EditReview({ review, onSave, onBack }) {
         </fieldset>
 
         <label className="edit-review-text-label" htmlFor="edit-review-text">
-          Your Review (Optional)
+          Your Review
         </label>
 
         <textarea
@@ -95,6 +95,7 @@ export default function EditReview({ review, onSave, onBack }) {
           placeholder="Write a Review..."
           maxLength={5000}
           rows={6}
+          required
         />
 
         <h3>Describe your review...</h3>
@@ -148,13 +149,9 @@ export default function EditReview({ review, onSave, onBack }) {
         <button
           type="submit"
           className="edit-review-save"
-          disabled={rating === 0}
+          disabled={!text.trim() || rating === 0}
         >
-          {text.trim() && review
-          ? 'Save Changes'
-          : text.trim()
-            ? 'Post Review'
-            : 'Save Rating'}
+          {review ? 'Save Changes' : 'Post Review'}
         </button>
       </form>
     </div>
