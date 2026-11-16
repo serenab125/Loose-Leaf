@@ -195,6 +195,14 @@
   box-sizing: border-box;
 }
 
+.fieldInput:focus,
+.textArea:focus,
+.countrySelect:focus,
+.shelfNameInput:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(91, 49, 19, 0.35);
+}
+
 .textArea {
   height: 80px;
   resize: none;
@@ -290,4 +298,689 @@
   letter-spacing: -0.312px;
   text-align: center;
   cursor: pointer;
+}
+
+/* Shelf Management Styles — centered dialogs */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(45, 30, 20, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+  box-sizing: border-box;
+}
+
+.modalContent {
+  background: #fdf8f3;
+  border-radius: 24px;
+  padding: 24px;
+  width: 100%;
+  max-width: 361px;
+  max-height: 852px;
+  overflow-y: auto;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+}
+
+.modalTitle {
+  font-family: 'Georgia', serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: #5b3113;
+  margin: 0 0 8px 0;
+  text-align: center;
+}
+
+.modalSubtitle {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #8c7365;
+  margin: 0 0 20px 0;
+  text-align: center;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.modalActions .cancelBtn,
+.modalActions .saveBtn {
+  flex: 1;
+  margin-top: 0;
+  padding: 13px;
+  border-radius: 22px;
+  font-size: 15px;
+  box-shadow: none;
+}
+
+.modalActions .cancelBtn {
+  background: transparent;
+  border: 1px solid #ebdcc5;
+  color: #5b3113;
+}
+
+.modalActions .cancelBtn:hover {
+  background: #f7f1e5;
+}
+
+.modalActions .saveBtn {
+  background: #5b3113;
+  color: #ffffff;
+  border: none;
+}
+
+.modalActions .saveBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.modalDivider {
+  height: 1px;
+  background: #ebe2d3;
+  margin: 20px 0 16px;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.chip {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid #ebdcc5;
+  background-color: #f9f6ed;
+  color: #5b3113;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background-color: #f4f3e6;
+}
+
+.addBookResults {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.addBookResultRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 13px 16px;
+  background: #f9f6ed;
+  border: 1px solid #ebdcc5;
+  border-radius: 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5b3113;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.addBookResultSelected,
+.addBookResultRow:hover {
+  background: #f4f3e6;
+  border-color: #5b3113;
+}
+
+.shelvesView {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 30px;
+}
+
+.shelvesPageTitle {
+  font-family: 'Georgia', serif;
+  font-size: 24px;
+  font-weight: 500;
+  color: #5b3113;
+  margin: 0 0 8px 0;
+}
+
+.shelvesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shelfCard {
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.shelfHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.shelfName {
+  font-family: 'Georgia', serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: #5b3113;
+  margin: 0;
+  cursor: pointer;
+  flex: 1;
+  text-align: left;
+}
+
+.shelfActions {
+  display: flex;
+  gap: 8px;
+}
+
+.shelfActionBtn {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #5b3113;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.shelfActionBtn:hover {
+  background: #ede8e0;
+}
+
+.shelfDescription {
+  font-size: 13px;
+  color: #8c7365;
+  margin: 8px 0;
+  line-height: 1.4;
+}
+
+.bookRow {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 10px 0;
+}
+
+.bookRow::-webkit-scrollbar {
+  display: none;
+}
+
+.bookCover {
+  width: 72px;
+  height: 106px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.emptyBook {
+  font-size: 12px;
+  color: #a0826d;
+  font-style: italic;
+}
+
+.addBookBtn {
+  background-color: #5b3113;
+  color: #fdf8f3;
+  border: none;
+  border-radius: 24px;
+  padding: 10px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(91, 49, 19, 0.15);
+}
+
+.addShelfBar {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 16px;
+}
+
+.addShelfBtn {
+  background-color: #5b3113;
+  color: #fdf8f3;
+  border: none;
+  border-radius: 24px;
+  padding: 14px 28px;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(91, 49, 19, 0.2);
+}
+
+.shelvesView .addShelfBtn {
+  width: 100%;
+}
+
+.errorText {
+  color: #b91c1c;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.modalContent .fieldGroup:last-child {
+  margin-bottom: 0;
+}
+
+.shelfNameInput {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(91, 49, 19, 0.2);
+  background: #f7f0e6;
+  font-family: 'Georgia', serif;
+  font-size: 18px;
+  color: #5b3113;
+  box-sizing: border-box;
+}
+
+.shelfNameInput:focus {
+  outline: none;
+  border-color: #5b3113;
+}
+
+.emptyShelves {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 16px;
+  background: #f7f0e6;
+  border-radius: 20px;
+  text-align: center;
+}
+
+.emptyText {
+  font-size: 14px;
+  color: #8c7365;
+  margin: 0;
+}
+
+.newShelfBtn {
+  background-color: #5b3113;
+  color: #fdf8f3;
+  border: none;
+  border-radius: 24px;
+  padding: 12px 24px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(91, 49, 19, 0.2);
+}
+
+.cancelBtn {
+  background: transparent;
+  border: none;
+  border-radius: 20px;
+  padding: 12px 20px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #5b3113;
+  cursor: pointer;
+}
+
+.cancelBtn:hover {
+  background: #ede8e0;
+}
+
+/* --- Shelf books: cover + inline remove --- */
+
+.shelfBookItem {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+/* Always visible (no hover on touch); sits inside the cover so the
+   overflow-x scroller on .bookRow does not clip it. */
+.removeBookBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(91, 49, 19, 0.82);
+  color: #fdf8f3;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.28);
+  transition: background 0.15s ease;
+}
+
+.removeBookBtn:hover {
+  background: #8a4a1e;
+}
+
+.removeBookBtn:focus-visible {
+  outline: 2px solid #5b3113;
+  outline-offset: 2px;
+}
+
+.removeBookBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* --- Add-books result rows: cover beside the title --- */
+
+.addBookResultInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.addBookResultCoverWrap {
+  position: relative;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 58px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f0ece1;
+  box-shadow: 0 2px 5px rgba(60, 35, 20, 0.12);
+}
+
+/* Shown until the cover loads, and stays if the cover fails. */
+.addBookResultCoverFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  box-sizing: border-box;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  color: #5a321a;
+}
+
+.addBookResultCover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.addBookResultTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Shelf card: title opens the full shelf page, covers open the book --- */
+
+/* The shelf name was an <h3>; it is a button now, so restyle the box while
+   keeping the original type treatment. */
+.shelfNameBtn {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: 'Georgia', serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: #5b3113;
+  text-align: left;
+  cursor: pointer;
+}
+
+.shelfNameBtn:hover {
+  text-decoration: underline;
+}
+
+.shelfNameBtn:focus-visible {
+  outline: 2px solid #5b3113;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Marks the three system shelves, which have no delete action. */
+.defaultTag {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #eef1e0;
+  color: #706c3e;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.shelfBookCoverBtn {
+  display: block;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  transition: transform 120ms ease;
+}
+
+.shelfBookCoverBtn:hover {
+  transform: translateY(-2px);
+}
+
+.shelfBookCoverBtn:focus-visible {
+  outline: 2px solid #5b3113;
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+/* --- Full shelf page --- */
+
+.shelfDetailView {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 30px;
+}
+
+/* Back arrow and shelf name share the top row. */
+.shelfDetailNavBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shelfDetailBackBtn {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: 'Georgia', serif;
+  font-size: 28px;
+  line-height: 1;
+  color: #4e342e;
+  cursor: pointer;
+}
+
+.shelfDetailBackBtn:hover {
+  color: #5b3113;
+}
+
+.shelfDetailBackBtn:focus-visible {
+  outline: 2px solid #5b3113;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.shelfDetailNavTitle {
+  font-family: 'Georgia', serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: #3e2723;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Hero card: faint pink fading to white. */
+.shelfSummaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 24px;
+  border-radius: 24px;
+  background: linear-gradient(90deg, #fff5f5 0%, #ffffff 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.shelfSummaryTitle {
+  font-family: 'Georgia', serif;
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #3e2723;
+}
+
+.shelfSummaryLabel {
+  font-size: 16px;
+  color: #8d6e63;
+}
+
+.shelfBookList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shelfBookRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+  transition: box-shadow 150ms ease;
+}
+
+.shelfBookRow:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.09);
+}
+
+.shelfBookRow:focus-visible {
+  outline: 2px solid #5b3113;
+  outline-offset: 2px;
+}
+
+.shelfBookCoverWrap {
+  position: relative;
+  flex: 0 0 60px;
+  width: 60px;
+  height: 90px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f0ece1;
+  box-shadow: 0 3px 7px rgba(60, 35, 20, 0.14);
+}
+
+/* Title card shown until the cover loads, and kept if it fails. */
+.shelfBookCoverFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 5px;
+  box-sizing: border-box;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  color: #5a321a;
+}
+
+.shelfBookCover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shelfBookInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shelfBookTitle {
+  font-family: 'Georgia', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #3e2723;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shelfBookAuthor {
+  font-size: 14px;
+  color: #a1887f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shelfBookChevron {
+  flex-shrink: 0;
+  font-size: 20px;
+  line-height: 1;
+  color: #d7ccc8;
+}
+
+.shelfDetailEmpty {
+  font-size: 13px;
+  color: #8c7365;
+  text-align: center;
+  padding: 22px 0;
+  margin: 0;
 }

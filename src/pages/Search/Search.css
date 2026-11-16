@@ -125,6 +125,27 @@
     box-shadow: 0 3px 6px rgba(60, 35, 20, 0.12);
 }
 
+/* The items are buttons now; undo the UA button chrome so the cover keeps
+   the exact same box as the old div. */
+button.search-book-item {
+    padding: 0;
+    border: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 120ms ease;
+}
+
+button.search-book-item:active {
+    transform: scale(0.97);
+}
+
+button.search-book-item:focus-visible {
+    outline: 2px solid #5b3113;
+    outline-offset: 2px;
+}
+
 .search-book-item img {
     width: 100%;
     height: 100%;
