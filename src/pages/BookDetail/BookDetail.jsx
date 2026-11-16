@@ -480,7 +480,7 @@ const handleSelectStatusOption = (option) => {
                     bookTitle: resolvedBookTitle,
                     reviewText: updatedReview.text,
                     ratingOutOf10: updatedReview.ratingOutOf10,
-                    classification: review.reviewType === 'casual' ? 'Casual' : 'Analytical',
+                    classification: updatedReview.classification,
                     includesSpoilers: updatedReview.includesSpoilers,
                   });
 

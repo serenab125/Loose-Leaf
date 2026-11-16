@@ -25,8 +25,8 @@ export async function saveBookReview({
   if (!cleanBookTitle || cleanBookTitle.length > 500) {
     throw new Error('A valid book title is required.');
   }
-  if (!cleanReviewText || cleanReviewText.length > 5000) {
-    throw new Error('Review text must be between 1 and 5000 characters.');
+  if (cleanReviewText.length > 5000) {
+    throw new Error('Review text must be 5000 or less characters.');
   }
   if (!Number.isInteger(rating) || rating < 1 || rating > 10) {
     throw new Error('Choose a whole-number rating from 1 to 10.');
