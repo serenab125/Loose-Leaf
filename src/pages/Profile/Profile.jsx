@@ -8,6 +8,7 @@ import {
   deleteShelf,
   addBookToShelf,
   removeBookFromShelf,
+  ensureDefaultShelves,
 } from '../../services/shelfService';
 import { searchBooksByTitle } from '../../services/bookService';
 import { fetchMyBookPageReactions } from '../../services/pageReactionService';
@@ -108,14 +109,20 @@ export function Profile({ user, logout, onSelectBook }) {
 
     loadProfileData();
 
-    loadShelves().then((result) => {
-      if (cancelled) return;
-      if (result.error) {
-        setSavedMessage(result.error);
-      } else if (result.shelves.length > 0) {
-        setShelves(result.shelves);
-      }
-    });
+    // Every account owns the three default shelves. Seed any that are missing
+    // before reading the list, so they appear on the user's very first load.
+    ensureDefaultShelves(user.id)
+      .catch((err) => console.warn('Could not seed default shelves:', err))
+      .finally(() => {
+        loadShelves().then((result) => {
+          if (cancelled) return;
+          if (result.error) {
+            setSavedMessage(result.error);
+          } else {
+            setShelves(result.shelves);
+          }
+        });
+      });
 
     return () => {
       cancelled = true;
@@ -171,9 +178,28 @@ export function Profile({ user, logout, onSelectBook }) {
 
   const handleDeleteShelf = async (shelfId) => {
     if (!user) return;
+
+    const shelf = shelves.find((s) => s.id === shelfId);
+
+    // Guard here as well as in the UI and the RPC: the default shelves are
+    // part of the product, not user data.
+    if (shelf?.is_default) {
+      setSavedMessage('Default shelves cannot be deleted.');
+      setTimeout(() => setSavedMessage(''), 2500);
+      return;
+    }
+
     if (!confirm('Delete this shelf? Books will remain in the database.')) return;
     try {
-      await deleteShelf(user.id, shelfId);
+      // deleteShelf resolves false when the RPC refused the delete.
+      const deleted = await deleteShelf(user.id, shelfId);
+
+      if (!deleted) {
+        setSavedMessage('Default shelves cannot be deleted.');
+        setTimeout(() => setSavedMessage(''), 2500);
+        return;
+      }
+
       setShelves((prev) => prev.filter((s) => s.id !== shelfId));
       setSavedMessage('Shelf deleted.');
       setTimeout(() => setSavedMessage(''), 2000);
@@ -464,20 +490,28 @@ export function Profile({ user, logout, onSelectBook }) {
                   type="button"
                   className={styles.shelfActionBtn}
                   onClick={() => beginEditShelf(shelf)}
+                  aria-label={`Edit ${shelf.name}`}
                 >
                   ✎
                 </button>
-                <button
-                  type="button"
-                  className={styles.shelfActionBtn}
-                  onClick={() => handleDeleteShelf(shelf.id)}
-                >
-                  🗑
-                </button>
+                {!shelf.is_default && (
+                  <button
+                    type="button"
+                    className={styles.shelfActionBtn}
+                    onClick={() => handleDeleteShelf(shelf.id)}
+                    aria-label={`Delete ${shelf.name}`}
+                  >
+                    🗑
+                  </button>
+                )}
               </>
             )}
           </div>
         </div>
+
+        {shelf.is_default && (
+          <span className={styles.defaultTag}>Default</span>
+        )}
 
         {isEditing && (
           <textarea

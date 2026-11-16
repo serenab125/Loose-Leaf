@@ -22,6 +22,101 @@ const firstRow = (data) => {
 };
 
 /**
+ * The three shelves every account starts with. `is_default` marks them as
+ * system-provided: they cannot be deleted, and the app re-creates any that are
+ * missing so a user always ends up with all three.
+ */
+export const DEFAULT_SHELVES = [
+  {
+    name: 'Current Reads',
+    description: 'Books you are reading right now.',
+  },
+  {
+    name: 'Finished',
+    description: 'Books you have completed.',
+  },
+  {
+    name: 'Did Not Finish',
+    description: 'Books you stopped reading.',
+  },
+];
+
+/**
+ * In-flight seeding promises, keyed by user id, so concurrent callers share a
+ * single pass instead of each inserting a full set of default shelves.
+ */
+const defaultShelfSeeds = new Map();
+
+/**
+ * Make sure a user has the three default shelves.
+ *
+ * Seeds any default shelf whose name the user does not currently have, so the
+ * invariant "every account has these three shelves" holds even if one was
+ * deleted before the database-level guard shipped. Because matching is by
+ * name, renaming a default shelf means its original name reappears on the next
+ * load — the three names are part of the product.
+ *
+ * Concurrent calls share one in-flight promise. React StrictMode mounts
+ * effects twice in development, so without this two simultaneous passes would
+ * each observe zero defaults and insert a second copy of all three.
+ *
+ * @param {string} userId
+ * @param {object} options
+ * @param {object} options.client - Supabase client instance (optional)
+ * @returns {Promise<array>} The user's default shelves
+ */
+export async function ensureDefaultShelves(userId, { client } = {}) {
+  if (!userId) return [];
+
+  const inFlight = defaultShelfSeeds.get(userId);
+  if (inFlight) return inFlight;
+
+  const request = seedDefaultShelves(userId, client).finally(() => {
+    defaultShelfSeeds.delete(userId);
+  });
+
+  defaultShelfSeeds.set(userId, request);
+  return request;
+}
+
+async function seedDefaultShelves(userId, client) {
+  const s = client || supabase;
+
+  const { data: shelves, error } = await s
+    .from('shelves')
+    .select('id, name, description, is_default, created_at, updated_at')
+    .eq('user_id', userId);
+
+  if (error) throw error;
+
+  const names = new Set((shelves || []).map((shelf) => shelf.name));
+  const missing = DEFAULT_SHELVES.filter((shelf) => !names.has(shelf.name));
+
+  if (missing.length === 0) {
+    return (shelves || []).filter((shelf) => shelf.is_default);
+  }
+
+  const { data: created, error: insertError } = await s
+    .from('shelves')
+    .insert(
+      missing.map((shelf) => ({
+        user_id: userId,
+        name: shelf.name,
+        description: shelf.description,
+        is_default: true,
+      }))
+    )
+    .select('id, name, description, is_default, created_at, updated_at');
+
+  if (insertError) throw insertError;
+
+  return [
+    ...(shelves || []).filter((shelf) => shelf.is_default),
+    ...(created || []),
+  ];
+}
+
+/**
  * Create a new shelf for the current user.
  * @param {string} userId - The authenticated user's Supabase ID
  * @param {string} name - Shelf name (1-200 chars)
@@ -91,12 +186,15 @@ export async function deleteShelf(userId, shelfId, { client } = {}) {
   const s = client || supabase;
 
   try {
-    const { error } = await s.rpc('delete_shelf', {
+    // delete_shelf returns no row when it refuses the delete (a default
+    // shelf), so the returned record — not the absence of an error — is what
+    // tells us whether anything was actually removed.
+    const { data, error } = await s.rpc('delete_shelf', {
       p_shelf_id: shelfId,
     });
 
     if (error) throw error;
-    return true;
+    return Boolean(firstRow(data));
   } catch (error) {
     console.error('Error deleting shelf:', error);
     throw error;
