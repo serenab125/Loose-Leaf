@@ -35,4 +35,3 @@ export async function addBookPageReaction({
       if (error) throw error;
       return Array.isArray(data) ? data[0] ?? null : data;
     }
-}
