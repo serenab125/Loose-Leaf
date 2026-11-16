@@ -12,10 +12,7 @@ import { Profile } from './pages/Profile/Profile'
 import { supabase } from './supabaseClient'
 import ReviewsPreview from './components/Reviews/ReviewsPreview'
 import ReadingTimer from './components/Timer/Timer'
-<<<<<<< HEAD
-=======
 import BookDetail from './pages/BookDetail/BookDetail'
->>>>>>> 5965c2c605084a6345c006fd54f2ddd78ff03c39
 
 function App() {
   const { user, logout, loading, savePreferences } = useAuth()
@@ -205,11 +202,7 @@ function App() {
   className={view === 'timer' ? 'active' : ''}
   onClick={() => setView('timer')}
 >
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 5965c2c605084a6345c006fd54f2ddd78ff03c39
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
@@ -220,11 +213,7 @@ function App() {
             <button
               type="button"
               className={view === 'search' ? 'active' : ''}
-<<<<<<< HEAD
-              onClick={() => setView('reviews-preview')}
-=======
               onClick={() => setView('search')}
->>>>>>> 5965c2c605084a6345c006fd54f2ddd78ff03c39
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8" />

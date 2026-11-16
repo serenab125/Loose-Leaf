@@ -10,7 +10,7 @@ import EditReview from '../../components/Reviews/EditReview';
 import { saveBookReview, deleteBookReview } from '../../services/reviewService';
 import ReviewModal from '../../components/Reviews/ReviewModal';
 import ReviewForm from '../../reviews/ReviewForm';
-
+import { fetchBookOverview } from '../../services/bookService';
 
 export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -57,6 +57,37 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [editingReview, setEditingReview] = useState(null);
   const [deletingReview, setDeletingReview] = useState(null);
   const [creatingReview, setCreatingReview] = useState(false);
+
+const [bookOverview, setBookOverview] = useState(
+  typeof book?.description === 'string' ? book.description : ''
+);
+const [overviewLoading, setOverviewLoading] = useState(false);
+
+useEffect(() => {
+  let cancelled = false;
+
+  async function loadOverview() {
+    const existingDescription =
+      typeof book?.description === 'string' ? book.description : '';
+    setBookOverview(existingDescription);
+    setOverviewLoading(!existingDescription);
+
+    try {
+      const overview = await fetchBookOverview(book);
+      if (!cancelled) setBookOverview(overview);
+    } catch (error) {
+      console.warn('Could not load the book overview:', error);
+      if (!cancelled) setBookOverview('');
+    } finally {
+      if (!cancelled) setOverviewLoading(false);
+    }
+  }
+
+  loadOverview();
+  return () => {
+    cancelled = true;
+  };
+}, [book]);
 
   const coverUrl = book?.coverUrl || book?.cover || book?.cover_url;
   const resolvedBookId = String(
@@ -376,8 +407,9 @@ const handleSelectStatusOption = (option) => {
       <section className="book-overview-section">
         <h2 className="book-section-heading">Overview</h2>
         <p className="book-overview-text">
-          {book?.description ||
-            `Set in a dystopian future where twelve districts are forced to send tributes to compete in a televised battle to the death. Katniss Everdeen steps up to take her younger sister's place, relying on her sharp survival instincts.`}
+          {overviewLoading
+  ? 'Loading overview…'
+  : bookOverview || 'No overview is currently available from Open Library.'}
         </p>
       </section>
 
