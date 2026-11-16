@@ -10,7 +10,8 @@ import EditReview from '../../components/Reviews/EditReview';
 import { saveBookReview, deleteBookReview } from '../../services/reviewService';
 import ReviewModal from '../../components/Reviews/ReviewModal';
 import ReviewForm from '../../reviews/ReviewForm';
-import { fetchBookOverview } from '../../services/bookService';
+import { cleanBookOverview, fetchBookOverview } from '../../services/bookService';
+
 
 export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -57,43 +58,41 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [editingReview, setEditingReview] = useState(null);
   const [deletingReview, setDeletingReview] = useState(null);
   const [creatingReview, setCreatingReview] = useState(false);
-
-const [bookOverview, setBookOverview] = useState(
-  typeof book?.description === 'string' ? book.description : ''
-);
-const [overviewLoading, setOverviewLoading] = useState(false);
-
-useEffect(() => {
-  let cancelled = false;
-
-  async function loadOverview() {
-    const existingDescription =
-      typeof book?.description === 'string' ? book.description : '';
-    setBookOverview(existingDescription);
-    setOverviewLoading(!existingDescription);
-
-    try {
-      const overview = await fetchBookOverview(book);
-      if (!cancelled) setBookOverview(overview);
-    } catch (error) {
-      console.warn('Could not load the book overview:', error);
-      if (!cancelled) setBookOverview('');
-    } finally {
-      if (!cancelled) setOverviewLoading(false);
-    }
-  }
-
-  loadOverview();
-  return () => {
-    cancelled = true;
-  };
-}, [book]);
+  const [bookOverview, setBookOverview] = useState(() =>
+    cleanBookOverview(book?.description)
+  );
+  const [overviewLoading, setOverviewLoading] = useState(false);
 
   const coverUrl = book?.coverUrl || book?.cover || book?.cover_url;
   const resolvedBookId = String(
     book?.bookId || book?.id || book?.open_library_id || book?.title || ''
   ).trim();
   const resolvedBookTitle = String(book?.title || 'Untitled Book').trim();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadOverview() {
+      const existingDescription = cleanBookOverview(book?.description);
+      setBookOverview(existingDescription);
+      setOverviewLoading(!existingDescription);
+
+      try {
+        const overview = await fetchBookOverview(book);
+        if (!cancelled) setBookOverview(overview);
+      } catch (error) {
+        console.warn('Could not load the book overview:', error);
+        if (!cancelled) setBookOverview('');
+      } finally {
+        if (!cancelled) setOverviewLoading(false);
+      }
+    }
+
+    loadOverview();
+    return () => {
+      cancelled = true;
+    };
+  }, [book]);
 
   // RR-08: Determine the highest chapter the current user has reached/reacted on
   const userReactionsForBook = allBookReactions.filter(
@@ -408,8 +407,8 @@ const handleSelectStatusOption = (option) => {
         <h2 className="book-section-heading">Overview</h2>
         <p className="book-overview-text">
           {overviewLoading
-  ? 'Loading overview…'
-  : bookOverview || 'No overview is currently available from Open Library.'}
+            ? 'Loading overview…'
+            : bookOverview || 'No overview is currently available from Open Library.'}
         </p>
       </section>
 
@@ -522,7 +521,7 @@ const handleSelectStatusOption = (option) => {
 
                       setDeletingReview(null);
                     } catch (error) {
-                      console.error('Could not delete review:', error);
+                      console.error('Could not delete your review:', error);
                       alert('Could not delete your review. Please try again.');
                     }
                   }}
