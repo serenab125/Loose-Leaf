@@ -1,58 +1,87 @@
 
 import { useState, useCallback, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 import {
   TASTE_SECTIONS,
   GOAL_SECTIONS,
   MIN_TASTE_ANSWERS,
 } from './quizData';
 
-export function useQuiz() {
+export function useQuiz(userId) {
   // 0 = introduction
   // 1 = reading taste
   // 2 = reading goals
   // 3 = loading / complete
-  const [currentStep, setCurrentStep] = useState(() => {
-    try {
-      const savedStep = Number(localStorage.getItem('looseleaf_quiz_step'));
-      return savedStep === 1 || savedStep === 2 ? savedStep : 0;
-    } catch {
-      return 0;
-    }
-  });
-  const [answers, setAnswers] = useState(() => {
-    try {
-      const savedAnswers = localStorage.getItem('looseleaf_quiz_answers');
-      return savedAnswers ? JSON.parse(savedAnswers) : {};
-    } catch (error) {
-      console.warn('Could not restore quiz answers:', error);
-      return {};
-    }
-  });
+  const [currentStep, setCurrentStep] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [loadingProgress, setLoadingProgress] = useState(true);
 
   useEffect(() => {
-    if (Object.keys(answers).length > 0) {
-      localStorage.setItem('looseleaf_quiz_answers', JSON.stringify(answers));
+    if (!userId) {
+      setLoadingProgress(false);
+      return;
     }
-  }, [answers]);
+  
+    let cancelled = false;
+    setLoadingProgress(true);
+    setAnswers({});
+    setCurrentStep(0);
+  
+    async function loadSavedQuiz() {
+      const { data, error } = await supabase
+        .from('quiz_progress')
+        .select('answers, current_step')
+        .eq('user_id', userId)
+        .is('completed_at', null)
+        .maybeSingle();
+  
+      if (cancelled) return;
+  
+      if (error) {
+        console.error('Could not load saved quiz:', error);
+      } else if (data) {
+        setAnswers(data.answers || {});
+        setCurrentStep(
+          data.current_step === 1 || data.current_step === 2
+            ? data.current_step
+            : 0
+        );
+      }
+  
+      setLoadingProgress(false);
+    }
+  
+    loadSavedQuiz();
+  
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
-  useEffect(() => {
-    if (currentStep === 1 || currentStep === 2) {
-      localStorage.setItem('looseleaf_quiz_step', String(currentStep));
-    }
-  }, [currentStep]);
+  
 
   const goToIntro = useCallback(() => {
     setCurrentStep(0);
   }, []);
 
-  const startOver = useCallback(() => {
-    localStorage.removeItem('looseleaf_quiz_answers');
-    localStorage.removeItem('looseleaf_quiz_step');
+  const startOver = useCallback(async () => {
+    if (!userId) {
+      throw new Error('You must be signed in to restart your quiz.');
+    }
+  
+    const { error } = await supabase
+      .from('quiz_progress')
+      .delete()
+      .eq('user_id', userId);
+  
+    if (error) {
+      throw error;
+    }
   
     setAnswers({});
     setCurrentStep(0);
     window.scrollTo(0, 0);
-  }, []);
+  }, [userId]);
 
   const answerQuestion = useCallback((sectionId, selectedIds) => {
     setAnswers((previous) => ({
@@ -134,6 +163,7 @@ export function useQuiz() {
   return {
     currentStep,
     answers,
+    loadingProgress,
     answerQuestion,
     goToIntro,
     startOver,
@@ -151,3 +181,5 @@ export function useQuiz() {
     progress,
   };
 }
+
+

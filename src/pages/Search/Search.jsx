@@ -95,11 +95,32 @@ async function findBookCover(bookInfo) {
     return book;
 }
 
+function getDailyTrendingBooks(books) {
+    if (books.length <= 3) return books;
+  
+    const today = new Date();
+    const dayNumber = Math.floor(
+      Date.UTC(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+      ) / 86400000
+    );
+  
+    const startIndex = (dayNumber * 3) % books.length;
+  
+    return Array.from(
+      { length: 3 },
+      (_, index) => books[(startIndex + index) % books.length]
+    );
+  }
+
+
 export default function Search({ onSelectBook }) {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [bookRows, setBookRows] = useState([]);
     const [loadingBooks, setLoadingBooks] = useState(false);
-    const [trendingBooks, setTrendingBooks] = useState(TOP_SEARCHES);
+    const [trendingBooks, setTrendingBooks] = useState([]);
 
     const [query, setQuery] = useState("");
     const [submittedQuery, setSubmittedQuery] = useState("");
@@ -116,7 +137,7 @@ export default function Search({ onSelectBook }) {
             const books = await fetchTrendingBooks();
       
             if (!cancelled && books.length > 0) {
-              setTrendingBooks(books);
+                setTrendingBooks(getDailyTrendingBooks(books));
             }
           } catch (error) {
             console.warn("Could not load trending books:", error);
@@ -424,7 +445,7 @@ export default function Search({ onSelectBook }) {
                                 {trendingBooks.slice(0, 3).map((book) => (
                                         <button
                                             type="button"
-                                            key={book.id}
+                                            key={book.bookId}
                                             className="top-search-card"
                                             onClick={() => {
                                                 setQuery(book.title);
