@@ -9,11 +9,14 @@ import {
   createShelf,
   addBookToShelf,
   removeBookFromShelf,
+  syncBookToStatusShelf,
+  STATUS_SHELF_MAP,
 } from '../../services/shelfService';
 import {
   saveBookStatus,
   removeSavedBook,
   fetchSavedBook,
+  clearOtherCurrentReads,
   STATUS_LABELS,
 } from '../../services/savedBookService';
 import './BookDetail.css';
@@ -276,6 +279,30 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     // Currently Reading / Finished / Did Not Finish
     setStatusSaving(true);
     try {
+      // There is only one current read per user. Hand the slot over: the
+      // previous holder loses its status and leaves the Current Reads shelf,
+      // otherwise saving this book as currently reading violates
+      // one_current_read_per_user and the whole status save fails.
+      let evicted = [];
+      if (option === 'Currently Reading' && user?.id) {
+        evicted = await clearOtherCurrentReads(user.id, resolvedBookId);
+
+        if (evicted.length > 0) {
+          const shelves = await fetchUserShelvesWithBooks(user.id);
+          const currentReads = shelves.find(
+            (shelf) => shelf.name === 'Current Reads'
+          );
+
+          if (currentReads) {
+            await Promise.all(
+              evicted.map((book) =>
+                removeBookFromShelf(user.id, currentReads.id, book.bookId)
+              )
+            );
+          }
+        }
+      }
+
       await saveBookStatus({
         userId: user?.id,
         bookId: resolvedBookId,
@@ -284,13 +311,58 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
         coverUrl,
         status: option,
       });
-      setCurrentStatus(option);
-      onUpdateStatus?.(book, option);
-      setStatusMessage(`Saved — ${option}.`);
-      setTimeout(() => setStatusMessage(''), 2500);
+
+      // A status change also moves the book between the default status
+      // shelves: marking it Finished takes it off Current Reads and files it
+      // under Finished. Best-effort — the status itself is already saved.
+      try {
+        const result = await syncBookToStatusShelf({
+          userId: user?.id,
+          bookId: resolvedBookId,
+          title: resolvedBookTitle,
+          author: book?.author,
+          coverUrl,
+          status: option,
+        });
+
+        if (result && user?.id) {
+          const shelves = await fetchUserShelvesWithBooks(user.id);
+          setUserShelves(shelves);
+        }
+
+        const shelfName = STATUS_SHELF_MAP[option];
+        const suffix =
+          result === 'moved'
+            ? ` Moved to the ${shelfName} shelf.`
+            : result === 'unchanged'
+              ? ` Already on the ${shelfName} shelf.`
+              : '';
+        const evictedNote = evicted.length
+          ? ` ${evicted.map((b) => b.title).join(', ')} ` +
+            `${evicted.length === 1 ? 'is' : 'are'} no longer your current read.`
+          : '';
+
+        setCurrentStatus(option);
+        onUpdateStatus?.(book, option);
+        setStatusMessage(`Saved — ${option}.${suffix}${evictedNote}`);
+        setTimeout(() => setStatusMessage(''), 3000);
+      } catch (shelfErr) {
+        console.error('Could not sync the status shelf:', shelfErr);
+        setCurrentStatus(option);
+        onUpdateStatus?.(book, option);
+        setStatusMessage(`Saved — ${option}.`);
+        setTimeout(() => setStatusMessage(''), 2500);
+      }
     } catch (err) {
       console.error('Failed to save reading status:', err);
-      setStatusError(err.message || 'Could not save your reading status.');
+      // The check constraint on saved_books.reading_status has to be widened
+      // before "Did Not Finish" can be stored; point at the fix rather than
+      // showing a raw Postgres message.
+      setStatusError(
+        err?.message?.includes('saved_books_reading_status_check')
+          ? 'This reading status is not allowed by the database yet — apply the migration in src/supabase/migrations.'
+          : err.message || 'Could not save your reading status.'
+      );
     } finally {
       setStatusSaving(false);
     }

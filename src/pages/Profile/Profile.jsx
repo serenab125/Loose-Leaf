@@ -9,6 +9,7 @@ import {
   addBookToShelf,
   removeBookFromShelf,
   ensureDefaultShelves,
+  sortShelves,
 } from '../../services/shelfService';
 import { searchBooksByTitle } from '../../services/bookService';
 import { fetchMyBookPageReactions } from '../../services/pageReactionService';
@@ -162,7 +163,7 @@ export function Profile({ user, logout, onSelectBook }) {
     try {
       const created = await createShelf(user.id, newShelfName.trim(), newShelfDescription.trim());
       if (created) {
-        setShelves((prev) => [...prev, { ...created, books: [] }]);
+        setShelves((prev) => sortShelves([...prev, { ...created, books: [] }]));
         setShowNewShelfModal(false);
         setNewShelfName('');
         setNewShelfDescription('');

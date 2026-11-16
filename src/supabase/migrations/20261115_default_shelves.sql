@@ -75,3 +75,22 @@ AS $$
   AND is_default = FALSE
   RETURNING *;
 $$;
+
+-- ============================================================
+-- Reading status: allow "Did Not Finish"
+--
+-- saved_books.reading_status had a check constraint limited to
+-- ('currently_reading', 'finished', 'want_to_read'), so the app's
+-- "Did Not Finish" option could never be saved — every attempt failed with
+-- "violates check constraint saved_books_reading_status_check". Add it.
+-- ============================================================
+ALTER TABLE saved_books DROP CONSTRAINT IF EXISTS saved_books_reading_status_check;
+
+ALTER TABLE saved_books
+  ADD CONSTRAINT saved_books_reading_status_check
+  CHECK (reading_status IN (
+    'currently_reading',
+    'finished',
+    'did_not_finish',
+    'want_to_read'
+  ));
