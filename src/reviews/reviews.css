@@ -342,3 +342,26 @@
   color: #5b3113;
   font-weight: 700;
 }
+
+
+/* Disabled review options when no review text exists */
+
+.review-type-option:disabled,
+.review-type-switch:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.review-spoiler-row:has(input:disabled) {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.review-spoiler-row input:disabled + .review-spoiler-switch {
+  cursor: not-allowed;
+}
+
+.review-type-option:disabled:hover,
+.review-type-switch:disabled:hover {
+  transform: none;
+}

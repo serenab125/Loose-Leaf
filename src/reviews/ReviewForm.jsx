@@ -18,6 +18,7 @@ export default function ReviewForm({
     initialReview?.includesSpoilers ?? false
   )
 
+  const hasReviewText = reviewText.trim().length > 0
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -37,10 +38,6 @@ export default function ReviewForm({
     return
   }
 
-    if (!reviewText.trim()) {
-      setError('Please write a review before submitting.')
-      return
-    }
 
     if (typeof onSubmit !== 'function') {
       setError('Review publishing is not connected yet.')
@@ -54,8 +51,8 @@ export default function ReviewForm({
         bookId,
         rating,
         reviewText: reviewText.trim(),
-        reviewType,
-        includesSpoilers
+        reviewType: hasReviewText ? reviewType : 'analytical',
+        includesSpoilers: hasReviewText ? includesSpoilers : false
       })
 
       setSuccess('Your review was published successfully!')
@@ -82,10 +79,11 @@ export default function ReviewForm({
 
           <textarea
             className="review-textarea"
-            placeholder="Write a Review..."
+            placeholder="Write a Review (Optional)..."
             aria-label="Write a Review"
             value={reviewText}
             onChange={(event) => setReviewText(event.target.value)}
+            maxLength={5000}
             disabled={submitting}
           />
 
@@ -99,7 +97,7 @@ export default function ReviewForm({
               }`}
               onClick={() => setReviewType('analytical')}
               aria-pressed={reviewType === 'analytical'}
-              disabled={submitting}
+              disabled={submitting || !hasReviewText}
             >
               <strong>Analytical</strong>
               <span>(Lengthy &amp; Detailed)</span>
@@ -116,7 +114,7 @@ export default function ReviewForm({
                 )
               }
               aria-label="Toggle review type"
-              disabled={submitting}
+              disabled={submitting || !hasReviewText}
             >
               <span className="review-type-knob" />
             </button>
@@ -128,7 +126,7 @@ export default function ReviewForm({
               }`}
               onClick={() => setReviewType('casual')}
               aria-pressed={reviewType === 'casual'}
-              disabled={submitting}
+              disabled={submitting || !hasReviewText}
             >
               <strong>Casual</strong>
               <span>(Quick Thoughts)</span>
@@ -140,7 +138,7 @@ export default function ReviewForm({
               type="checkbox"
               checked={includesSpoilers}
               onChange={(event) => setIncludesSpoilers(event.target.checked)}
-              disabled={submitting}
+              disabled={submitting || !hasReviewText}
             />
             <span className="review-spoiler-switch" aria-hidden="true" />
             <span className={`review-spoiler-label ${
@@ -167,7 +165,11 @@ export default function ReviewForm({
             className="review-submit-button"
             disabled={submitting}
           >
-            {submitting ? 'Publishing...' : 'Submit'}
+            {submitting
+              ? 'Saving...'
+              : hasReviewText
+                ? 'Publish Review'
+                : 'Save Rating'}
           </button>
         </form>
       </div>
