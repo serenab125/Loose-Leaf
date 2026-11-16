@@ -38,10 +38,37 @@ export async function searchBooksBySubject(subject) {
   );
 }
 
+export function cleanBookOverview(description) {
+  const rawText =
+    typeof description === "string"
+      ? description
+      : typeof description?.value === "string"
+        ? description.value
+        : "";
+
+  return rawText
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .filter((line) => {
+      const standaloneLink = line.match(
+        /^\s*(?:#{1,6}\s*)?\[\s*(.*?)\s*\]\(\s*https?:\/\/[^)]*\)\s*$/i
+      );
+      return !(standaloneLink && /\bread this book online\b/i.test(standaloneLink[1]));
+    })
+    .map((line) =>
+      line
+        .replace(/^\s{0,3}#{1,6}\s+/, "")
+        .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/gi, "$1")
+        .replace(/https?:\/\/\S+/gi, "")
+    )
+    .join("\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function getDescriptionText(description) {
-  if (typeof description === "string") return description.trim();
-  if (typeof description?.value === "string") return description.value.trim();
-  return "";
+  return cleanBookOverview(description);
 }
 
 async function fetchWorkDescription(workId) {
@@ -101,7 +128,7 @@ export async function fetchBookOverview(book) {
       ? firstSentence[0]
       : firstSentence;
     if (typeof searchDescription === "string" && searchDescription.trim()) {
-      return searchDescription.trim();
+      return getDescriptionText(searchDescription);
     }
 
     const matchedWorkId = matchingWork?.key?.split("/").pop();
@@ -312,7 +339,7 @@ export async function fetchMultiPersonalizedRecommendations(userId) {
         });
       }
     }
-    // Additional recommendations based on quiz preferences
+    // Additional recommendations based on quiz answers
     const extraPreferences = [
       {
         values: prefs['movies-tv']?.slice(1),
@@ -452,3 +479,4 @@ export async function fetchBookDescription(book) {
 
   return '';
 }
+

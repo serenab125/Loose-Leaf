@@ -4,7 +4,10 @@ import {
   addBookPageReaction,
   fetchBookPageReactions,
 } from '../../services/pageReactionService';
-import { fetchBookDescription } from '../../services/bookService';
+import {
+  cleanBookOverview,
+  fetchBookOverview,
+} from '../../services/bookService';
 import {
   saveBookReview,
   deleteBookReview,
@@ -25,6 +28,7 @@ import BookReviews from '../../components/Reviews/BookReviews';
 import EditReview from '../../components/Reviews/EditReview';
 import ReviewModal from '../../components/Reviews/ReviewModal';
 import ReviewForm from '../../reviews/ReviewForm';
+
 import './BookDetail.css';
 
 const SHELF_NAME_SUGGESTIONS = [
@@ -45,10 +49,6 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [currentStatus, setCurrentStatus] = useState('Set Status');
   const [activeTab, setActiveTab] = useState('reviews');
 
-  // Book Synopsis / Overview state
-  const [overviewText, setOverviewText] = useState(book?.description || '');
-  const [loadingOverview, setLoadingOverview] = useState(!book?.description);
-
   // Chapter Reaction Modal state (RR-06)
   const [showReactionModal, setShowReactionModal] = useState(false);
   const [reactionChapter, setReactionChapter] = useState('1');
@@ -67,6 +67,12 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [editingReview, setEditingReview] = useState(null);
   const [deletingReview, setDeletingReview] = useState(null);
   const [creatingReview, setCreatingReview] = useState(false);
+
+  // Book Synopsis / Overview state
+  const [bookOverview, setBookOverview] = useState(() =>
+    cleanBookOverview(book?.description)
+  );
+  const [overviewLoading, setOverviewLoading] = useState(false);
 
   // Saved reading status + shelf actions
   const [statusSaving, setStatusSaving] = useState(false);
@@ -93,13 +99,18 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     let cancelled = false;
 
     async function loadOverview() {
-      setLoadingOverview(true);
-      const desc = await fetchBookDescription(book);
-      if (!cancelled) {
-        setOverviewText(
-          desc || 'No description is available for this book yet.'
-        );
-        setLoadingOverview(false);
+      const existingDescription = cleanBookOverview(book?.description);
+      setBookOverview(existingDescription);
+      setOverviewLoading(!existingDescription);
+
+      try {
+        const overview = await fetchBookOverview(book);
+        if (!cancelled) setBookOverview(overview);
+      } catch (error) {
+        console.warn('Could not load the book overview:', error);
+        if (!cancelled) setBookOverview('');
+      } finally {
+        if (!cancelled) setOverviewLoading(false);
       }
     }
 
@@ -726,7 +737,10 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       <section className="book-overview-section">
         <h2 className="book-section-heading">Overview</h2>
         <p className="book-overview-text">
-          {loadingOverview ? 'Loading synopsis...' : overviewText}
+          {overviewLoading
+            ? 'Loading overview…'
+            : bookOverview ||
+              'No overview is currently available from Open Library.'}
         </p>
       </section>
 
@@ -842,7 +856,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
 
                       setDeletingReview(null);
                     } catch (error) {
-                      console.error('Could not delete review:', error);
+                      console.error('Could not delete your review:', error);
                       alert('Could not delete your review. Please try again.');
                     }
                   }}

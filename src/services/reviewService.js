@@ -6,11 +6,17 @@ export async function saveBookReview({
   bookTitle,
   reviewText,
   ratingOutOf10,
+  classification = 'Analytical',
+  includesSpoilers = false,
 }) {
   const cleanBookId = String(bookId ?? '').trim();
   const cleanBookTitle = String(bookTitle ?? '').trim();
   const cleanReviewText = String(reviewText ?? '').trim();
   const rating = Number(ratingOutOf10);
+  const normalizedClassification =
+    String(classification).trim().toLowerCase() === 'casual'
+      ? 'Casual'
+      : 'Analytical';
 
   if (!cleanBookId || cleanBookId.length > 100) {
     throw new Error('A valid book ID is required.');
@@ -30,23 +36,31 @@ export async function saveBookReview({
     p_book_title: cleanBookTitle,
     p_review_text: cleanReviewText,
     p_rating_out_of_10: rating,
+    p_review_type: normalizedClassification,
+    p_includes_spoilers: includesSpoilers,
   });
 
   if (error) throw error;
   return Array.isArray(data) ? data[0] : data;
 }
 
-/** Fetches all saved reviews for one book (community reviews tab). */
-export async function fetchBookReviews(bookId) {
+/** Delete the signed-in user's review for a book. */
+export async function deleteBookReview(bookId) {
   const cleanBookId = String(bookId ?? '').trim();
-  if (!cleanBookId) return [];
 
-  const { data, error } = await supabase
-    .from('book_reviews')
-    .select('*')
-    .eq('book_id', cleanBookId)
-    .order('created_at', { ascending: false });
+  if (!cleanBookId) {
+    throw new Error('A valid book ID is required.');
+  }
+
+  const { data, error } = await supabase.rpc('delete_book_review', {
+    p_book_id: cleanBookId,
+  });
 
   if (error) throw error;
-  return data ?? [];
+
+  if (!data) {
+    throw new Error('Review not found or could not be deleted.');
+  }
+
+  return true;
 }

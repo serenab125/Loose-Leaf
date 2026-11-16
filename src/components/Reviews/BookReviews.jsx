@@ -178,7 +178,7 @@ export default function BookReviews({
             </button>
           </div>
         ) : (
-          <p className="review-text">{review.text}</p>
+          <p className="review-text">{review.text?.trim()}</p>
         )}
       </article>
     );
