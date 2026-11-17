@@ -4,41 +4,50 @@ import {
   addBookPageReaction,
   fetchBookPageReactions,
 } from '../../services/pageReactionService';
-import './BookDetail.css';
+import {
+  cleanBookOverview,
+  fetchBookOverview,
+} from '../../services/bookService';
+import {
+  saveBookReview,
+  deleteBookReview,
+} from '../../services/reviewService';
+import {
+  fetchUserShelvesWithBooks,
+  createShelf,
+  addBookToShelf,
+  removeBookFromShelf,
+} from '../../services/shelfService';
+import {
+  saveBookStatus,
+  removeSavedBook,
+  fetchSavedBook,
+  STATUS_LABELS,
+} from '../../services/savedBookService';
 import BookReviews from '../../components/Reviews/BookReviews';
 import EditReview from '../../components/Reviews/EditReview';
-import { saveBookReview, deleteBookReview } from '../../services/reviewService';
 import ReviewModal from '../../components/Reviews/ReviewModal';
 import ReviewForm from '../../reviews/ReviewForm';
-import { cleanBookOverview, fetchBookOverview } from '../../services/bookService';
 
+import './BookDetail.css';
+
+const SHELF_NAME_SUGGESTIONS = [
+  'Comfort Reads',
+  'Owned',
+  'Read Soon',
+  'Buddy Reads',
+  'Book Club',
+];
+
+/** Rough rendered height of the status menu, used to decide if it fits below. */
+const STATUS_MENU_HEIGHT = 440;
 
 export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef(null);
-  useEffect(() => {
-    if (!showDropdown) return;
-  
-    function handleClickOutside(event) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
-        setShowDropdown(false);
-      }
-    }
-  
-    document.addEventListener('pointerdown', handleClickOutside);
-  
-    return () => {
-      document.removeEventListener('pointerdown', handleClickOutside);
-    };
-  }, [showDropdown]);
-
-  const [currentStatus, setCurrentStatus] = useState('Update');
+  const [menuAbove, setMenuAbove] = useState(false);
+  const statusMenuRef = useRef(null);
+  const [currentStatus, setCurrentStatus] = useState('Set Status');
   const [activeTab, setActiveTab] = useState('reviews');
-  const [analysisMode, setAnalysisMode] = useState('analytical');
-  const [sortOrder, setSortOrder] = useState('highest');
 
   // Chapter Reaction Modal state (RR-06)
   const [showReactionModal, setShowReactionModal] = useState(false);
@@ -58,10 +67,26 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [editingReview, setEditingReview] = useState(null);
   const [deletingReview, setDeletingReview] = useState(null);
   const [creatingReview, setCreatingReview] = useState(false);
+
+  // Book Synopsis / Overview state
   const [bookOverview, setBookOverview] = useState(() =>
     cleanBookOverview(book?.description)
   );
   const [overviewLoading, setOverviewLoading] = useState(false);
+
+  // Saved reading status + shelf actions
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [statusError, setStatusError] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [userShelves, setUserShelves] = useState([]);
+  const [showShelfModal, setShowShelfModal] = useState(false);
+  const [shelfName, setShelfName] = useState('');
+  const [shelfError, setShelfError] = useState('');
+  const [shelfSaving, setShelfSaving] = useState(false);
+  const [addBookToNewShelf, setAddBookToNewShelf] = useState(true);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [showAddToShelfModal, setShowAddToShelfModal] = useState(false);
+  const [selectedShelves, setSelectedShelves] = useState(() => new Set());
 
   const coverUrl = book?.coverUrl || book?.cover || book?.cover_url;
   const resolvedBookId = String(
@@ -69,6 +94,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   ).trim();
   const resolvedBookTitle = String(book?.title || 'Untitled Book').trim();
 
+  // Fetch missing book overview/description automatically
   useEffect(() => {
     let cancelled = false;
 
@@ -144,7 +170,6 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       try {
         const dbReactions = await fetchBookPageReactions(resolvedBookId);
         if (!cancelled) {
-          
           const formatted = dbReactions.map((row) => ({
             id: row.id,
             userId: row.user_id,
@@ -179,37 +204,39 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
           .order('created_at', { ascending: false });
 
         if (!cancelled && !error) {
-          const reviewerIds = [...new Set(
-            (dbReviews || []).map((row) => row.user_id)
-          )];
-          
-          const { data: reviewerProfiles, error: profilesError } = await supabase
-            .from('profiles')
-            .select('id, full_name')
-            .in('id', reviewerIds);
-          
+          const reviewerIds = [
+            ...new Set((dbReviews || []).map((row) => row.user_id)),
+          ];
+
+          const { data: reviewerProfiles, error: profilesError } =
+            await supabase
+              .from('profiles')
+              .select('id, full_name')
+              .in('id', reviewerIds);
+
           if (profilesError) {
             console.warn('Could not load reviewer names:', profilesError);
           }
-          
+
           const namesById = new Map(
             (reviewerProfiles || []).map((profile) => [
               profile.id,
               profile.full_name,
             ])
           );
-          
+
           const formattedReviews = (dbReviews || []).map((row) => ({
             id: row.id,
             userId: row.user_id,
             authorName:
-  row.user_id === user?.id
-    ? 'You'
-    : namesById.get(row.user_id) || 'Reader',
+              row.user_id === user?.id
+                ? 'You'
+                : namesById.get(row.user_id) || 'Reader',
             rating: row.rating_out_of_10 / 2,
             ratingOutOf10: row.rating_out_of_10,
             text: row.review_text,
-            classification: row.review_type ?? row.classification ?? 'Analytical',
+            classification:
+              row.review_type ?? row.classification ?? 'Analytical',
             includesSpoilers: row.includes_spoilers ?? false,
           }));
 
@@ -226,29 +253,318 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     };
   }, [resolvedBookId, user?.id]);
 
+  // Load the saved reading status and the user's shelves for this book.
+  useEffect(() => {
+    if (!user?.id || !resolvedBookId) return;
+    let cancelled = false;
 
-const handleSelectStatusOption = (option) => {
-  setShowDropdown(false);
+    async function loadSavedState() {
+      try {
+        const row = await fetchSavedBook(user.id, resolvedBookId);
+        if (!cancelled && row?.reading_status) {
+          setCurrentStatus(STATUS_LABELS[row.reading_status] || 'Set Status');
+        }
+      } catch (err) {
+        console.warn('Could not load saved reading status:', err);
+      }
 
-  if (option === 'Progress Update') {
-    setReactionError('');
-    setShowReactionModal(true);
-    return;
-  }
+      try {
+        const shelves = await fetchUserShelvesWithBooks(user.id);
+        if (!cancelled) setUserShelves(shelves);
+      } catch (err) {
+        console.warn('Could not load shelves:', err);
+      }
+    }
 
-  // Update the book's reading status
-  setCurrentStatus(option);
-  onUpdateStatus?.(book, option);
+    loadSavedState();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, resolvedBookId]);
 
-  // RR-02, RR-03, RR-04:
-  // Open the review form when a book is finished
-  if (option === 'Finished') {
-    setActiveTab('reviews');
-    setEditingReview(null);
-    setCreatingReview(true);
-  }
-};
+  // Open the status menu, flipping it above the trigger when it would
+  // otherwise run off the bottom of the screen.
+  const toggleStatusDropdown = () => {
+    if (!showDropdown && statusMenuRef.current) {
+      const trigger = statusMenuRef.current.querySelector(
+        '.status-dropdown-btn'
+      );
+      const rect = trigger?.getBoundingClientRect();
+      if (rect) {
+        setMenuAbove(window.innerHeight - rect.bottom < STATUS_MENU_HEIGHT);
+      }
+    }
+    setShowDropdown((prev) => !prev);
+  };
 
+  // Close the menu when the user clicks anywhere outside it.
+  useEffect(() => {
+    if (!showDropdown) return;
+
+    const handlePointerDown = (event) => {
+      if (
+        statusMenuRef.current &&
+        !statusMenuRef.current.contains(event.target)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [showDropdown]);
+
+  const handleSelectStatusOption = async (option) => {
+    setShowDropdown(false);
+    setStatusError('');
+    setStatusMessage('');
+
+    if (option === 'Progress Update') {
+      setReactionError('');
+      setShowReactionModal(true);
+      return;
+    }
+
+    if (option === 'Add to a Shelf') {
+      setSelectedShelves(new Set());
+      setShowAddToShelfModal(true);
+      return;
+    }
+
+    if (option === 'Create a New Shelf') {
+      setShelfName('');
+      setShelfError('');
+      setAddBookToNewShelf(true);
+      setShowShelfModal(true);
+      return;
+    }
+
+    if (option === 'Remove Book From Shelf') {
+      setSelectedShelves(new Set());
+      setShowRemoveModal(true);
+      return;
+    }
+
+    // Currently Reading / Finished / Did Not Finish
+    setStatusSaving(true);
+    try {
+      await saveBookStatus({
+        userId: user?.id,
+        bookId: resolvedBookId,
+        title: resolvedBookTitle,
+        author: book?.author,
+        coverUrl,
+        status: option,
+      });
+      setCurrentStatus(option);
+      onUpdateStatus?.(book, option);
+      setStatusMessage(`Saved — ${option}.`);
+      setTimeout(() => setStatusMessage(''), 2500);
+
+      // Open the review form immediately when a book is marked Finished
+      if (option === 'Finished') {
+        setActiveTab('reviews');
+        setEditingReview(null);
+        setCreatingReview(true);
+      }
+    } catch (err) {
+      console.error('Failed to save reading status:', err);
+      setStatusError(err.message || 'Could not save your reading status.');
+    } finally {
+      setStatusSaving(false);
+    }
+  };
+
+  const handleCreateShelfAndAdd = async (e) => {
+    e.preventDefault();
+    if (!user?.id) return;
+
+    const name = shelfName.trim();
+    if (!name) {
+      setShelfError('Shelf name is required.');
+      return;
+    }
+
+    const shouldAddBook = addBookToNewShelf;
+
+    setShelfSaving(true);
+    setShelfError('');
+    try {
+      const created = await createShelf(user.id, name);
+      if (!created) throw new Error('Could not create the shelf.');
+
+      let nextShelves = [
+        ...userShelves,
+        { ...created, books: [], bookCount: 0 },
+      ];
+
+      if (shouldAddBook) {
+        await addBookToShelf(
+          user.id,
+          created.id,
+          resolvedBookId,
+          resolvedBookTitle,
+          book?.author,
+          coverUrl
+        );
+        nextShelves = nextShelves.map((shelf) =>
+          shelf.id === created.id
+            ? {
+                ...shelf,
+                books: [
+                  {
+                    book_id: resolvedBookId,
+                    title: resolvedBookTitle,
+                    author: book?.author,
+                    cover_url: coverUrl,
+                  },
+                ],
+                bookCount: 1,
+              }
+            : shelf
+        );
+      }
+
+      setUserShelves(nextShelves);
+      setShowShelfModal(false);
+      setShelfName('');
+      setAddBookToNewShelf(true);
+      setStatusMessage(
+        shouldAddBook
+          ? `Added to "${created.name}".`
+          : `Shelf "${created.name}" created.`
+      );
+      setTimeout(() => setStatusMessage(''), 2500);
+    } catch (err) {
+      console.error('Failed to create shelf:', err);
+      setShelfError(err.message || 'Could not create the shelf.');
+    } finally {
+      setShelfSaving(false);
+    }
+  };
+
+  const shelvesWithBook = userShelves.filter((shelf) =>
+    (shelf.books || []).some((b) => (b.book_id || b.id) === resolvedBookId)
+  );
+
+  const shelvesWithoutBook = userShelves.filter(
+    (shelf) =>
+      !(shelf.books || []).some((b) => (b.book_id || b.id) === resolvedBookId)
+  );
+
+  const toggleShelfSelection = (shelfId) => {
+    setSelectedShelves((prev) => {
+      const next = new Set(prev);
+      if (next.has(shelfId)) next.delete(shelfId);
+      else next.add(shelfId);
+      return next;
+    });
+  };
+
+  const handleConfirmRemove = async () => {
+    if (!user?.id || selectedShelves.size === 0) return;
+
+    setStatusSaving(true);
+    setStatusError('');
+    try {
+      await Promise.all(
+        [...selectedShelves].map((shelfId) =>
+          removeBookFromShelf(user.id, shelfId, resolvedBookId)
+        )
+      );
+
+      const anyShelfKeepsBook = userShelves.some(
+        (shelf) =>
+          !selectedShelves.has(shelf.id) &&
+          (shelf.books || []).some(
+            (b) => (b.book_id || b.id) === resolvedBookId
+          )
+      );
+
+      if (!anyShelfKeepsBook) {
+        await removeSavedBook(user.id, resolvedBookId);
+        setCurrentStatus('Not Saved');
+        onUpdateStatus?.(book, 'Not Saved');
+      }
+
+      setUserShelves((prev) =>
+        prev.map((shelf) => ({
+          ...shelf,
+          books: (shelf.books || []).filter(
+            (b) => (b.book_id || b.id) !== resolvedBookId
+          ),
+          bookCount: (shelf.books || []).filter(
+            (b) => (b.book_id || b.id) !== resolvedBookId
+          ).length,
+        }))
+      );
+
+      setSelectedShelves(new Set());
+      setShowRemoveModal(false);
+      setStatusMessage('Removed from your shelves.');
+      setTimeout(() => setStatusMessage(''), 2500);
+    } catch (err) {
+      console.error('Failed to remove book from shelves:', err);
+      setStatusError(err.message || 'Could not remove the book.');
+    } finally {
+      setStatusSaving(false);
+    }
+  };
+
+  const handleConfirmAddToShelves = async () => {
+    if (!user?.id || selectedShelves.size === 0) return;
+
+    setStatusSaving(true);
+    setStatusError('');
+    try {
+      await Promise.all(
+        [...selectedShelves].map((shelfId) =>
+          addBookToShelf(
+            user.id,
+            shelfId,
+            resolvedBookId,
+            resolvedBookTitle,
+            book?.author,
+            coverUrl
+          )
+        )
+      );
+
+      setUserShelves((prev) =>
+        prev.map((shelf) =>
+          selectedShelves.has(shelf.id)
+            ? {
+                ...shelf,
+                books: [
+                  ...(shelf.books || []),
+                  {
+                    id: resolvedBookId,
+                    book_id: resolvedBookId,
+                    title: resolvedBookTitle,
+                    author: book?.author,
+                    cover_url: coverUrl,
+                  },
+                ],
+                bookCount: (shelf.books || []).length + 1,
+              }
+            : shelf
+        )
+      );
+
+      const count = selectedShelves.size;
+      setSelectedShelves(new Set());
+      setShowAddToShelfModal(false);
+      setStatusMessage(
+        `Added to ${count} ${count === 1 ? 'shelf' : 'shelves'}.`
+      );
+      setTimeout(() => setStatusMessage(''), 2500);
+    } catch (err) {
+      console.error('Failed to add book to shelves:', err);
+      setStatusError(err.message || 'Could not add the book to your shelves.');
+    } finally {
+      setStatusSaving(false);
+    }
+  };
 
   // RR-06: Validate and submit chapter reaction
   const handleAddReaction = async (e) => {
@@ -258,7 +574,6 @@ const handleSelectStatusOption = (option) => {
     const trimmedText = reactionText.trim();
     const parsedChapter = Number(reactionChapter);
 
-    // AC 2: Explicit validation message for empty/whitespace-only reactions
     if (!trimmedText) {
       setReactionError('Please enter a reaction before posting.');
       return;
@@ -299,7 +614,6 @@ const handleSelectStatusOption = (option) => {
       setShowReactionModal(false);
       setActiveTab('reactions');
     } catch (err) {
-      // AC 3: Preserve entered reaction text when saving fails
       console.error('Failed to save chapter reaction:', err);
       setReactionError(
         err.message || 'Could not save reaction. Your text has been preserved.'
@@ -311,10 +625,10 @@ const handleSelectStatusOption = (option) => {
 
   return (
     <main
-  className={`book-detail-page ${
-    editingReview || creatingReview ? 'book-detail-editing' : ''
-  }`}
->
+      className={`book-detail-page ${
+        editingReview || creatingReview ? 'book-detail-editing' : ''
+      }`}
+    >
       {/* Top Header Navigation */}
       <header className="book-detail-header">
         <button type="button" className="book-detail-back-btn" onClick={onBack}>
@@ -338,52 +652,60 @@ const handleSelectStatusOption = (option) => {
 
         <h1 className="book-detail-title">{resolvedBookTitle}</h1>
         <p className="book-detail-author">
-          {book?.author ? `by ${book.author}` : 'Suzanne Collins'}
+          {book?.author ? `by ${book.author}` : 'Author unknown'}
         </p>
 
         {/* Status Dropdown */}
-        <div className="status-dropdown-container" ref={dropdownRef}>
+        <div className="status-dropdown-container" ref={statusMenuRef}>
           <button
             type="button"
             className="status-dropdown-btn"
-            onClick={() => setShowDropdown((prev) => !prev)}
+            onClick={toggleStatusDropdown}
+            disabled={statusSaving}
           >
-            {currentStatus} ▾
+            {statusSaving ? 'Saving…' : `${currentStatus} ▾`}
           </button>
 
           {showDropdown && (
-            <div className="status-dropdown-menu">
+            <div className={`status-dropdown-menu ${menuAbove ? 'above' : ''}`}>
               <button
                 type="button"
-                className="status-dropdown-item"
+                className="status-dropdown-item status"
                 onClick={() => handleSelectStatusOption('Currently Reading')}
               >
                 Currently Reading
               </button>
               <button
                 type="button"
-                className="status-dropdown-item"
+                className="status-dropdown-item status"
                 onClick={() => handleSelectStatusOption('Progress Update')}
               >
                 Progress Update
               </button>
               <button
                 type="button"
-                className="status-dropdown-item"
+                className="status-dropdown-item status"
                 onClick={() => handleSelectStatusOption('Finished')}
               >
                 Finished
               </button>
               <button
                 type="button"
-                className="status-dropdown-item"
+                className="status-dropdown-item status"
                 onClick={() => handleSelectStatusOption('Did Not Finish')}
               >
                 Did Not Finish
               </button>
               <button
                 type="button"
-                className="status-dropdown-item"
+                className="status-dropdown-item shelf"
+                onClick={() => handleSelectStatusOption('Add to a Shelf')}
+              >
+                Add to a Shelf
+              </button>
+              <button
+                type="button"
+                className="status-dropdown-item shelf"
                 onClick={() => handleSelectStatusOption('Create a New Shelf')}
               >
                 Create a New Shelf
@@ -400,6 +722,15 @@ const handleSelectStatusOption = (option) => {
             </div>
           )}
         </div>
+
+        {(statusError || statusMessage) && (
+          <p
+            className={statusError ? 'status-error-msg' : 'status-ok-msg'}
+            role={statusError ? 'alert' : 'status'}
+          >
+            {statusError || statusMessage}
+          </p>
+        )}
       </section>
 
       {/* Book Synopsis Overview */}
@@ -408,7 +739,8 @@ const handleSelectStatusOption = (option) => {
         <p className="book-overview-text">
           {overviewLoading
             ? 'Loading overview…'
-            : bookOverview || 'No overview is currently available from Open Library.'}
+            : bookOverview ||
+              'No overview is currently available from Open Library.'}
         </p>
       </section>
 
@@ -430,7 +762,6 @@ const handleSelectStatusOption = (option) => {
             Reactions
           </button>
         </div>
-
 
         {/* Tab Content Display */}
         {activeTab === 'reviews' ? (
@@ -456,7 +787,8 @@ const handleSelectStatusOption = (option) => {
                   ratingOutOf10: saved.rating_out_of_10,
                   text: saved.review_text,
                   classification: saved.review_type ?? review.reviewType,
-                  includesSpoilers: saved.includes_spoilers ?? review.includesSpoilers,
+                  includesSpoilers:
+                    saved.includes_spoilers ?? review.includesSpoilers,
                 };
 
                 setReviewsList((previous) => [
@@ -479,7 +811,11 @@ const handleSelectStatusOption = (option) => {
                     bookTitle: resolvedBookTitle,
                     reviewText: updatedReview.text,
                     ratingOutOf10: updatedReview.ratingOutOf10,
-                    classification: updatedReview.classification,
+                    classification:
+                      String(updatedReview.classification).toLowerCase() ===
+                      'casual'
+                        ? 'Casual'
+                        : 'Analytical',
                     includesSpoilers: updatedReview.includesSpoilers,
                   });
 
@@ -498,7 +834,6 @@ const handleSelectStatusOption = (option) => {
             />
           ) : (
             <>
-
               <BookReviews
                 reviews={reviewsList}
                 currentUserId={user?.id}
@@ -529,7 +864,6 @@ const handleSelectStatusOption = (option) => {
               )}
             </>
           )
-
         ) : reactionsLoading ? (
           <p style={{ textAlign: 'center', color: '#8c7365', fontSize: '14px' }}>
             Loading reactions...
@@ -551,7 +885,8 @@ const handleSelectStatusOption = (option) => {
             </div>
             <h3 className="reactions-locked-title">Reactions are locked</h3>
             <p className="reactions-locked-text">
-              Log a chapter reaction to set your reading position and unlock spoiler-free reactions up to that chapter.
+              Log a chapter reaction to set your reading position and unlock
+              spoiler-free reactions up to that chapter.
             </p>
             <button
               type="button"
@@ -688,6 +1023,237 @@ const handleSelectStatusOption = (option) => {
                 {isSubmittingReaction ? 'Saving...' : 'Post'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Create a New Shelf — Figma bottom sheet */}
+      {showShelfModal && (
+        <div className="sheet-overlay" onClick={() => setShowShelfModal(false)}>
+          <div
+            className="sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-shelf-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="sheet-title" id="create-shelf-title">
+              Create a new shelf
+            </h2>
+            <p className="sheet-subtitle">
+              Make your own shelf to organize this book however you like.
+            </p>
+
+            <form onSubmit={handleCreateShelfAndAdd} noValidate>
+              <label className="sheet-label" htmlFor="shelf-name">
+                Shelf name
+              </label>
+              <input
+                id="shelf-name"
+                type="text"
+                className="sheet-input"
+                value={shelfName}
+                onChange={(e) => {
+                  setShelfName(e.target.value);
+                  if (shelfError) setShelfError('');
+                }}
+                placeholder="e.g. Cozy Autumn Reads"
+                autoFocus
+              />
+
+              <div className="chip-row">
+                {SHELF_NAME_SUGGESTIONS.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    className="chip"
+                    onClick={() => setShelfName(suggestion)}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={addBookToNewShelf}
+                  onChange={(e) => setAddBookToNewShelf(e.target.checked)}
+                />
+                <span>Add {resolvedBookTitle} to this shelf</span>
+              </label>
+
+              {shelfError && (
+                <p className="sheet-error" role="alert">
+                  {shelfError}
+                </p>
+              )}
+
+              <div className="sheet-actions">
+                <button
+                  type="button"
+                  className="btn-outline"
+                  onClick={() => setShowShelfModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={shelfSaving || !shelfName.trim()}
+                >
+                  {shelfSaving ? 'Creating…' : 'Create Shelf'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add to an existing shelf — same sheet layout as remove */}
+      {showAddToShelfModal && (
+        <div
+          className="sheet-overlay"
+          onClick={() => setShowAddToShelfModal(false)}
+        >
+          <div
+            className="sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-to-shelf-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="sheet-title" id="add-to-shelf-title">
+              Add to a shelf
+            </h2>
+            <p className="sheet-subtitle">
+              Select the{' '}
+              {shelvesWithoutBook.length === 1 ? 'shelf' : 'shelves'} you’d
+              like to add {resolvedBookTitle} to.
+            </p>
+
+            <div className="shelf-picker-list">
+              {shelvesWithoutBook.length === 0 ? (
+                <p className="shelf-picker-empty">
+                  {userShelves.length === 0
+                    ? 'You don’t have any shelves yet. Create one first.'
+                    : 'This book is already on all of your shelves.'}
+                </p>
+              ) : (
+                shelvesWithoutBook.map((shelf) => (
+                  <label key={shelf.id} className="shelf-picker-row">
+                    <input
+                      type="checkbox"
+                      checked={selectedShelves.has(shelf.id)}
+                      onChange={() => toggleShelfSelection(shelf.id)}
+                    />
+                    <span className="shelf-picker-name">
+                      {shelf.name || 'Untitled Shelf'}
+                    </span>
+                    <span className="shelf-picker-count">
+                      {shelf.bookCount ?? (shelf.books || []).length}
+                      {(shelf.bookCount ?? (shelf.books || []).length) === 1
+                        ? ' book'
+                        : ' books'}
+                    </span>
+                  </label>
+                ))
+              )}
+            </div>
+
+            <p className="sheet-footnote">
+              Adding a book to a shelf won’t change its reading status.
+            </p>
+
+            <div className="sheet-actions">
+              <button
+                type="button"
+                className="btn-outline"
+                onClick={() => setShowAddToShelfModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={selectedShelves.size === 0 || statusSaving}
+                onClick={handleConfirmAddToShelves}
+              >
+                {statusSaving ? 'Adding…' : 'Add to Shelves'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove from shelf — Figma bottom sheet */}
+      {showRemoveModal && (
+        <div className="sheet-overlay" onClick={() => setShowRemoveModal(false)}>
+          <div
+            className="sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="remove-shelf-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="sheet-title" id="remove-shelf-title">
+              Remove from shelf
+            </h2>
+            <p className="sheet-subtitle">
+              {resolvedBookTitle} is on {shelvesWithBook.length}{' '}
+              {shelvesWithBook.length === 1 ? 'shelf' : 'shelves'}. Select the
+              ones you’d like to remove it from.
+            </p>
+
+            <div className="shelf-picker-list">
+              {shelvesWithBook.length === 0 ? (
+                <p className="shelf-picker-empty">
+                  This book isn’t on any of your shelves yet.
+                </p>
+              ) : (
+                shelvesWithBook.map((shelf) => (
+                  <label key={shelf.id} className="shelf-picker-row">
+                    <input
+                      type="checkbox"
+                      checked={selectedShelves.has(shelf.id)}
+                      onChange={() => toggleShelfSelection(shelf.id)}
+                    />
+                    <span className="shelf-picker-name">
+                      {shelf.name || 'Untitled Shelf'}
+                    </span>
+                    <span className="shelf-picker-count">
+                      {shelf.bookCount ?? (shelf.books || []).length}
+                      {(shelf.bookCount ?? (shelf.books || []).length) === 1
+                        ? ' book'
+                        : ' books'}
+                    </span>
+                  </label>
+                ))
+              )}
+            </div>
+
+            <p className="sheet-footnote">
+              Removing a book from a shelf won’t delete your reviews or
+              reactions.
+            </p>
+
+            <div className="sheet-actions">
+              <button
+                type="button"
+                className="btn-outline"
+                onClick={() => setShowRemoveModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={selectedShelves.size === 0 || statusSaving}
+                onClick={handleConfirmRemove}
+              >
+                {statusSaving ? 'Removing…' : 'Remove from Shelf'}
+              </button>
+            </div>
           </div>
         </div>
       )}

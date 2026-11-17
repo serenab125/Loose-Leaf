@@ -1,87 +1,61 @@
 
-import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import { useState, useCallback } from 'react';
 import {
   TASTE_SECTIONS,
   GOAL_SECTIONS,
   MIN_TASTE_ANSWERS,
 } from './quizData';
 
-export function useQuiz(userId) {
+const PROGRESS_KEY = 'looseleaf_quiz_progress';
+
+/**
+ * Read the saved quiz progress from localStorage.
+ * Returns null when nothing usable is stored.
+ */
+const readSavedProgress = () => {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.step === undefined) return null;
+
+    return {
+      step: typeof parsed.step === 'number' ? parsed.step : 0,
+      answers:
+        parsed.answers && typeof parsed.answers === 'object'
+          ? parsed.answers
+          : {},
+    };
+  } catch {
+    return null;
+  }
+};
+
+export { PROGRESS_KEY };
+
+export function useQuiz() {
   // 0 = introduction
   // 1 = reading taste
   // 2 = reading goals
   // 3 = loading / complete
-  const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [loadingProgress, setLoadingProgress] = useState(true);
+  const [initialProgress] = useState(() => readSavedProgress());
+  const [currentStep, setCurrentStep] = useState(
+    initialProgress?.step ?? 0
+  );
+  const [answers, setAnswers] = useState(initialProgress?.answers ?? {});
 
-  useEffect(() => {
-    if (!userId) {
-      setLoadingProgress(false);
-      return;
-    }
-  
-    let cancelled = false;
-    setLoadingProgress(true);
-    setAnswers({});
-    setCurrentStep(0);
-  
-    async function loadSavedQuiz() {
-      const { data, error } = await supabase
-        .from('quiz_progress')
-        .select('answers, current_step')
-        .eq('user_id', userId)
-        .is('completed_at', null)
-        .maybeSingle();
-  
-      if (cancelled) return;
-  
-      if (error) {
-        console.error('Could not load saved quiz:', error);
-      } else if (data) {
-        setAnswers(data.answers || {});
-        setCurrentStep(
-          data.current_step === 1 || data.current_step === 2
-            ? data.current_step
-            : 0
-        );
-      }
-  
-      setLoadingProgress(false);
-    }
-  
-    loadSavedQuiz();
-  
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
-
-  
+  // Restored once, on mount, straight from the saved progress.
+  const [restoreMessage] = useState(() =>
+    initialProgress
+      ? 'Your quiz progress has been restored — you can continue from where you left off.'
+      : ''
+  );
 
   const goToIntro = useCallback(() => {
     setCurrentStep(0);
-  }, []);
-
-  const startOver = useCallback(async () => {
-    if (!userId) {
-      throw new Error('You must be signed in to restart your quiz.');
-    }
-  
-    const { error } = await supabase
-      .from('quiz_progress')
-      .delete()
-      .eq('user_id', userId);
-  
-    if (error) {
-      throw error;
-    }
-  
     setAnswers({});
-    setCurrentStep(0);
-    window.scrollTo(0, 0);
-  }, [userId]);
+  }, []);
 
   const answerQuestion = useCallback((sectionId, selectedIds) => {
     setAnswers((previous) => ({
@@ -108,6 +82,14 @@ export function useQuiz(userId) {
 
   const tasteAnsweredCount = TASTE_SECTIONS.filter(hasAnswer).length;
   const goalAnsweredCount = GOAL_SECTIONS.filter(hasAnswer).length;
+
+  // Remaining taste questions needed before the quiz can continue.
+  // MIN_TASTE_ANSWERS is the gate, so this is the shortfall — not the
+  // number of still-unanswered sections, which would overstate the ask.
+  const remainingAnswers = Math.max(
+    0,
+    MIN_TASTE_ANSWERS - tasteAnsweredCount
+  );
 
   const canContinue = tasteAnsweredCount >= MIN_TASTE_ANSWERS;
 
@@ -163,10 +145,8 @@ export function useQuiz(userId) {
   return {
     currentStep,
     answers,
-    loadingProgress,
     answerQuestion,
     goToIntro,
-    startOver,
     goToNext,
     goToGoals,
     goBackToTaste,
@@ -178,8 +158,8 @@ export function useQuiz(userId) {
     canContinue,
     tasteAnsweredCount,
     goalAnsweredCount,
+    remainingAnswers,
     progress,
+    restoreMessage,
   };
 }
-
-

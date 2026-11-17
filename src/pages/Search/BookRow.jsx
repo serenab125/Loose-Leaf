@@ -25,19 +25,22 @@ function BookCover({ book }) {
     );
 }
 
-export default function BookRow({ title, books = [] }) {
+export default function BookRow({ title, books = [], onSelectBook }) {
     return (
         <section className="search-book-section">
             <h2 className="search-book-section-title">{title}</h2>
 
             <div className="search-book-row">
                 {books.map((book, index) => (
-                    <div
+                    <button
+                        type="button"
                         className="search-book-item"
                         key={book.bookId ?? index}
+                        onClick={() => onSelectBook?.(book)}
+                        aria-label={`View ${book.title || 'book'}`}
                     >
                         <BookCover book={book} />
-                    </div>
+                    </button>
                 ))}
             </div>
         </section>

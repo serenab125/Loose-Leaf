@@ -47,21 +47,22 @@ const normalize = (text) =>
 const coverCache = new Map();
 
 async function findBookCover(bookInfo) {
-    if (bookInfo.coverUrl) {
-        return { ...bookInfo, bookId: bookInfo.title };
-    }
-
     const cacheKey = `${bookInfo.title}|${bookInfo.author}`;
 
     if (coverCache.has(cacheKey)) {
         return coverCache.get(cacheKey);
     }
 
+    // Keep any pre-set cover as a presentation fallback, but still resolve the
+    // real Open Library id. Without this, a book reached via a category row
+    // (pre-set cover) keeps bookId = title while the same book reached via
+    // search gets its OLID — two identities for one book, which splits statuses,
+    // shelf entries, reviews and reactions.
     let book = {
-        bookId: bookInfo.title,
+        bookId: bookInfo.bookId ?? bookInfo.title,
         title: bookInfo.title,
         author: bookInfo.author,
-        coverUrl: null,
+        coverUrl: bookInfo.coverUrl ?? null,
     };
 
     try {
@@ -80,8 +81,8 @@ async function findBookCover(bookInfo) {
         if (match) {
             book = {
                 ...book,
-                bookId: match.bookId ?? bookInfo.title,
-                coverUrl: match.coverUrl ?? null,
+                bookId: match.bookId ?? book.bookId,
+                coverUrl: book.coverUrl ?? match.coverUrl ?? null,
             };
         }
     } catch (error) {
@@ -95,32 +96,11 @@ async function findBookCover(bookInfo) {
     return book;
 }
 
-function getDailyTrendingBooks(books) {
-    if (books.length <= 3) return books;
-  
-    const today = new Date();
-    const dayNumber = Math.floor(
-      Date.UTC(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate()
-      ) / 86400000
-    );
-  
-    const startIndex = (dayNumber * 3) % books.length;
-  
-    return Array.from(
-      { length: 3 },
-      (_, index) => books[(startIndex + index) % books.length]
-    );
-  }
-
-
 export default function Search({ onSelectBook }) {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [bookRows, setBookRows] = useState([]);
     const [loadingBooks, setLoadingBooks] = useState(false);
-    const [trendingBooks, setTrendingBooks] = useState([]);
+    const [trendingBooks, setTrendingBooks] = useState(TOP_SEARCHES);
 
     const [query, setQuery] = useState("");
     const [submittedQuery, setSubmittedQuery] = useState("");
@@ -137,7 +117,7 @@ export default function Search({ onSelectBook }) {
             const books = await fetchTrendingBooks();
       
             if (!cancelled && books.length > 0) {
-                setTrendingBooks(getDailyTrendingBooks(books));
+              setTrendingBooks(books);
             }
           } catch (error) {
             console.warn("Could not load trending books:", error);
@@ -154,11 +134,7 @@ export default function Search({ onSelectBook }) {
     useEffect(() => {
         const category = categoryData[selectedCategory];
 
-        if (!category) {
-            setBookRows([]);
-            setLoadingBooks(false);
-            return;
-        }
+        if (!category) return;
 
         let cancelled = false;
 
@@ -227,22 +203,16 @@ export default function Search({ onSelectBook }) {
     useEffect(() => {
         const trimmedQuery = query.trim();
 
-        if (!trimmedQuery) {
-            requestNumber.current += 1;
-            setSearchResults([]);
-            setSearchError("");
-            setSearchLoading(false);
-            return;
-        }
+        if (!trimmedQuery) return;
 
         const currentRequest = ++requestNumber.current;
 
-        setSearchLoading(true);
-        setSearchError("");
-        setSearchResults([]);
-
         // Wait briefly so we don't request books on every keystroke.
         const timeout = setTimeout(async () => {
+            setSearchLoading(true);
+            setSearchError("");
+            setSearchResults([]);
+
             try {
                 const results = await searchBooksByTitle(trimmedQuery);
 
@@ -281,7 +251,11 @@ export default function Search({ onSelectBook }) {
                     <button
                         type="button"
                         className="search-back-button"
-                        onClick={() => setSelectedCategory(null)}
+                        onClick={() => {
+                            setSelectedCategory(null);
+                            setBookRows([]);
+                            setLoadingBooks(false);
+                        }}
                     >
                         ← Back
                     </button>
@@ -301,6 +275,7 @@ export default function Search({ onSelectBook }) {
                             key={row.title}
                             title={row.title}
                             books={row.books}
+                            onSelectBook={onSelectBook}
                         />
                     ))}
                 </>
@@ -334,7 +309,17 @@ export default function Search({ onSelectBook }) {
                             className="search-input"
                             placeholder="Search for a book title..."
                             value={query}
-                            onChange={(event) => setQuery(event.target.value)}
+                            onChange={(event) => {
+                                const value = event.target.value;
+                                setQuery(value);
+
+                                if (!value.trim()) {
+                                    requestNumber.current += 1;
+                                    setSearchResults([]);
+                                    setSearchError("");
+                                    setSearchLoading(false);
+                                }
+                            }}
                             onKeyDown={async (event) => {
                                 if (event.key !== "Enter" || !query.trim()) return;
                               
@@ -351,7 +336,7 @@ export default function Search({ onSelectBook }) {
                                   if (currentRequest === requestNumber.current) {
                                     setSearchResults(results);
                                   }
-                                } catch (error) {
+                                } catch {
                                   if (currentRequest === requestNumber.current) {
                                     setSearchError("Unable to retrieve books. Please try again.");
                                   }
@@ -445,7 +430,7 @@ export default function Search({ onSelectBook }) {
                                 {trendingBooks.slice(0, 3).map((book) => (
                                         <button
                                             type="button"
-                                            key={book.bookId}
+                                            key={book.id ?? book.bookId ?? book.title}
                                             className="top-search-card"
                                             onClick={() => {
                                                 setQuery(book.title);

@@ -1,13 +1,17 @@
+// Login.jsx
 import { useState } from 'react';
 import styles from './Login.module.css';
 import { useAuth } from './useAuth';
 
-export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword }) {
-  const { signIn, loading, error, clearError } = useAuth();
-
+export function Login({
+  onNavigateToCreateAccount,
+  onNavigateToForgotPassword,
+}) {
+  const { signIn: signInAuth, loading: authLoading, initializing } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,7 +22,12 @@ export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword })
     }
     setFormError('');
     try {
-      await signIn(email.trim(), password);
+      await signInAuth(email.trim(), password);
+      // "Remember me" OFF: clear the manual store so the session doesn't
+      // persist across page reloads (single client uses persistSession: true).
+      if (!rememberMe) {
+        localStorage.removeItem('looseleaf_session');
+      }
     } catch (err) {
       setFormError(err.message || 'Failed to sign in. Please try again.');
     }
@@ -29,6 +38,8 @@ export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword })
     if (!password) return 'Password is required.';
     return '';
   };
+
+  const busy = authLoading || initializing;
 
   return (
     <div className={styles.container}>
@@ -48,6 +59,7 @@ export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword })
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
+              autoComplete="email"
             />
           </div>
 
@@ -65,10 +77,27 @@ export function Login({ onNavigateToCreateAccount, onNavigateToForgotPassword })
             />
           </div>
 
+          <div className={styles.fieldGroup}>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                className={styles.checkbox}
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                disabled={busy}
+              />
+              <span>Remember me</span>
+            </label>
+          </div>
+
           {formError && <p className={styles.error}>{formError}</p>}
 
-          <button type="submit" className={styles.buttonPrimary} disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+          <button
+            type="submit"
+            className={styles.buttonPrimary}
+            disabled={busy}
+          >
+            {busy ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
