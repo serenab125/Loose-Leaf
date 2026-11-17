@@ -828,7 +828,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
                   setEditingReview(null);
                 } catch (error) {
                   console.error('Could not update review:', error);
-                  alert('Could not update your review. Please try again.');
+                  alert(`Could not update your review: ${error.message || 'Please try again.'}`);
                 }
               }}
             />

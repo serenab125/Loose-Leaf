@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import BookRating from './BookRating'
 import './reviews.css'
@@ -11,8 +10,10 @@ export default function ReviewForm({
 }) {
   const [rating, setRating] = useState(initialReview?.rating ?? 0)
   const [reviewText, setReviewText] = useState(initialReview?.reviewText ?? '')
-  const [reviewType, setReviewType] = useState(
-    initialReview?.reviewType ?? 'analytical'
+  const [reviewType, setReviewType] = useState(() =>
+    initialReview?.reviewText?.trim()
+      ? initialReview.reviewType ?? 'analytical'
+      : 'casual'
   )
   const [includesSpoilers, setIncludesSpoilers] = useState(
     initialReview?.includesSpoilers ?? false
@@ -33,11 +34,15 @@ export default function ReviewForm({
       return
     }
 
-    if (!Number.isFinite(rating) ||rating < 0.5 ||rating > 5 ||!Number.isInteger(rating * 2))
-      {setError('Please select a rating between 0.5 and 5 stars.')
-    return
-  }
-
+    if (
+      !Number.isFinite(rating) ||
+      rating < 0.5 ||
+      rating > 5 ||
+      !Number.isInteger(rating * 2)
+    ) {
+      setError('Please select a rating between 0.5 and 5 stars.')
+      return
+    }
 
     if (typeof onSubmit !== 'function') {
       setError('Review publishing is not connected yet.')
@@ -51,7 +56,7 @@ export default function ReviewForm({
         bookId,
         rating,
         reviewText: reviewText.trim(),
-        reviewType: hasReviewText ? reviewType : 'analytical',
+        reviewType: hasReviewText ? reviewType : 'casual',
         includesSpoilers: hasReviewText ? includesSpoilers : false
       })
 
@@ -75,14 +80,26 @@ export default function ReviewForm({
         </button>
 
         <form onSubmit={handleSubmit} className="review-form">
-          <BookRating value={rating} onChange={setRating} disabled={submitting} />
+          <BookRating
+            value={rating}
+            onChange={setRating}
+            disabled={submitting}
+          />
 
           <textarea
             className="review-textarea"
             placeholder="Write a Review (Optional)..."
             aria-label="Write a Review"
             value={reviewText}
-            onChange={(event) => setReviewText(event.target.value)}
+            onChange={(event) => {
+              const nextText = event.target.value
+              setReviewText(nextText)
+
+              if (!nextText.trim()) {
+                setReviewType('casual')
+                setIncludesSpoilers(false)
+              }
+            }}
             maxLength={5000}
             disabled={submitting}
           />

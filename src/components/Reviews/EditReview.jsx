@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import './EditReview.css';
 
@@ -7,25 +6,28 @@ export default function EditReview({ review, onSave, onBack }) {
     review?.ratingOutOf10 ?? Math.round((review?.rating ?? 0) * 2)
   );
   const [text, setText] = useState(review?.text ?? '');
+  const hasReviewText = text.trim().length > 0;
   const [classification, setClassification] = useState(
-    review?.classification ?? 'Analytical'
+    review?.text?.trim()
+      ? review?.classification ?? 'Analytical'
+      : 'Casual'
   );
   const [includesSpoilers, setIncludesSpoilers] = useState(
-    review?.includesSpoilers ?? false
+    review?.text?.trim() ? review?.includesSpoilers ?? false : false
   );
 
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    if (!text.trim() || rating === 0) return;
+    if (rating === 0) return;
 
     onSave({
       ...review,
       text: text.trim(),
       rating: rating / 2,
       ratingOutOf10: rating,
-      classification,
-      includesSpoilers,
+      classification: hasReviewText ? classification : 'Casual',
+      includesSpoilers: hasReviewText ? includesSpoilers : false,
     });
   };
 
@@ -85,17 +87,24 @@ export default function EditReview({ review, onSave, onBack }) {
         </fieldset>
 
         <label className="edit-review-text-label" htmlFor="edit-review-text">
-          Your Review
+          Your Review (Optional)
         </label>
 
         <textarea
           id="edit-review-text"
           value={text}
-          onChange={(event) => setText(event.target.value)}
+          onChange={(event) => {
+            const nextText = event.target.value;
+            setText(nextText);
+
+            if (!nextText.trim()) {
+              setClassification('Casual');
+              setIncludesSpoilers(false);
+            }
+          }}
           placeholder="Write a Review..."
           maxLength={5000}
           rows={6}
-          required
         />
 
         <h3>Describe your review...</h3>
@@ -105,6 +114,7 @@ export default function EditReview({ review, onSave, onBack }) {
             type="button"
             className={classification === 'Analytical' ? 'selected' : ''}
             onClick={() => setClassification('Analytical')}
+            disabled={!hasReviewText}
           >
             Analytical
             <small>Lengthy & Detailed</small>
@@ -122,6 +132,7 @@ export default function EditReview({ review, onSave, onBack }) {
             }
             aria-label="Toggle review type"
             aria-pressed={classification === 'Casual'}
+            disabled={!hasReviewText}
           >
             <span />
           </button>
@@ -130,6 +141,7 @@ export default function EditReview({ review, onSave, onBack }) {
             type="button"
             className={classification === 'Casual' ? 'selected' : ''}
             onClick={() => setClassification('Casual')}
+            disabled={!hasReviewText}
           >
             Casual
             <small>Quick Thoughts</small>
@@ -141,6 +153,7 @@ export default function EditReview({ review, onSave, onBack }) {
             type="checkbox"
             checked={includesSpoilers}
             onChange={(event) => setIncludesSpoilers(event.target.checked)}
+            disabled={!hasReviewText}
           />
           <span className="edit-review-spoiler-switch" />
           Includes Spoilers
@@ -149,9 +162,11 @@ export default function EditReview({ review, onSave, onBack }) {
         <button
           type="submit"
           className="edit-review-save"
-          disabled={!text.trim() || rating === 0}
+          disabled={rating === 0}
         >
-          {review ? 'Save Changes' : 'Post Review'}
+          {hasReviewText
+            ? review ? 'Save Changes' : 'Post Review'
+            : 'Save Rating'}
         </button>
       </form>
     </div>
