@@ -105,7 +105,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
 
       try {
         const overview = await fetchBookOverview(book);
-        if (!cancelled) setBookOverview(overview);
+        if (!cancelled) setBookOverview(cleanBookOverview(overview));
       } catch (error) {
         console.warn('Could not load the book overview:', error);
         if (!cancelled) setBookOverview('');

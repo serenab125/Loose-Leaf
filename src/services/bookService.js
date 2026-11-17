@@ -420,63 +420,8 @@ export async function fetchMultiPersonalizedRecommendations(userId) {
   }
 }
 
-/** Fetches a book's synopsis/overview from Open Library if missing */
+/** Backward-compatible alias; uses the same cleaned overview lookup. */
 export async function fetchBookDescription(book) {
-  if (book?.description && String(book.description).trim()) {
-    return String(book.description).trim();
-  }
-
-  const rawId = String(
-    book?.bookId || book?.id || book?.open_library_id || ''
-  ).trim();
-  const workKey = rawId.startsWith('/works/')
-    ? rawId
-    : rawId.startsWith('OL') && rawId.endsWith('W')
-      ? `/works/${rawId}`
-      : null;
-
-  try {
-    if (workKey) {
-      const res = await fetch(`https://openlibrary.org${workKey}.json`);
-      if (res.ok) {
-        const data = await res.json();
-        const desc =
-          typeof data.description === 'string'
-            ? data.description
-            : data.description?.value;
-        if (desc && desc.trim()) return desc.trim();
-      }
-    }
-
-    if (book?.title) {
-      const query = encodeURIComponent(
-        `${book.title} ${book.author || ''}`.trim()
-      );
-      const searchRes = await fetch(
-        `https://openlibrary.org/search.json?q=${query}&limit=1`
-      );
-      if (searchRes.ok) {
-        const searchData = await searchRes.json();
-        const firstWorkKey = searchData.docs?.[0]?.key;
-        if (firstWorkKey) {
-          const workRes = await fetch(
-            `https://openlibrary.org${firstWorkKey}.json`
-          );
-          if (workRes.ok) {
-            const workData = await workRes.json();
-            const desc =
-              typeof workData.description === 'string'
-                ? workData.description
-                : workData.description?.value;
-            if (desc && desc.trim()) return desc.trim();
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.warn('Could not fetch book description:', err);
-  }
-
-  return '';
+  return fetchBookOverview(book);
 }
 
