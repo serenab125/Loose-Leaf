@@ -10,7 +10,8 @@ function HomeCarousel({
   user,
   onRetakeQuiz,
   onNavigateToSearch,
-  onNavigateToTimer
+  onNavigateToTimer,
+  onSelectBook
 }) {
   const [activeSlide, setActiveSlide] = useState(0)
   const [recommendedBook, setRecommendedBook] = useState(null)
@@ -132,7 +133,9 @@ function HomeCarousel({
         key="recommendation"
         book={recommendedBook}
         onStartReading={(book) => {
-          console.log('Start reading:', book)
+          if (book) {
+            onSelectBook?.(book)
+          }
         }}
       />
     ),
