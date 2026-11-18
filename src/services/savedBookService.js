@@ -175,3 +175,36 @@ export async function removeSavedBook(userId, bookId) {
   if (error) throw error;
   return true;
 }
+
+/**
+ * Hand over the single "current read" slot.
+ *
+ * `saved_books` enforces one current read per user (the
+ * one_current_read_per_user constraint, matching the Home "Current Read" card),
+ * so marking a second book as currently reading requires dropping the previous
+ * holder's status first — otherwise the insert fails on the unique index.
+ *
+ * @param {string} userId
+ * @param {string} keepBookId - the book taking the slot
+ * @returns {Promise<Array<{bookId: string, title: string}>>} the evicted rows
+ */
+export async function clearOtherCurrentReads(userId, keepBookId) {
+  const cleanUserId = String(userId ?? '').trim();
+  const cleanBookId = String(keepBookId ?? '').trim();
+  if (!cleanUserId || !cleanBookId) return [];
+
+  const { data, error } = await supabase
+    .from('saved_books')
+    .delete()
+    .eq('user_id', cleanUserId)
+    .eq('reading_status', 'currently_reading')
+    .neq('open_library_id', cleanBookId)
+    .select('open_library_id, title');
+
+  if (error) throw error;
+
+  return (data || []).map((row) => ({
+    bookId: row.open_library_id,
+    title: row.title,
+  }));
+}

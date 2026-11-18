@@ -19,11 +19,14 @@ import {
   createShelf,
   addBookToShelf,
   removeBookFromShelf,
+  syncBookToStatusShelf,
+  STATUS_SHELF_MAP,
 } from '../../services/shelfService';
 import {
   saveBookStatus,
   removeSavedBook,
   fetchSavedBook,
+  clearOtherCurrentReads,
   STATUS_LABELS,
 } from '../../services/savedBookService';
 import BookReviews from '../../components/Reviews/BookReviews';
@@ -72,6 +75,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [editingReview, setEditingReview] = useState(null);
   const [deletingReview, setDeletingReview] = useState(null);
   const [creatingReview, setCreatingReview] = useState(false);
+  const [showReviewPrompt, setShowReviewPrompt] = useState(false);
 
   // Book Synopsis / Overview state
   const [bookOverview, setBookOverview] = useState(() =>
@@ -377,6 +381,35 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     // Currently Reading / Finished / Did Not Finish
     setStatusSaving(true);
     try {
+      let evicted = [];
+
+      // Only one book can hold the "current read" slot. Hand it over first:
+      // the previous holder loses its status and leaves the Current Reads
+      // shelf, otherwise saving this book as currently reading violates the
+      // one_current_read_per_user unique index and the whole save fails.
+      if (option === 'Currently Reading' && user?.id) {
+        evicted = await clearOtherCurrentReads(user.id, resolvedBookId);
+
+        if (evicted.length > 0) {
+          const shelves = await fetchUserShelvesWithBooks(user.id);
+          const currentReads = shelves.find(
+            (shelf) => shelf.name === 'Current Reads'
+          );
+
+          if (currentReads) {
+            await Promise.all(
+              evicted.map((evictedBook) =>
+                removeBookFromShelf(
+                  user.id,
+                  currentReads.id,
+                  evictedBook.bookId
+                )
+              )
+            );
+          }
+        }
+      }
+
       await saveBookStatus({
         userId: user?.id,
         bookId: resolvedBookId,
@@ -385,26 +418,58 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
         coverUrl,
         status: option,
       });
-      setCurrentStatus(option);
-      onUpdateStatus?.(book, option);
 
-      if (user?.id) {
-        const refreshedShelves = await fetchUserShelvesWithBooks(user.id);
-        setUserShelves(refreshedShelves);
+      // A reading status also files the book on the matching default shelf
+      // and removes it from the other status shelves. Best-effort: the
+      // status itself is already saved if this fails.
+      let shelfSuffix = '';
+      try {
+        const result = await syncBookToStatusShelf({
+          userId: user?.id,
+          bookId: resolvedBookId,
+          title: resolvedBookTitle,
+          author: book?.author,
+          coverUrl,
+          status: option,
+        });
+
+        if (result && user?.id) {
+          setUserShelves(await fetchUserShelvesWithBooks(user.id));
+        }
+
+        const shelfName = STATUS_SHELF_MAP[option];
+        shelfSuffix =
+          result === 'moved'
+            ? ` Moved to the ${shelfName} shelf.`
+            : result === 'unchanged'
+              ? ` Already on the ${shelfName} shelf.`
+              : '';
+      } catch (shelfErr) {
+        console.error('Could not sync the status shelf:', shelfErr);
       }
 
-      setStatusMessage(`Saved — ${option}.`);
-      setTimeout(() => setStatusMessage(''), 2500);
+      const evictedNote = evicted.length
+        ? ` ${evicted.map((b) => b.title).join(', ')} ` +
+          `${evicted.length === 1 ? 'is' : 'are'} no longer your current read.`
+        : '';
 
-      // Open the review form immediately when a book is marked Finished
+      setCurrentStatus(option);
+      onUpdateStatus?.(book, option);
+      setStatusMessage(`Saved — ${option}.${shelfSuffix}${evictedNote}`);
+      setTimeout(() => setStatusMessage(''), 3000);
+
+      // Ask instead of forcing: marking a book Finished opens a prompt, and
+      // the review form only opens when the user chooses to write one.
       if (option === 'Finished') {
-        setActiveTab('reviews');
-        setEditingReview(null);
-        setCreatingReview(true);
+        setShowReviewPrompt(true);
       }
     } catch (err) {
       console.error('Failed to save reading status:', err);
-      setStatusError(err.message || 'Could not save your reading status.');
+      setStatusError(
+        err?.message?.includes('saved_books_reading_status_check')
+          ? 'This reading status is not allowed by the database yet — apply the migration in src/supabase/migrations.'
+          : err.message || 'Could not save your reading status.'
+      );
     } finally {
       setStatusSaving(false);
     }
@@ -1216,6 +1281,40 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
                 onClick={handleConfirmDeleteReaction}
               >
                 {isDeletingReaction ? 'Deleting…' : 'Delete Reaction'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Finished → optional review prompt */}
+      {showReviewPrompt && (
+        <div className="reaction-modal-overlay">
+          <div className="reaction-modal" role="dialog" aria-modal="true">
+            <h3 className="modal-title">Write a review?</h3>
+            <p className="sheet-subtitle">
+              You marked {resolvedBookTitle} as Finished. Would you like to
+              share a review?
+            </p>
+            <div className="sheet-actions">
+              <button
+                type="button"
+                className="btn-outline"
+                onClick={() => setShowReviewPrompt(false)}
+              >
+                Not now
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  setShowReviewPrompt(false);
+                  setActiveTab('reviews');
+                  setEditingReview(null);
+                  setCreatingReview(true);
+                }}
+              >
+                Write a review
               </button>
             </div>
           </div>
