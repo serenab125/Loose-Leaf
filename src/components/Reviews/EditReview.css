@@ -188,7 +188,11 @@
     justify-content: flex-end;
     background: #c98996;
   }
-  
+  .edit-review-type > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  }
+
   .edit-review-switch span {
     width: 18px;
     height: 18px;
@@ -207,6 +211,11 @@
     margin-bottom: 30px;
   }
   
+  .edit-review-spoilers:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+  }
+
   .edit-review-spoilers input {
     position: absolute;
     opacity: 0;

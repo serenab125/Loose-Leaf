@@ -51,7 +51,7 @@ export default function ReviewForm({
         bookId,
         rating,
         reviewText: reviewText.trim(),
-        reviewType: hasReviewText ? reviewType : 'analytical',
+        reviewType: hasReviewText ? reviewType : 'casual',
         includesSpoilers: hasReviewText ? includesSpoilers : false
       })
 
