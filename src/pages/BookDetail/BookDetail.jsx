@@ -356,6 +356,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       // the previous holder loses its status and leaves the Current Reads
       // shelf, otherwise saving this book as currently reading violates the
       // one_current_read_per_user unique index and the whole save fails.
+      let evicted = [];
       if (option === 'Currently Reading' && user?.id) {
         evicted = await clearOtherCurrentReads(user.id, resolvedBookId);
 
