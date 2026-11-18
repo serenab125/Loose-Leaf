@@ -3,6 +3,8 @@ import { supabase } from '../../supabaseClient';
 import {
   addBookPageReaction,
   fetchBookPageReactions,
+  updateBookPageReaction,
+  deleteBookPageReaction,
 } from '../../services/pageReactionService';
 import {
   cleanBookOverview,
@@ -17,11 +19,14 @@ import {
   createShelf,
   addBookToShelf,
   removeBookFromShelf,
+  syncBookToStatusShelf,
+  STATUS_SHELF_MAP,
 } from '../../services/shelfService';
 import {
   saveBookStatus,
   removeSavedBook,
   fetchSavedBook,
+  clearOtherCurrentReads,
   STATUS_LABELS,
 } from '../../services/savedBookService';
 import BookReviews from '../../components/Reviews/BookReviews';
@@ -49,8 +54,11 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [currentStatus, setCurrentStatus] = useState('Set Status');
   const [activeTab, setActiveTab] = useState('reviews');
 
-  // Chapter Reaction Modal state (RR-06)
+  // Chapter Reaction Modal state (RR-06 + Edit/Delete)
   const [showReactionModal, setShowReactionModal] = useState(false);
+  const [editingReaction, setEditingReaction] = useState(null);
+  const [deletingReaction, setDeletingReaction] = useState(null);
+  const [isDeletingReaction, setIsDeletingReaction] = useState(false);
   const [reactionChapter, setReactionChapter] = useState('1');
   const [reactionText, setReactionText] = useState('');
   const [reactionError, setReactionError] = useState('');
@@ -67,6 +75,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [editingReview, setEditingReview] = useState(null);
   const [deletingReview, setDeletingReview] = useState(null);
   const [creatingReview, setCreatingReview] = useState(false);
+  const [showReviewPrompt, setShowReviewPrompt] = useState(false);
 
   // Book Synopsis / Overview state
   const [bookOverview, setBookOverview] = useState(() =>
@@ -314,14 +323,38 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, [showDropdown]);
 
+  const openCreateReactionModal = () => {
+    setEditingReaction(null);
+    setReactionChapter(
+      maxUnlockedChapter > 0 ? String(maxUnlockedChapter) : '1'
+    );
+    setReactionText('');
+    setReactionError('');
+    setShowReactionModal(true);
+  };
+
+  const openEditReactionModal = (reaction) => {
+    setEditingReaction(reaction);
+    setReactionChapter(String(reaction.chapterNumber));
+    setReactionText(reaction.text);
+    setReactionError('');
+    setShowReactionModal(true);
+  };
+
+  const closeReactionModal = () => {
+    if (isSubmittingReaction) return;
+    setShowReactionModal(false);
+    setEditingReaction(null);
+    setReactionError('');
+  };
+
   const handleSelectStatusOption = async (option) => {
     setShowDropdown(false);
     setStatusError('');
     setStatusMessage('');
 
     if (option === 'Progress Update') {
-      setReactionError('');
-      setShowReactionModal(true);
+      openCreateReactionModal();
       return;
     }
 
@@ -348,6 +381,35 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     // Currently Reading / Finished / Did Not Finish
     setStatusSaving(true);
     try {
+      let evicted = [];
+
+      // Only one book can hold the "current read" slot. Hand it over first:
+      // the previous holder loses its status and leaves the Current Reads
+      // shelf, otherwise saving this book as currently reading violates the
+      // one_current_read_per_user unique index and the whole save fails.
+      if (option === 'Currently Reading' && user?.id) {
+        evicted = await clearOtherCurrentReads(user.id, resolvedBookId);
+
+        if (evicted.length > 0) {
+          const shelves = await fetchUserShelvesWithBooks(user.id);
+          const currentReads = shelves.find(
+            (shelf) => shelf.name === 'Current Reads'
+          );
+
+          if (currentReads) {
+            await Promise.all(
+              evicted.map((evictedBook) =>
+                removeBookFromShelf(
+                  user.id,
+                  currentReads.id,
+                  evictedBook.bookId
+                )
+              )
+            );
+          }
+        }
+      }
+
       await saveBookStatus({
         userId: user?.id,
         bookId: resolvedBookId,
@@ -356,20 +418,58 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
         coverUrl,
         status: option,
       });
+
+      // A reading status also files the book on the matching default shelf
+      // and removes it from the other status shelves. Best-effort: the
+      // status itself is already saved if this fails.
+      let shelfSuffix = '';
+      try {
+        const result = await syncBookToStatusShelf({
+          userId: user?.id,
+          bookId: resolvedBookId,
+          title: resolvedBookTitle,
+          author: book?.author,
+          coverUrl,
+          status: option,
+        });
+
+        if (result && user?.id) {
+          setUserShelves(await fetchUserShelvesWithBooks(user.id));
+        }
+
+        const shelfName = STATUS_SHELF_MAP[option];
+        shelfSuffix =
+          result === 'moved'
+            ? ` Moved to the ${shelfName} shelf.`
+            : result === 'unchanged'
+              ? ` Already on the ${shelfName} shelf.`
+              : '';
+      } catch (shelfErr) {
+        console.error('Could not sync the status shelf:', shelfErr);
+      }
+
+      const evictedNote = evicted.length
+        ? ` ${evicted.map((b) => b.title).join(', ')} ` +
+          `${evicted.length === 1 ? 'is' : 'are'} no longer your current read.`
+        : '';
+
       setCurrentStatus(option);
       onUpdateStatus?.(book, option);
-      setStatusMessage(`Saved — ${option}.`);
-      setTimeout(() => setStatusMessage(''), 2500);
+      setStatusMessage(`Saved — ${option}.${shelfSuffix}${evictedNote}`);
+      setTimeout(() => setStatusMessage(''), 3000);
 
-      // Open the review form immediately when a book is marked Finished
+      // Ask instead of forcing: marking a book Finished opens a prompt, and
+      // the review form only opens when the user chooses to write one.
       if (option === 'Finished') {
-        setActiveTab('reviews');
-        setEditingReview(null);
-        setCreatingReview(true);
+        setShowReviewPrompt(true);
       }
     } catch (err) {
       console.error('Failed to save reading status:', err);
-      setStatusError(err.message || 'Could not save your reading status.');
+      setStatusError(
+        err?.message?.includes('saved_books_reading_status_check')
+          ? 'This reading status is not allowed by the database yet — apply the migration in src/supabase/migrations.'
+          : err.message || 'Could not save your reading status.'
+      );
     } finally {
       setStatusSaving(false);
     }
@@ -566,8 +666,8 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     }
   };
 
-  // RR-06: Validate and submit chapter reaction
-  const handleAddReaction = async (e) => {
+  // RR-06: Validate and submit (or update) chapter reaction
+  const handleSaveReaction = async (e) => {
     e.preventDefault();
     if (isSubmittingReaction) return;
 
@@ -593,26 +693,52 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     setIsSubmittingReaction(true);
 
     try {
-      const savedRow = await addBookPageReaction({
-        bookId: resolvedBookId,
-        bookTitle: resolvedBookTitle,
-        chapterNumber: parsedChapter,
-        reaction: trimmedText,
-      });
+      if (editingReaction) {
+        const updatedRow = await updateBookPageReaction({
+          reactionId: editingReaction.id,
+          chapterNumber: parsedChapter,
+          reaction: trimmedText,
+        });
 
-      const newReaction = {
-        id: savedRow?.id || Date.now(),
-        userId: user?.id,
-        reviewer: 'You',
-        chapterNumber: Number(savedRow?.page_number ?? parsedChapter),
-        text: savedRow?.reaction ?? trimmedText,
-      };
+        setAllBookReactions((prev) =>
+          prev.map((item) =>
+            item.id === editingReaction.id
+              ? {
+                  ...item,
+                  chapterNumber: Number(
+                    updatedRow?.page_number ?? parsedChapter
+                  ),
+                  text: updatedRow?.reaction ?? trimmedText,
+                }
+              : item
+          )
+        );
+        setSelectedChapterFilter('all');
+        setEditingReaction(null);
+        setReactionText('');
+        setShowReactionModal(false);
+      } else {
+        const savedRow = await addBookPageReaction({
+          bookId: resolvedBookId,
+          bookTitle: resolvedBookTitle,
+          chapterNumber: parsedChapter,
+          reaction: trimmedText,
+        });
 
-      setAllBookReactions((prev) => [newReaction, ...prev]);
-      setSelectedChapterFilter('all');
-      setReactionText('');
-      setShowReactionModal(false);
-      setActiveTab('reactions');
+        const newReaction = {
+          id: savedRow?.id || Date.now(),
+          userId: user?.id,
+          reviewer: 'You',
+          chapterNumber: Number(savedRow?.page_number ?? parsedChapter),
+          text: savedRow?.reaction ?? trimmedText,
+        };
+
+        setAllBookReactions((prev) => [newReaction, ...prev]);
+        setSelectedChapterFilter('all');
+        setReactionText('');
+        setShowReactionModal(false);
+        setActiveTab('reactions');
+      }
     } catch (err) {
       console.error('Failed to save chapter reaction:', err);
       setReactionError(
@@ -620,6 +746,26 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       );
     } finally {
       setIsSubmittingReaction(false);
+    }
+  };
+
+  const handleConfirmDeleteReaction = async () => {
+    if (!deletingReaction || isDeletingReaction) return;
+
+    setIsDeletingReaction(true);
+    try {
+      await deleteBookPageReaction(deletingReaction.id);
+
+      setAllBookReactions((prev) =>
+        prev.filter((item) => item.id !== deletingReaction.id)
+      );
+      setSelectedChapterFilter('all');
+      setDeletingReaction(null);
+    } catch (err) {
+      console.error('Failed to delete chapter reaction:', err);
+      alert(err.message || 'Could not delete your reaction. Please try again.');
+    } finally {
+      setIsDeletingReaction(false);
     }
   };
 
@@ -891,10 +1037,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
             <button
               type="button"
               className="reactions-unlock-btn"
-              onClick={() => {
-                setReactionError('');
-                setShowReactionModal(true);
-              }}
+              onClick={openCreateReactionModal}
             >
               Add a Chapter Reaction
             </button>
@@ -935,24 +1078,84 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
               </div>
             ) : (
               <div className="cards-list">
-                {displayedReactions.map((react) => (
-                  <article key={react.id} className="review-card">
-                    <span className="reaction-chapter-badge">
-                      Chapter {react.chapterNumber}
-                    </span>
-                    <div className="review-card-header">
-                      <div className="reviewer-profile">
-                        <div className="reviewer-avatar">
-                          {react.reviewer.charAt(0)}
-                        </div>
-                        <div>
-                          <h4 className="reviewer-name">{react.reviewer}</h4>
+                {displayedReactions.map((react) => {
+                  const isOwnReaction =
+                    user?.id && String(react.userId) === String(user.id);
+
+                  return (
+                    <article key={react.id} className="review-card">
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: '8px',
+                        }}
+                      >
+                        <span className="reaction-chapter-badge">
+                          Chapter {react.chapterNumber}
+                        </span>
+
+                        {isOwnReaction && (
+                          <div
+                            style={{
+                              display: 'flex',
+                              gap: '6px',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => openEditReactionModal(react)}
+                              aria-label={`Edit reaction for Chapter ${react.chapterNumber}`}
+                              style={{
+                                border: '1px solid #d8c8b6',
+                                background: '#fffdf9',
+                                color: '#5b4636',
+                                borderRadius: '999px',
+                                padding: '4px 10px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeletingReaction(react)}
+                              aria-label={`Delete reaction for Chapter ${react.chapterNumber}`}
+                              style={{
+                                border: '1px solid #e6b8b2',
+                                background: '#fff6f5',
+                                color: '#a33a2b',
+                                borderRadius: '999px',
+                                padding: '4px 10px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="review-card-header">
+                        <div className="reviewer-profile">
+                          <div className="reviewer-avatar">
+                            {react.reviewer.charAt(0)}
+                          </div>
+                          <div>
+                            <h4 className="reviewer-name">{react.reviewer}</h4>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <p className="review-text">{react.text}</p>
-                  </article>
-                ))}
+                      <p className="review-text">{react.text}</p>
+                    </article>
+                  );
+                })}
               </div>
             )}
 
@@ -976,19 +1179,29 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
         )}
       </section>
 
-      {/* Chapter Reaction Modal (RR-06) */}
+      {/* Chapter Reaction Create / Edit Modal (RR-06) */}
       {showReactionModal && (
-        <div className="reaction-modal-overlay">
-          <div className="reaction-modal" role="dialog" aria-modal="true">
+        <div className="reaction-modal-overlay" onClick={closeReactionModal}>
+          <div
+            className="reaction-modal"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               type="button"
               className="modal-back-btn"
-              onClick={() => setShowReactionModal(false)}
+              onClick={closeReactionModal}
+              disabled={isSubmittingReaction}
             >
               ← Back to Book
             </button>
-            <h3 className="modal-title">What chapter are you reacting to?</h3>
-            <form onSubmit={handleAddReaction} noValidate>
+            <h3 className="modal-title">
+              {editingReaction
+                ? 'Edit your chapter reaction'
+                : 'What chapter are you reacting to?'}
+            </h3>
+            <form onSubmit={handleSaveReaction} noValidate>
               <div className="chapter-selector">
                 <input
                   type="number"
@@ -1020,9 +1233,90 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
                 className="modal-submit-btn"
                 disabled={isSubmittingReaction}
               >
-                {isSubmittingReaction ? 'Saving...' : 'Post'}
+                {isSubmittingReaction
+                  ? 'Saving...'
+                  : editingReaction
+                    ? 'Save Changes'
+                    : 'Post'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Reaction Confirmation Sheet */}
+      {deletingReaction && (
+        <div
+          className="sheet-overlay"
+          onClick={() => !isDeletingReaction && setDeletingReaction(null)}
+        >
+          <div
+            className="sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-reaction-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="sheet-title" id="delete-reaction-title">
+              Delete reaction?
+            </h2>
+            <p className="sheet-subtitle">
+              Are you sure you want to delete your Chapter{' '}
+              {deletingReaction.chapterNumber} reaction? This cannot be undone.
+            </p>
+
+            <div className="sheet-actions">
+              <button
+                type="button"
+                className="btn-outline"
+                disabled={isDeletingReaction}
+                onClick={() => setDeletingReaction(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={isDeletingReaction}
+                onClick={handleConfirmDeleteReaction}
+              >
+                {isDeletingReaction ? 'Deleting…' : 'Delete Reaction'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Finished → optional review prompt */}
+      {showReviewPrompt && (
+        <div className="reaction-modal-overlay">
+          <div className="reaction-modal" role="dialog" aria-modal="true">
+            <h3 className="modal-title">Write a review?</h3>
+            <p className="sheet-subtitle">
+              You marked {resolvedBookTitle} as Finished. Would you like to
+              share a review?
+            </p>
+            <div className="sheet-actions">
+              <button
+                type="button"
+                className="btn-outline"
+                onClick={() => setShowReviewPrompt(false)}
+              >
+                Not now
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  setShowReviewPrompt(false);
+                  setActiveTab('reviews');
+                  setEditingReview(null);
+                  setCreatingReview(true);
+                }}
+              >
+                Write a review
+              </button>
+            </div>
           </div>
         </div>
       )}

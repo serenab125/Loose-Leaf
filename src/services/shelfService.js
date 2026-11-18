@@ -48,6 +48,81 @@ export const DEFAULT_SHELVES = [
 const defaultShelfSeeds = new Map();
 
 /**
+ * Reading status -> the default shelf that holds it.
+ */
+export const STATUS_SHELF_MAP = {
+  'Currently Reading': 'Current Reads',
+  Finished: 'Finished',
+  'Did Not Finish': 'Did Not Finish',
+};
+
+/**
+ * File a book on the default shelf matching its reading status, taking it off
+ * the other status shelves. Marking "The Hobbit" as Finished therefore removes
+ * it from "Current Reads" and puts it on "Finished".
+ *
+ * Only the three status shelves are touched — a custom shelf ("Book Club")
+ * stays exactly as the user left it.
+ *
+ * @returns {Promise<string|null>} 'moved' | 'added' | 'unchanged' | null when
+ *   the status has no matching shelf or a required id is missing.
+ */
+export async function syncBookToStatusShelf({
+  userId,
+  bookId,
+  title,
+  author,
+  coverUrl,
+  status,
+  client,
+}) {
+  if (!userId || !bookId) return null;
+
+  const shelfName = STATUS_SHELF_MAP[status];
+  if (!shelfName) return null;
+
+  await ensureDefaultShelves(userId, { client });
+
+  const shelves = await fetchUserShelvesWithBooks(userId, { client });
+  const statusShelfNames = Object.values(STATUS_SHELF_MAP);
+
+  const target = shelves.find((shelf) => shelf.name === shelfName);
+  if (!target) return null;
+
+  const isOnTarget = (target.books || []).some(
+    (book) => (book.book_id || book.id) === bookId
+  );
+
+  // Clear the other status shelves first, so the book never sits on two
+  // reading statuses at once.
+  await Promise.all(
+    shelves
+      .filter(
+        (shelf) =>
+          shelf.is_default &&
+          statusShelfNames.includes(shelf.name) &&
+          shelf.name !== shelfName
+      )
+      .map((shelf) => removeBookFromShelf(userId, shelf.id, bookId, { client }))
+  );
+
+  if (isOnTarget) return 'unchanged';
+
+  await addBookToShelf(
+    userId,
+    target.id,
+    bookId,
+    title,
+    author,
+    coverUrl,
+    0,
+    { client }
+  );
+
+  return 'moved';
+}
+
+/**
  * Make sure a user has the three default shelves.
  *
  * Seeds any default shelf whose name the user does not currently have, so the
@@ -320,11 +395,36 @@ export async function fetchUserShelves(userId, { client } = {}) {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return sortShelves(data || []);
   } catch (error) {
     console.error('Error fetching shelves:', error);
     throw error;
   }
+}
+
+/**
+ * Order shelves for the Profile list: the three default shelves first (in the
+ * canonical Current Reads / Finished / Did Not Finish order), then the user's
+ * own shelves newest-first. Non-default shelves keep the database's
+ * created_at ordering so recent work stays at the top.
+ */
+export function sortShelves(shelves) {
+  if (!Array.isArray(shelves) || shelves.length === 0) return shelves || [];
+
+  const defaultRank = new Map(DEFAULT_SHELVES.map((shelf, index) => [shelf.name, index]));
+
+  return [...shelves].sort((a, b) => {
+    const aDefault = Boolean(a.is_default);
+    const bDefault = Boolean(b.is_default);
+    if (aDefault !== bDefault) return aDefault ? -1 : 1;
+    if (aDefault && bDefault) {
+      const rankA = defaultRank.get(a.name);
+      const rankB = defaultRank.get(b.name);
+      if (rankA !== undefined && rankB !== undefined) return rankA - rankB;
+      return String(a.name).localeCompare(String(b.name));
+    }
+    return 0;
+  });
 }
 
 /**

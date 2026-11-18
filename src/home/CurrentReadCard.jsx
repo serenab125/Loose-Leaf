@@ -1,7 +1,9 @@
 // HS-02: Current Read Card
 // Displays the user's current book or an empty state.
 
-function CurrentReadCard({ book, onPickBook, onContinueReading }) {
+function CurrentReadCard({ book, coverUrl, onPickBook, onContinueReading }) {
+  const cover = coverUrl || book?.cover_url;
+
   return (
     <section className="current-read-card">
       <p className="current-read-label">CURRENT READ</p>
@@ -10,9 +12,9 @@ function CurrentReadCard({ book, onPickBook, onContinueReading }) {
         // User has a currently reading book
         <>
           <div className="current-read-content">
-            {book.cover_url ? (
+            {cover ? (
               <img
-                src={book.cover_url}
+                src={cover}
                 alt={`Cover of ${book.title}`}
                 className="current-read-cover"
               />

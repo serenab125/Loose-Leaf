@@ -75,3 +75,45 @@ AS $$
   AND is_default = FALSE
   RETURNING *;
 $$;
+
+-- Default shelves keep their names. The app matches them by name to sync
+-- reading status and to pin them to the top of the list, so a rename would
+-- silently break both. Descriptions stay editable.
+CREATE OR REPLACE FUNCTION update_shelf(
+  p_shelf_id UUID,
+  p_name TEXT,
+  p_description TEXT DEFAULT NULL
+)
+RETURNS shelves
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  UPDATE shelves
+  SET
+    name = CASE WHEN is_default THEN name ELSE COALESCE(p_name, name) END,
+    description = COALESCE(p_description, description),
+    updated_at = NOW()
+  WHERE id = p_shelf_id
+  AND user_id = auth.uid()
+  RETURNING *;
+$$;
+
+-- ============================================================
+-- Reading status: allow "Did Not Finish"
+--
+-- saved_books.reading_status had a check constraint limited to
+-- ('currently_reading', 'finished', 'want_to_read'), so the app's
+-- "Did Not Finish" option could never be saved — every attempt failed with
+-- "violates check constraint saved_books_reading_status_check". Add it.
+-- ============================================================
+ALTER TABLE saved_books DROP CONSTRAINT IF EXISTS saved_books_reading_status_check;
+
+ALTER TABLE saved_books
+  ADD CONSTRAINT saved_books_reading_status_check
+  CHECK (reading_status IN (
+    'currently_reading',
+    'finished',
+    'did_not_finish',
+    'want_to_read'
+  ));

@@ -164,6 +164,54 @@ export async function fetchTrendingBooks() {
     }));
 }
 
+// Cover lookups are cached so a book with no stored cover is only searched
+// once per session, no matter how many times the Home tab remounts.
+const coverLookupCache = new Map();
+
+/**
+ * Best-effort cover lookup from Open Library's search API.
+ *
+ * Rows written before `saved_books.cover_url` was populated have no cover, so
+ * the Current Read card would fall back to the placeholder even though a cover
+ * exists. This fills that gap at display time without touching the database.
+ *
+ * @param {string} title - Book title
+ * @param {string} author - Author name, used to disambiguate same-titled works
+ * @returns {Promise<string|null>} Cover image URL, or null when none is found
+ */
+export async function resolveOpenLibraryCover(title, author) {
+  const cleanTitle = String(title ?? '').trim();
+  if (!cleanTitle) return null;
+
+  const cleanAuthor = String(author ?? '').trim();
+  const cacheKey = `${cleanTitle.toLowerCase()}|${cleanAuthor.toLowerCase()}`;
+
+  if (coverLookupCache.has(cacheKey)) return coverLookupCache.get(cacheKey);
+
+  try {
+    const params = new URLSearchParams({ title: cleanTitle, limit: '1' });
+    if (cleanAuthor) params.set('author', cleanAuthor);
+
+    const response = await fetch(
+      `https://openlibrary.org/search.json?${params.toString()}`
+    );
+    if (!response.ok) throw new Error('Cover lookup failed');
+
+    const data = await response.json();
+    const coverId = data?.docs?.[0]?.cover_i;
+    const url = coverId
+      ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg?default=false`
+      : null;
+
+    coverLookupCache.set(cacheKey, url);
+    return url;
+  } catch (error) {
+    console.warn('Cover lookup failed:', error);
+    coverLookupCache.set(cacheKey, null);
+    return null;
+  }
+}
+
 export const DEFAULT_BOOKS = [
   {
     bookId: '1',
@@ -420,8 +468,63 @@ export async function fetchMultiPersonalizedRecommendations(userId) {
   }
 }
 
-/** Backward-compatible alias; uses the same cleaned overview lookup. */
+/** Fetches a book's synopsis/overview from Open Library if missing */
 export async function fetchBookDescription(book) {
-  return fetchBookOverview(book);
+  if (book?.description && String(book.description).trim()) {
+    return String(book.description).trim();
+  }
+
+  const rawId = String(
+    book?.bookId || book?.id || book?.open_library_id || ''
+  ).trim();
+  const workKey = rawId.startsWith('/works/')
+    ? rawId
+    : rawId.startsWith('OL') && rawId.endsWith('W')
+      ? `/works/${rawId}`
+      : null;
+
+  try {
+    if (workKey) {
+      const res = await fetch(`https://openlibrary.org${workKey}.json`);
+      if (res.ok) {
+        const data = await res.json();
+        const desc =
+          typeof data.description === 'string'
+            ? data.description
+            : data.description?.value;
+        if (desc && desc.trim()) return desc.trim();
+      }
+    }
+
+    if (book?.title) {
+      const query = encodeURIComponent(
+        `${book.title} ${book.author || ''}`.trim()
+      );
+      const searchRes = await fetch(
+        `https://openlibrary.org/search.json?q=${query}&limit=1`
+      );
+      if (searchRes.ok) {
+        const searchData = await searchRes.json();
+        const firstWorkKey = searchData.docs?.[0]?.key;
+        if (firstWorkKey) {
+          const workRes = await fetch(
+            `https://openlibrary.org${firstWorkKey}.json`
+          );
+          if (workRes.ok) {
+            const workData = await workRes.json();
+            const desc =
+              typeof workData.description === 'string'
+                ? workData.description
+                : workData.description?.value;
+            if (desc && desc.trim()) return desc.trim();
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Could not fetch book description:', err);
+  }
+
+  return '';
 }
 

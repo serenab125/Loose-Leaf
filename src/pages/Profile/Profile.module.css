@@ -602,6 +602,31 @@
   border-color: #5b3113;
 }
 
+/* Default shelves are read-only: the name is fixed, only the description can
+   be edited. */
+.shelfNameLocked {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px dashed rgba(91, 49, 19, 0.25);
+  background: #f2ece1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shelfNameLockedText {
+  font-family: 'Georgia', serif;
+  font-size: 18px;
+  color: #5b3113;
+}
+
+.shelfNameLockedHint {
+  font-size: 11px;
+  color: #8c7365;
+}
+
 .emptyShelves {
   display: flex;
   flex-direction: column;

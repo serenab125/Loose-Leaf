@@ -9,6 +9,7 @@ import {
   addBookToShelf,
   removeBookFromShelf,
   ensureDefaultShelves,
+  sortShelves,
 } from '../../services/shelfService';
 import { searchBooksByTitle } from '../../services/bookService';
 import { fetchMyBookPageReactions } from '../../services/pageReactionService';
@@ -132,10 +133,16 @@ export function Profile({ user, logout, onSelectBook }) {
   const handleSaveShelf = async (shelfId) => {
     if (!user || !shelfId) return;
     try {
+      // Default shelves are matched by name throughout the app (status sync,
+      // the pinned order), so their name is never rewritten even if a caller
+      // sends one.
+      const shelf = shelves.find((s) => s.id === shelfId);
+      const nextName = shelf?.is_default ? shelf.name : newShelfName.trim();
+
       const updated = await updateShelf(
         user.id,
         shelfId,
-        newShelfName.trim(),
+        nextName,
         newShelfDescription.trim()
       );
       if (updated) {
@@ -162,7 +169,7 @@ export function Profile({ user, logout, onSelectBook }) {
     try {
       const created = await createShelf(user.id, newShelfName.trim(), newShelfDescription.trim());
       if (created) {
-        setShelves((prev) => [...prev, { ...created, books: [] }]);
+        setShelves((prev) => sortShelves([...prev, { ...created, books: [] }]));
         setShowNewShelfModal(false);
         setNewShelfName('');
         setNewShelfDescription('');
@@ -447,14 +454,23 @@ export function Profile({ user, logout, onSelectBook }) {
       <div key={shelf.id} className={styles.shelfCard}>
         <div className={styles.shelfHeader}>
           {isEditing ? (
-            <input
-              type="text"
-              className={styles.shelfNameInput}
-              value={newShelfName}
-              onChange={(e) => setNewShelfName(e.target.value)}
-              placeholder="Shelf name"
-              autoFocus
-            />
+            shelf.is_default ? (
+              <div className={styles.shelfNameLocked}>
+                <span className={styles.shelfNameLockedText}>{shelf.name}</span>
+                <span className={styles.shelfNameLockedHint}>
+                  Default shelves keep their name.
+                </span>
+              </div>
+            ) : (
+              <input
+                type="text"
+                className={styles.shelfNameInput}
+                value={newShelfName}
+                onChange={(e) => setNewShelfName(e.target.value)}
+                placeholder="Shelf name"
+                autoFocus
+              />
+            )
           ) : (
             <button
               type="button"
@@ -479,7 +495,7 @@ export function Profile({ user, logout, onSelectBook }) {
                   type="button"
                   className={styles.shelfActionBtn}
                   onClick={() => handleSaveShelf(shelf.id)} // FIX Bug 2
-                  disabled={!newShelfName.trim()}
+                  disabled={!shelf.is_default && !newShelfName.trim()}
                 >
                   Save
                 </button>

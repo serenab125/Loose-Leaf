@@ -1,83 +1,87 @@
-import { useCallback, useEffect, useState } from "react";
-import { supabase } from "../supabaseClient";
-import CurrentReadCard from './CurrentReadCard';
 
-export default function CurrentRead({ onNavigateToSearch, onNavigateToTimer }) {
-    const [book, setBook] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+import { useCallback, useEffect, useState } from 'react'
+import { supabase } from '../supabaseClient'
+import { fetchUserShelvesWithBooks } from '../services/shelfService'
+import CurrentReadCard from './CurrentReadCard'
 
-    // Returns the current read plus any load error, so callers apply the
-    // result from a promise callback instead of an effect body.
-    const loadCurrentRead = useCallback(async () => {
-        try {
-            const {
-                data: { user },
-                error: authError,
-            } = await supabase.auth.getUser();
+export default function CurrentRead({
+  onNavigateToSearch,
+  onNavigateToTimer
+}) {
+  const [book, setBook] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-            if (authError) throw authError;
+  const loadCurrentRead = useCallback(async () => {
+    setLoading(true)
+    setError('')
 
-            if (!user) return { book: null, error: "" };
+    try {
+      const {
+        data: { user },
+        error: authError
+      } = await supabase.auth.getUser()
 
-            const { data, error: queryError } = await supabase
-                .from("saved_books")
-                .select("open_library_id, title, author, cover_url")
-                .eq("user_id", user.id)
-                .eq("reading_status", "currently_reading")
-                .maybeSingle();
+      if (authError) throw authError
 
-            if (queryError) throw queryError;
+      if (!user) {
+        setBook(null)
+        return
+      }
 
-            return { book: data ?? null, error: "" };
-        } catch (err) {
-            console.error("Failed to load current read:", err);
-            return { book: null, error: "Failed to load current read." };
-        }
-    }, []);
+      // Load Josh's shelves and their saved books
+      const shelves = await fetchUserShelvesWithBooks(user.id)
 
-    useEffect(() => {
-        let cancelled = false;
+      // Find the default Current Reads shelf
+      const currentShelf = shelves.find(
+        (shelf) =>
+          shelf.is_default &&
+          shelf.name === 'Current Reads'
+      )
 
-        loadCurrentRead().then((result) => {
-            if (cancelled) return;
-            setBook(result.book);
-            setError(result.error);
-            setLoading(false);
-        });
+      // Display the first book on that shelf
+      const firstBook = currentShelf?.books?.[0] ?? null
 
-        return () => {
-            cancelled = true;
-        };
-    }, [loadCurrentRead]);
+      if (firstBook) {
+        setBook({
+          open_library_id: firstBook.book_id,
+          title: firstBook.title,
+          author: firstBook.author,
+          cover_url: firstBook.cover_url
+        })
+      } else {
+        setBook(null)
+      }
+    } catch (err) {
+      console.error('Failed to load current read:', err)
+      setError('Failed to load current read.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
-    const handleRetry = async () => {
-        setLoading(true);
-        setError("");
-        const result = await loadCurrentRead();
-        setBook(result.book);
-        setError(result.error);
-        setLoading(false);
-    };
+  useEffect(() => {
+    loadCurrentRead()
+  }, [loadCurrentRead])
 
-    return (
-        <div>
-            {loading ? (
-                <p role="status">Loading current read...</p>
-            ) : error ? (
-                <div role="alert">
-                    <p>{error}</p>
-                    <button type="button" onClick={handleRetry}>
-                        Retry
-                    </button>
-                </div>
-            ) : (
-                <CurrentReadCard
-                    book={book}
-                    onPickBook={onNavigateToSearch}
-                    onContinueReading={() => onNavigateToTimer?.(book)}
-                />
-            )}
+  return (
+    <div>
+      {loading ? (
+        <p role="status">Loading current read...</p>
+      ) : error ? (
+        <div role="alert">
+          <p>{error}</p>
+          <button type="button" onClick={loadCurrentRead}>
+            Retry
+          </button>
         </div>
-    );
+      ) : (
+        <CurrentReadCard
+          book={book}
+          onPickBook={onNavigateToSearch}
+          onContinueReading={() => onNavigateToTimer?.(book)}
+        />
+      )}
+    </div>
+  )
 }

@@ -1,0 +1,119 @@
+-- ============================================================
+-- Default shelves: "Current Reads", "Finished", "Did Not Finish"
+--
+-- Every account owns these three shelves. They are flagged is_default and
+-- cannot be deleted.
+--
+-- The app also seeds them (shelfService.ensureDefaultShelves) so accounts
+-- work before this migration is applied; the trigger below covers every
+-- signup afterwards, and the backfill covers accounts that already exist.
+-- ============================================================
+
+-- Insert the default shelves a user is missing. Name-based so re-running the
+-- migration (or firing the trigger twice) never duplicates a shelf.
+CREATE OR REPLACE FUNCTION seed_default_shelves(p_user_id UUID)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  INSERT INTO shelves (user_id, name, description, is_default)
+  SELECT p_user_id, d.name, d.description, TRUE
+  FROM (VALUES
+    ('Current Reads',  'Books you are reading right now.'),
+    ('Finished',       'Books you have completed.'),
+    ('Did Not Finish', 'Books you stopped reading.')
+  ) AS d(name, description)
+  WHERE NOT EXISTS (
+    SELECT 1
+    FROM shelves s
+    WHERE s.user_id = p_user_id
+      AND s.name = d.name
+  );
+$$;
+
+-- Give every new account its shelves at signup.
+CREATE OR REPLACE FUNCTION handle_new_user_default_shelves()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  PERFORM seed_default_shelves(NEW.id);
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_default_shelves ON auth.users;
+
+CREATE TRIGGER on_auth_user_default_shelves
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user_default_shelves();
+
+-- Backfill accounts that signed up before this shipped.
+SELECT seed_default_shelves(id) FROM auth.users;
+
+-- Guard against a duplicate set of default shelves. The app shares an
+-- in-flight seeding promise, but two tabs (or a slow request racing a remount)
+-- can still both try to insert; this makes the database refuse the second.
+CREATE UNIQUE INDEX IF NOT EXISTS shelves_default_name_unique
+  ON shelves (user_id, name)
+  WHERE is_default;
+
+-- Default shelves are part of the product, not user data: refuse the delete.
+-- Returns no row when it refuses, which deleteShelf() treats as failure.
+CREATE OR REPLACE FUNCTION delete_shelf(p_shelf_id UUID)
+RETURNS shelves
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  DELETE FROM shelves
+  WHERE id = p_shelf_id
+  AND user_id = auth.uid()
+  AND is_default = FALSE
+  RETURNING *;
+$$;
+
+-- Default shelves keep their names. The app matches them by name to sync
+-- reading status and to pin them to the top of the list, so a rename would
+-- silently break both. Descriptions stay editable.
+CREATE OR REPLACE FUNCTION update_shelf(
+  p_shelf_id UUID,
+  p_name TEXT,
+  p_description TEXT DEFAULT NULL
+)
+RETURNS shelves
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  UPDATE shelves
+  SET
+    name = CASE WHEN is_default THEN name ELSE COALESCE(p_name, name) END,
+    description = COALESCE(p_description, description),
+    updated_at = NOW()
+  WHERE id = p_shelf_id
+  AND user_id = auth.uid()
+  RETURNING *;
+$$;
+
+-- ============================================================
+-- Reading status: allow "Did Not Finish"
+--
+-- saved_books.reading_status had a check constraint limited to
+-- ('currently_reading', 'finished', 'want_to_read'), so the app's
+-- "Did Not Finish" option could never be saved — every attempt failed with
+-- "violates check constraint saved_books_reading_status_check". Add it.
+-- ============================================================
+ALTER TABLE saved_books DROP CONSTRAINT IF EXISTS saved_books_reading_status_check;
+
+ALTER TABLE saved_books
+  ADD CONSTRAINT saved_books_reading_status_check
+  CHECK (reading_status IN (
+    'currently_reading',
+    'finished',
+    'did_not_finish',
+    'want_to_read'
+  ));
