@@ -73,3 +73,58 @@ export async function fetchMyBookPageReactions() {
   if (error) throw error;
   return data ?? [];
 }
+
+/** Updates one of the signed-in user's chapter reactions. */
+export async function updateBookPageReaction({
+  reactionId,
+  chapterNumber,
+  reaction,
+}) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error('You must be signed in to edit a reaction.');
+  }
+
+  const { data, error } = await supabase
+    .from('book_page_reactions')
+    .update({
+      page_number: chapterNumber,
+      reaction,
+    })
+    .eq('id', reactionId)
+    .eq('user_id', user.id)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(error.message || 'Could not update reaction.');
+  }
+
+  return data;
+}
+
+/** Deletes one of the signed-in user's chapter reactions. */
+export async function deleteBookPageReaction(reactionId) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error('You must be signed in to delete a reaction.');
+  }
+
+  const { error } = await supabase
+    .from('book_page_reactions')
+    .delete()
+    .eq('id', reactionId)
+    .eq('user_id', user.id);
+
+  if (error) {
+    throw new Error(error.message || 'Could not delete reaction.');
+  }
+}
