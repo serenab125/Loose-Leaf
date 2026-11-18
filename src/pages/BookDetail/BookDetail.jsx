@@ -1,24 +1,34 @@
 import { useEffect, useRef, useState } from 'react';
+import { supabase } from '../../supabaseClient';
 import {
   addBookPageReaction,
   fetchBookPageReactions,
 } from '../../services/pageReactionService';
-import { fetchBookReviews } from '../../services/reviewService';
+import {
+  cleanBookOverview,
+  fetchBookOverview,
+} from '../../services/bookService';
+import {
+  saveBookReview,
+  deleteBookReview,
+} from '../../services/reviewService';
 import {
   fetchUserShelvesWithBooks,
   createShelf,
   addBookToShelf,
   removeBookFromShelf,
-  syncBookToStatusShelf,
-  STATUS_SHELF_MAP,
 } from '../../services/shelfService';
 import {
   saveBookStatus,
   removeSavedBook,
   fetchSavedBook,
-  clearOtherCurrentReads,
   STATUS_LABELS,
 } from '../../services/savedBookService';
+import BookReviews from '../../components/Reviews/BookReviews';
+import EditReview from '../../components/Reviews/EditReview';
+import ReviewModal from '../../components/Reviews/ReviewModal';
+import ReviewForm from '../../reviews/ReviewForm';
+
 import './BookDetail.css';
 
 const SHELF_NAME_SUGGESTIONS = [
@@ -36,12 +46,8 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [menuAbove, setMenuAbove] = useState(false);
   const statusMenuRef = useRef(null);
-  // Neutral until a saved row says otherwise — defaulting to a real status
-  // made every unsaved book claim to be "Currently Reading".
   const [currentStatus, setCurrentStatus] = useState('Set Status');
   const [activeTab, setActiveTab] = useState('reviews');
-  const [analysisMode, setAnalysisMode] = useState('analytical');
-  const [sortOrder, setSortOrder] = useState('highest');
 
   // Chapter Reaction Modal state (RR-06)
   const [showReactionModal, setShowReactionModal] = useState(false);
@@ -58,6 +64,15 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
 
   // Reviews state (populated strictly from Supabase)
   const [reviewsList, setReviewsList] = useState([]);
+  const [editingReview, setEditingReview] = useState(null);
+  const [deletingReview, setDeletingReview] = useState(null);
+  const [creatingReview, setCreatingReview] = useState(false);
+
+  // Book Synopsis / Overview state
+  const [bookOverview, setBookOverview] = useState(() =>
+    cleanBookOverview(book?.description)
+  );
+  const [overviewLoading, setOverviewLoading] = useState(false);
 
   // Saved reading status + shelf actions
   const [statusSaving, setStatusSaving] = useState(false);
@@ -78,6 +93,32 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     book?.bookId || book?.id || book?.open_library_id || book?.title || ''
   ).trim();
   const resolvedBookTitle = String(book?.title || 'Untitled Book').trim();
+
+  // Fetch missing book overview/description automatically
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadOverview() {
+      const existingDescription = cleanBookOverview(book?.description);
+      setBookOverview(existingDescription);
+      setOverviewLoading(!existingDescription);
+
+      try {
+        const overview = await fetchBookOverview(book);
+        if (!cancelled) setBookOverview(overview);
+      } catch (error) {
+        console.warn('Could not load the book overview:', error);
+        if (!cancelled) setBookOverview('');
+      } finally {
+        if (!cancelled) setOverviewLoading(false);
+      }
+    }
+
+    loadOverview();
+    return () => {
+      cancelled = true;
+    };
+  }, [book]);
 
   // RR-08: Determine the highest chapter the current user has reached/reacted on
   const userReactionsForBook = allBookReactions.filter(
@@ -156,22 +197,49 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       }
 
       try {
-        const dbReviews = await fetchBookReviews(resolvedBookId);
+        const { data: dbReviews, error } = await supabase
+          .from('book_reviews')
+          .select('*')
+          .eq('book_id', resolvedBookId)
+          .order('created_at', { ascending: false });
 
-        if (!cancelled) {
+        if (!cancelled && !error) {
+          const reviewerIds = [
+            ...new Set((dbReviews || []).map((row) => row.user_id)),
+          ];
+
+          const { data: reviewerProfiles, error: profilesError } =
+            await supabase
+              .from('profiles')
+              .select('id, full_name')
+              .in('id', reviewerIds);
+
+          if (profilesError) {
+            console.warn('Could not load reviewer names:', profilesError);
+          }
+
+          const namesById = new Map(
+            (reviewerProfiles || []).map((profile) => [
+              profile.id,
+              profile.full_name,
+            ])
+          );
+
           const formattedReviews = (dbReviews || []).map((row) => ({
             id: row.id,
-            reviewer:
+            userId: row.user_id,
+            authorName:
               row.user_id === user?.id
                 ? 'You'
-                : row.reviewer_name || 'Reader',
-            match: row.user_id === user?.id ? 100 : 90,
-            rating: Math.max(
-              1,
-              Math.min(5, Math.round((row.rating_out_of_10 || 8) / 2))
-            ),
+                : namesById.get(row.user_id) || 'Reader',
+            rating: row.rating_out_of_10 / 2,
+            ratingOutOf10: row.rating_out_of_10,
             text: row.review_text,
+            classification:
+              row.review_type ?? row.classification ?? 'Analytical',
+            includesSpoilers: row.includes_spoilers ?? false,
           }));
+
           setReviewsList(formattedReviews);
         }
       } catch (err) {
@@ -194,9 +262,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       try {
         const row = await fetchSavedBook(user.id, resolvedBookId);
         if (!cancelled && row?.reading_status) {
-          setCurrentStatus(
-            STATUS_LABELS[row.reading_status] || 'Set Status'
-          );
+          setCurrentStatus(STATUS_LABELS[row.reading_status] || 'Set Status');
         }
       } catch (err) {
         console.warn('Could not load saved reading status:', err);
@@ -236,7 +302,10 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     if (!showDropdown) return;
 
     const handlePointerDown = (event) => {
-      if (statusMenuRef.current && !statusMenuRef.current.contains(event.target)) {
+      if (
+        statusMenuRef.current &&
+        !statusMenuRef.current.contains(event.target)
+      ) {
         setShowDropdown(false);
       }
     };
@@ -279,30 +348,6 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     // Currently Reading / Finished / Did Not Finish
     setStatusSaving(true);
     try {
-      // There is only one current read per user. Hand the slot over: the
-      // previous holder loses its status and leaves the Current Reads shelf,
-      // otherwise saving this book as currently reading violates
-      // one_current_read_per_user and the whole status save fails.
-      let evicted = [];
-      if (option === 'Currently Reading' && user?.id) {
-        evicted = await clearOtherCurrentReads(user.id, resolvedBookId);
-
-        if (evicted.length > 0) {
-          const shelves = await fetchUserShelvesWithBooks(user.id);
-          const currentReads = shelves.find(
-            (shelf) => shelf.name === 'Current Reads'
-          );
-
-          if (currentReads) {
-            await Promise.all(
-              evicted.map((book) =>
-                removeBookFromShelf(user.id, currentReads.id, book.bookId)
-              )
-            );
-          }
-        }
-      }
-
       await saveBookStatus({
         userId: user?.id,
         bookId: resolvedBookId,
@@ -311,58 +356,20 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
         coverUrl,
         status: option,
       });
+      setCurrentStatus(option);
+      onUpdateStatus?.(book, option);
+      setStatusMessage(`Saved — ${option}.`);
+      setTimeout(() => setStatusMessage(''), 2500);
 
-      // A status change also moves the book between the default status
-      // shelves: marking it Finished takes it off Current Reads and files it
-      // under Finished. Best-effort — the status itself is already saved.
-      try {
-        const result = await syncBookToStatusShelf({
-          userId: user?.id,
-          bookId: resolvedBookId,
-          title: resolvedBookTitle,
-          author: book?.author,
-          coverUrl,
-          status: option,
-        });
-
-        if (result && user?.id) {
-          const shelves = await fetchUserShelvesWithBooks(user.id);
-          setUserShelves(shelves);
-        }
-
-        const shelfName = STATUS_SHELF_MAP[option];
-        const suffix =
-          result === 'moved'
-            ? ` Moved to the ${shelfName} shelf.`
-            : result === 'unchanged'
-              ? ` Already on the ${shelfName} shelf.`
-              : '';
-        const evictedNote = evicted.length
-          ? ` ${evicted.map((b) => b.title).join(', ')} ` +
-            `${evicted.length === 1 ? 'is' : 'are'} no longer your current read.`
-          : '';
-
-        setCurrentStatus(option);
-        onUpdateStatus?.(book, option);
-        setStatusMessage(`Saved — ${option}.${suffix}${evictedNote}`);
-        setTimeout(() => setStatusMessage(''), 3000);
-      } catch (shelfErr) {
-        console.error('Could not sync the status shelf:', shelfErr);
-        setCurrentStatus(option);
-        onUpdateStatus?.(book, option);
-        setStatusMessage(`Saved — ${option}.`);
-        setTimeout(() => setStatusMessage(''), 2500);
+      // Open the review form immediately when a book is marked Finished
+      if (option === 'Finished') {
+        setActiveTab('reviews');
+        setEditingReview(null);
+        setCreatingReview(true);
       }
     } catch (err) {
       console.error('Failed to save reading status:', err);
-      // The check constraint on saved_books.reading_status has to be widened
-      // before "Did Not Finish" can be stored; point at the fix rather than
-      // showing a raw Postgres message.
-      setStatusError(
-        err?.message?.includes('saved_books_reading_status_check')
-          ? 'This reading status is not allowed by the database yet — apply the migration in src/supabase/migrations.'
-          : err.message || 'Could not save your reading status.'
-      );
+      setStatusError(err.message || 'Could not save your reading status.');
     } finally {
       setStatusSaving(false);
     }
@@ -440,8 +447,6 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     (shelf.books || []).some((b) => (b.book_id || b.id) === resolvedBookId)
   );
 
-  // Shelves that don't already hold this book — offering one that does would
-  // insert a duplicate row, since shelf_books has no unique constraint.
   const shelvesWithoutBook = userShelves.filter(
     (shelf) =>
       !(shelf.books || []).some((b) => (b.book_id || b.id) === resolvedBookId)
@@ -506,7 +511,6 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     }
   };
 
-  // Add this book to every shelf ticked in the "Add to a Shelf" sheet.
   const handleConfirmAddToShelves = async () => {
     if (!user?.id || selectedShelves.size === 0) return;
 
@@ -550,7 +554,9 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       const count = selectedShelves.size;
       setSelectedShelves(new Set());
       setShowAddToShelfModal(false);
-      setStatusMessage(`Added to ${count} ${count === 1 ? 'shelf' : 'shelves'}.`);
+      setStatusMessage(
+        `Added to ${count} ${count === 1 ? 'shelf' : 'shelves'}.`
+      );
       setTimeout(() => setStatusMessage(''), 2500);
     } catch (err) {
       console.error('Failed to add book to shelves:', err);
@@ -568,7 +574,6 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     const trimmedText = reactionText.trim();
     const parsedChapter = Number(reactionChapter);
 
-    // AC 2: Explicit validation message for empty/whitespace-only reactions
     if (!trimmedText) {
       setReactionError('Please enter a reaction before posting.');
       return;
@@ -609,7 +614,6 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       setShowReactionModal(false);
       setActiveTab('reactions');
     } catch (err) {
-      // AC 3: Preserve entered reaction text when saving fails
       console.error('Failed to save chapter reaction:', err);
       setReactionError(
         err.message || 'Could not save reaction. Your text has been preserved.'
@@ -620,7 +624,11 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
   };
 
   return (
-    <main className="book-detail-page">
+    <main
+      className={`book-detail-page ${
+        editingReview || creatingReview ? 'book-detail-editing' : ''
+      }`}
+    >
       {/* Top Header Navigation */}
       <header className="book-detail-header">
         <button type="button" className="book-detail-back-btn" onClick={onBack}>
@@ -729,8 +737,10 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       <section className="book-overview-section">
         <h2 className="book-section-heading">Overview</h2>
         <p className="book-overview-text">
-          {book?.description ||
-            'No description is available for this book yet. Check back soon!'}
+          {overviewLoading
+            ? 'Loading overview…'
+            : bookOverview ||
+              'No overview is currently available from Open Library.'}
         </p>
       </section>
 
@@ -755,75 +765,105 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
 
         {/* Tab Content Display */}
         {activeTab === 'reviews' ? (
-          <>
-            {/* Filter Controls (Reviews tab only) */}
-            <div className="community-filter-row">
-              <div className="mode-toggle-group">
-                <span className="mode-toggle-label">Perspective</span>
-                <div className="toggle-switch-pill">
-                  <button
-                    type="button"
-                    className={`toggle-option ${analysisMode === 'analytical' ? 'active' : ''}`}
-                    onClick={() => setAnalysisMode('analytical')}
-                  >
-                    Analytical
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-option ${analysisMode === 'casual' ? 'active' : ''}`}
-                    onClick={() => setAnalysisMode('casual')}
-                  >
-                    Casual
-                  </button>
-                </div>
-              </div>
+          creatingReview ? (
+            <ReviewForm
+              bookId={resolvedBookId}
+              onBack={() => setCreatingReview(false)}
+              onSubmit={async (review) => {
+                const saved = await saveBookReview({
+                  bookId: resolvedBookId,
+                  bookTitle: resolvedBookTitle,
+                  reviewText: review.reviewText,
+                  ratingOutOf10: review.rating * 2,
+                  classification: review.reviewType,
+                  includesSpoilers: review.includesSpoilers,
+                });
 
-              <div className="sort-pills-row">
-                <button
-                  type="button"
-                  className={`sort-pill-btn ${sortOrder === 'highest' ? 'active' : ''}`}
-                  onClick={() => setSortOrder('highest')}
-                >
-                  Highest to Lowest
-                </button>
-                <button
-                  type="button"
-                  className={`sort-pill-btn ${sortOrder === 'lowest' ? 'active' : ''}`}
-                  onClick={() => setSortOrder('lowest')}
-                >
-                  Lowest to Highest
-                </button>
-              </div>
-            </div>
+                const formattedReview = {
+                  id: saved.id,
+                  userId: user?.id,
+                  authorName: 'You',
+                  rating: saved.rating_out_of_10 / 2,
+                  ratingOutOf10: saved.rating_out_of_10,
+                  text: saved.review_text,
+                  classification: saved.review_type ?? review.reviewType,
+                  includesSpoilers:
+                    saved.includes_spoilers ?? review.includesSpoilers,
+                };
 
-            {reviewsList.length === 0 ? (
-              <div className="reactions-locked-card">
-                <p className="reactions-locked-text" style={{ margin: 0 }}>
-                  No reviews yet for this book.
-                </p>
-              </div>
-            ) : (
-              <div className="cards-list">
-                {reviewsList.map((rev) => (
-                  <article key={rev.id} className="review-card">
-                    <div className="review-card-header">
-                      <div className="reviewer-profile">
-                        <div className="reviewer-avatar">
-                          {rev.reviewer.charAt(0)}
-                        </div>
-                        <div>
-                          <h4 className="reviewer-name">{rev.reviewer}</h4>
-                          <span className="reviewer-match">{rev.match}% Match</span>
-                        </div>
-                      </div>
-                      <div className="star-rating">{'★'.repeat(rev.rating)}</div>
-                    </div>
-                    <p className="review-text">{rev.text}</p>
-                  </article>
-                ))}
-              </div>
-            )}
-          </>
+                setReviewsList((previous) => [
+                  formattedReview,
+                  ...previous.filter((item) => item.userId !== user?.id),
+                ]);
+
+                setCreatingReview(false);
+              }}
+            />
+          ) : editingReview ? (
+            <EditReview
+              key={editingReview.id}
+              review={editingReview}
+              onBack={() => setEditingReview(null)}
+              onSave={async (updatedReview) => {
+                try {
+                  await saveBookReview({
+                    bookId: resolvedBookId,
+                    bookTitle: resolvedBookTitle,
+                    reviewText: updatedReview.text,
+                    ratingOutOf10: updatedReview.ratingOutOf10,
+                    classification:
+                      String(updatedReview.classification).toLowerCase() ===
+                      'casual'
+                        ? 'Casual'
+                        : 'Analytical',
+                    includesSpoilers: updatedReview.includesSpoilers,
+                  });
+
+                  setReviewsList((previous) =>
+                    previous.map((item) =>
+                      item.id === updatedReview.id ? updatedReview : item
+                    )
+                  );
+
+                  setEditingReview(null);
+                } catch (error) {
+                  console.error('Could not update review:', error);
+                  alert('Could not update your review. Please try again.');
+                }
+              }}
+            />
+          ) : (
+            <>
+              <BookReviews
+                reviews={reviewsList}
+                currentUserId={user?.id}
+                onEdit={(review) => setEditingReview(review)}
+                onDelete={(review) => setDeletingReview(review)}
+              />
+
+              {deletingReview && (
+                <ReviewModal
+                  review={deletingReview}
+                  mode="delete"
+                  onClose={() => setDeletingReview(null)}
+                  onDelete={async (review) => {
+                    try {
+                      await deleteBookReview(resolvedBookId);
+
+                      setReviewsList((previous) =>
+                        previous.filter((item) => item.id !== review.id)
+                      );
+
+                      setDeletingReview(null);
+                    } catch (error) {
+                      console.error('Could not delete your review:', error);
+                      alert('Could not delete your review. Please try again.');
+                    }
+                  }}
+                />
+              )}
+            </>
+          )
         ) : reactionsLoading ? (
           <p style={{ textAlign: 'center', color: '#8c7365', fontSize: '14px' }}>
             Loading reactions...
@@ -845,7 +885,8 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
             </div>
             <h3 className="reactions-locked-title">Reactions are locked</h3>
             <p className="reactions-locked-text">
-              Log a chapter reaction to set your reading position and unlock spoiler-free reactions up to that chapter.
+              Log a chapter reaction to set your reading position and unlock
+              spoiler-free reactions up to that chapter.
             </p>
             <button
               type="button"
@@ -1087,7 +1128,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
             </h2>
             <p className="sheet-subtitle">
               Select the{' '}
-              {shelvesWithoutBook.length === 1 ? 'shelf' : 'shelves'} you&rsquo;d
+              {shelvesWithoutBook.length === 1 ? 'shelf' : 'shelves'} you’d
               like to add {resolvedBookTitle} to.
             </p>
 
@@ -1095,7 +1136,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
               {shelvesWithoutBook.length === 0 ? (
                 <p className="shelf-picker-empty">
                   {userShelves.length === 0
-                    ? 'You don&rsquo;t have any shelves yet. Create one first.'
+                    ? 'You don’t have any shelves yet. Create one first.'
                     : 'This book is already on all of your shelves.'}
                 </p>
               ) : (
@@ -1121,7 +1162,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
             </div>
 
             <p className="sheet-footnote">
-              Adding a book to a shelf won&rsquo;t change its reading status.
+              Adding a book to a shelf won’t change its reading status.
             </p>
 
             <div className="sheet-actions">
@@ -1161,13 +1202,13 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
             <p className="sheet-subtitle">
               {resolvedBookTitle} is on {shelvesWithBook.length}{' '}
               {shelvesWithBook.length === 1 ? 'shelf' : 'shelves'}. Select the
-              ones you&rsquo;d like to remove it from.
+              ones you’d like to remove it from.
             </p>
 
             <div className="shelf-picker-list">
               {shelvesWithBook.length === 0 ? (
                 <p className="shelf-picker-empty">
-                  This book isn&rsquo;t on any of your shelves yet.
+                  This book isn’t on any of your shelves yet.
                 </p>
               ) : (
                 shelvesWithBook.map((shelf) => (
@@ -1192,7 +1233,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
             </div>
 
             <p className="sheet-footnote">
-              Removing a book from a shelf won&rsquo;t delete your reviews or
+              Removing a book from a shelf won’t delete your reviews or
               reactions.
             </p>
 

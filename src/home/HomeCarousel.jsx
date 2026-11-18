@@ -6,7 +6,13 @@ import TopRecommendationCard from './TopRecommendationCard'
 import { fetchPersonalizedRecommendations } from '../services/bookService'
 import './home.css'
 
-function HomeCarousel({ user, onRetakeQuiz, onNavigateToSearch }) {
+function HomeCarousel({
+  user,
+  onRetakeQuiz,
+  onNavigateToSearch,
+  onNavigateToTimer,
+  onSelectBook
+}) {
   const [activeSlide, setActiveSlide] = useState(0)
   const [recommendedBook, setRecommendedBook] = useState(null)
   const [recommendationLoading, setRecommendationLoading] = useState(true)
@@ -115,6 +121,7 @@ function HomeCarousel({ user, onRetakeQuiz, onNavigateToSearch }) {
     <CurrentRead
       key="current"
       onNavigateToSearch={onNavigateToSearch}
+      onNavigateToTimer={onNavigateToTimer}
     />,
 
     recommendationLoading ? (
@@ -126,7 +133,9 @@ function HomeCarousel({ user, onRetakeQuiz, onNavigateToSearch }) {
         key="recommendation"
         book={recommendedBook}
         onStartReading={(book) => {
-          console.log('Start reading:', book)
+          if (book) {
+            onSelectBook?.(book)
+          }
         }}
       />
     ),

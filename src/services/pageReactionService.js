@@ -45,12 +45,10 @@ export async function fetchBookPageReactions(bookId) {
   const cleanBookId = String(bookId ?? '').trim();
   if (!cleanBookId) return [];
 
-  const { data, error } = await supabase
-    .from('book_page_reactions')
-    .select('*')
-    .eq('book_id', cleanBookId)
-    .order('page_number', { ascending: false })
-    .order('created_at', { ascending: false });
+  const { data, error } = await supabase.rpc(
+    'get_unlocked_book_reactions',
+    { p_book_id: cleanBookId }
+  );
 
   if (error) throw error;
   return data ?? [];

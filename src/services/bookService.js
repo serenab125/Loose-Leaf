@@ -38,6 +38,110 @@ export async function searchBooksBySubject(subject) {
   );
 }
 
+export function cleanBookOverview(description) {
+  const rawText =
+    typeof description === "string"
+      ? description
+      : typeof description?.value === "string"
+        ? description.value
+        : "";
+
+  return rawText
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .filter((line) => {
+      const standaloneLink = line.match(
+        /^\s*(?:#{1,6}\s*)?\[\s*(.*?)\s*\]\(\s*https?:\/\/[^)]*\)\s*$/i
+      );
+      return !(standaloneLink && /\bread this book online\b/i.test(standaloneLink[1]));
+    })
+    .map((line) =>
+      line
+        .replace(/^\s{0,3}#{1,6}\s+/, "")
+        .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/gi, "$1")
+        .replace(/https?:\/\/\S+/gi, "")
+    )
+    .join("\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function getDescriptionText(description) {
+  return cleanBookOverview(description);
+}
+
+async function fetchWorkDescription(workId) {
+  const response = await fetch(
+    `https://openlibrary.org/works/${encodeURIComponent(workId)}.json`
+  );
+
+  if (!response.ok) return "";
+
+  const work = await response.json();
+  return getDescriptionText(work.description);
+}
+
+export async function fetchBookOverview(book) {
+  const suppliedDescription = getDescriptionText(book?.description);
+  if (suppliedDescription) return suppliedDescription;
+
+  const rawBookId = String(
+    book?.bookId || book?.id || book?.open_library_id || ""
+  ).trim();
+  const workId = rawBookId.match(/(?:\/works\/)?(OL\d+W)$/i)?.[1];
+
+  if (workId) {
+    try {
+      const description = await fetchWorkDescription(workId);
+      if (description) return description;
+    } catch (error) {
+      console.warn("Could not load the Open Library book overview:", error);
+    }
+  }
+
+  if (!book?.title) return "";
+
+  try {
+    const params = new URLSearchParams({
+      title: book.title,
+      fields: "key,title,author_name,first_sentence",
+      limit: "10",
+    });
+    if (book.author) params.set("author", book.author);
+
+    const response = await fetch(
+      `https://openlibrary.org/search.json?${params.toString()}`
+    );
+    if (!response.ok) return "";
+
+    const result = await response.json();
+    const normalize = (value) =>
+      String(value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const normalizedTitle = normalize(book.title);
+    const matchingWork = (result.docs ?? []).find(
+      (candidate) => normalize(candidate.title) === normalizedTitle
+    );
+
+    const firstSentence = matchingWork?.first_sentence;
+    const searchDescription = Array.isArray(firstSentence)
+      ? firstSentence[0]
+      : firstSentence;
+    if (typeof searchDescription === "string" && searchDescription.trim()) {
+      return getDescriptionText(searchDescription);
+    }
+
+    const matchedWorkId = matchingWork?.key?.split("/").pop();
+    if (matchedWorkId && /^OL\d+W$/i.test(matchedWorkId)) {
+      return await fetchWorkDescription(matchedWorkId);
+    }
+  } catch (error) {
+    console.warn("Could not search Open Library for a book overview:", error);
+  }
+
+  return "";
+}
+
 export async function fetchTrendingBooks() {
   const response = await fetch(
     "https://openlibrary.org/trending/daily.json?limit=20"
@@ -283,7 +387,7 @@ export async function fetchMultiPersonalizedRecommendations(userId) {
         });
       }
     }
-    // Additional recommendations based on quiz preferences
+    // Additional recommendations based on quiz answers
     const extraPreferences = [
       {
         values: prefs['movies-tv']?.slice(1),
@@ -363,3 +467,64 @@ export async function fetchMultiPersonalizedRecommendations(userId) {
     return [];
   }
 }
+
+/** Fetches a book's synopsis/overview from Open Library if missing */
+export async function fetchBookDescription(book) {
+  if (book?.description && String(book.description).trim()) {
+    return String(book.description).trim();
+  }
+
+  const rawId = String(
+    book?.bookId || book?.id || book?.open_library_id || ''
+  ).trim();
+  const workKey = rawId.startsWith('/works/')
+    ? rawId
+    : rawId.startsWith('OL') && rawId.endsWith('W')
+      ? `/works/${rawId}`
+      : null;
+
+  try {
+    if (workKey) {
+      const res = await fetch(`https://openlibrary.org${workKey}.json`);
+      if (res.ok) {
+        const data = await res.json();
+        const desc =
+          typeof data.description === 'string'
+            ? data.description
+            : data.description?.value;
+        if (desc && desc.trim()) return desc.trim();
+      }
+    }
+
+    if (book?.title) {
+      const query = encodeURIComponent(
+        `${book.title} ${book.author || ''}`.trim()
+      );
+      const searchRes = await fetch(
+        `https://openlibrary.org/search.json?q=${query}&limit=1`
+      );
+      if (searchRes.ok) {
+        const searchData = await searchRes.json();
+        const firstWorkKey = searchData.docs?.[0]?.key;
+        if (firstWorkKey) {
+          const workRes = await fetch(
+            `https://openlibrary.org${firstWorkKey}.json`
+          );
+          if (workRes.ok) {
+            const workData = await workRes.json();
+            const desc =
+              typeof workData.description === 'string'
+                ? workData.description
+                : workData.description?.value;
+            if (desc && desc.trim()) return desc.trim();
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Could not fetch book description:', err);
+  }
+
+  return '';
+}
+
