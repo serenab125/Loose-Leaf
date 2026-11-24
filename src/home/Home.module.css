@@ -112,9 +112,14 @@
 
 .topPickCover {
   width: 68px;
-  height: 98px;
+  height: 100px;
   border-radius: 8px;
   object-fit: cover;
+  object-position: center;
+  background-color: #efe4d6;
+  border: 1px solid rgba(91, 49, 19, 0.1);
+  box-shadow: 0 3px 8px rgba(74, 43, 16, 0.14);
+  flex-shrink: 0;
 }
 
 .primaryBtn {
@@ -169,7 +174,7 @@
   display: flex;
   gap: 14px;
   overflow-x: auto;
-  padding: 0 16px 8px;
+  padding: 2px 16px 12px;
   scrollbar-width: none;
 }
 
@@ -178,19 +183,78 @@
 }
 
 .bookCard {
+  position: relative;
   flex-shrink: 0;
-  width: 110px;
-  height: 162px;
-  border-radius: 12px;
+  width: 112px;
+  height: 168px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  background-color: #efe4d6;
+  border: 1px solid rgba(91, 49, 19, 0.1);
+  box-shadow: 0 4px 12px rgba(74, 43, 16, 0.12);
   cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* Subtle book-spine crease highlight on the left edge */
+.bookCard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  box-shadow: inset 3px 0 6px rgba(255, 255, 255, 0.25),
+    inset -1px 0 2px rgba(74, 43, 16, 0.08);
+  pointer-events: none;
+}
+
+.bookCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 16px rgba(74, 43, 16, 0.18);
+}
+
+.bookCard:focus-visible {
+  outline: 2px solid #552a0e;
+  outline-offset: 2px;
 }
 
 .bookCover {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
+  background-color: #efe4d6;
+}
+
+.fallbackCover {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: linear-gradient(150deg, #f3e8da 0%, #e1d0bc 100%);
+  color: #5b3113;
+}
+
+.fallbackTitle {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+}
+
+.fallbackAuthor {
+  font-size: 10px;
+  color: #7c6252;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Bottom Navigation locked inside mobile app frame */

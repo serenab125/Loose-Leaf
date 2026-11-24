@@ -156,7 +156,6 @@
   line-height: 1.4;
 }
 
-
 /* Multi-select pill layout */
 .pillGrid {
   display: flex;
@@ -186,7 +185,6 @@
   white-space: nowrap;
 }
 
-
 .pill:hover {
   background: #fbe8e5;
 }
@@ -210,6 +208,85 @@
   border-color: #a99b77;
 }
 
+/* Custom "Other" input area */
+.otherBox {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid #e6d7cb;
+  border-radius: 16px;
+  background: #fffdf9;
+}
+
+.otherInputRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.otherInput {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid #dccbb9;
+  border-radius: 999px;
+  background: #fdf8f3;
+  color: #5b3113;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.otherInput:focus {
+  outline: 2px solid #969732;
+  outline-offset: 1px;
+}
+
+.otherAddButton {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 999px;
+  background: #5b3113;
+  color: #fdf8f3;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.otherAddButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.customTagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.customTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #efd3d0;
+  color: #5b3113;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.customTagRemove {
+  border: none;
+  background: transparent;
+  color: #5b3113;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
 /* Keyboard accessibility */
 .optionRow:has(input:focus-visible),
 .pill:has(input:focus-visible) {
@@ -227,7 +304,6 @@
     font-size: 23px;
   }
 
-
   .pillGrid {
     gap: 8px 7px;
   }
@@ -236,7 +312,6 @@
     min-height: 40px;
     padding: 9px 11px;
   }
-
 
   .optionRow {
     padding: 14px 16px;
@@ -253,7 +328,6 @@
 .optionContent {
   text-align: left;
 }
-
 
 .showMoreButton {
   display: block;
