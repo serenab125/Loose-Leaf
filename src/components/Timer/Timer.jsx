@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import './Timer.css';
 import TimerPlant from './TimerPlant';
+import ReadingHistory from './ReadingHistory';
+import { saveReadingSession } from '../../services/readingHistoryService';
 
 
 
@@ -54,7 +56,34 @@ function TimeWheel({ label, value, max, onChange }) {
   
   
 
-export default function ReadingTimer() {
+export default function ReadingTimer({ user }) {
+  const sessionRef = useRef(null);
+  const [historyView, setHistoryView] = useState(null);
+  const [saveMessage, setSaveMessage] = useState('');
+
+  async function recordSession(duration, completed) {
+    const session = sessionRef.current;
+
+    if (!session || duration <= 0 || session.saved) return;
+
+    session.saved = true;
+
+    try {
+      await saveReadingSession({
+        id: session.id,
+        user_id: session.userId,
+        started_at: session.startedAt,
+        ended_at: new Date().toISOString(),
+        duration_seconds: duration,
+        completed
+      });
+      setSaveMessage('Reading session saved!');
+    } catch (error) {
+      console.error('Reading session save failed:', error);
+      setSaveMessage('Unable to save your reading session.');
+    }
+  }
+
   const [secondsRemaining, setSecondsRemaining] = useState(30 * 60);
   const [hours, setHours] = useState(0);
 const [minutes, setMinutes] = useState(30);
@@ -90,11 +119,13 @@ const plantStage =
   useEffect(() => {
     if (secondsRemaining === 0 && status === 'running') {
       setStatus('completed');
+      recordSession(selectedDuration, true);
     }
   }, [secondsRemaining, status]);
 
   return (
     <main className="reading-timer">
+      <div hidden={Boolean(historyView)}>
       <img
   src="/looseleaf-logo%202.png"
   alt="LooseLeaf"
@@ -173,7 +204,14 @@ const plantStage =
   <button
     type="button"
     onClick={() => {
-        if (selectedDuration > 0) {
+        if (selectedDuration > 0 && user?.id) {
+          sessionRef.current = {
+            id: crypto.randomUUID(),
+            userId: user.id,
+            startedAt: new Date().toISOString(),
+            saved: false
+          };
+          setSaveMessage('');
           setSecondsRemaining(selectedDuration);
           setStatus('running');
         }
@@ -192,6 +230,7 @@ const plantStage =
     <button
       type="button"
       onClick={() => {
+        recordSession(selectedDuration - secondsRemaining, false);
         setStatus('ready');
         setSecondsRemaining(selectedDuration);
       }}
@@ -210,6 +249,7 @@ const plantStage =
     <button
       type="button"
       onClick={() => {
+        recordSession(selectedDuration - secondsRemaining, false);
         setStatus('ready');
         setSecondsRemaining(selectedDuration);
       }}
@@ -229,6 +269,16 @@ const plantStage =
   </button>
 )}
 
+      {saveMessage && (
+        <p role="status">{saveMessage}</p>
+      )}
+      </div>
+      <ReadingHistory
+        user={user}
+        refreshKey={saveMessage}
+        view={historyView}
+        setView={setHistoryView}
+      />
     </main>
   );
 }

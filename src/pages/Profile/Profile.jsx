@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import styles from './Profile.module.css';
+import AppDialog from '../../components/Dialog/AppDialog';
 import { supabase } from '../../supabaseClient';
 import {
   fetchUserShelvesWithBooks,
@@ -24,6 +25,7 @@ const SHELF_NAME_SUGGESTIONS = [
 
 export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
   const [view, setView] = useState('main');
+  const [appDialog, setAppDialog] = useState(null);
   // Shelf whose full page is open (view === 'shelfDetail').
   const [activeShelfId, setActiveShelfId] = useState(null);
   // Where "back" from the shelf page should return to.
@@ -183,7 +185,7 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
     }
   };
 
-  const handleDeleteShelf = async (shelfId) => {
+  const handleDeleteShelf = async (shelfId, confirmed = false) => {
     if (!user) return;
 
     const shelf = shelves.find((s) => s.id === shelfId);
@@ -196,7 +198,15 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
       return;
     }
 
-    if (!confirm('Delete this shelf? Books will remain in the database.')) return;
+    if (!confirmed) {
+      setAppDialog({
+        title: 'Delete Shelf?',
+        message: 'Are you sure you want to delete this shelf? Your books will remain in the database.',
+        confirmLabel: 'Delete Shelf',
+        action: () => handleDeleteShelf(shelfId, true)
+      });
+      return;
+    }
     try {
       // deleteShelf resolves false when the RPC refused the delete.
       const deleted = await deleteShelf(user.id, shelfId);
@@ -255,13 +265,21 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
 
   // Remove a single book from a shelf. Kept inline on the shelf card so the
   // user can prune a shelf without opening the book detail page.
-  const handleRemoveBookFromShelf = async (shelfId, book) => {
+  const handleRemoveBookFromShelf = async (shelfId, book, confirmed = false) => {
     if (!user || !shelfId || !book) return;
 
     const bookKey = book.book_id || book.id;
     if (!bookKey) return;
 
-    if (!confirm(`Remove "${book.title}" from this shelf?`)) return;
+    if (!confirmed) {
+      setAppDialog({
+        title: 'Remove Book?',
+        message: `Are you sure you want to remove "${book.title}" from this shelf?`,
+        confirmLabel: 'Remove Book',
+        action: () => handleRemoveBookFromShelf(shelfId, book, true)
+      });
+      return;
+    }
 
     setRemovingBookKey(bookKey);
     try {
@@ -1205,6 +1223,20 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
             </div>
           </div>
         </div>
+      )}
+      {appDialog && (
+        <AppDialog
+          title={appDialog.title}
+          message={appDialog.message}
+          confirmLabel={appDialog.confirmLabel}
+          destructive
+          onCancel={() => setAppDialog(null)}
+          onConfirm={() => {
+            const action = appDialog.action;
+            setAppDialog(null);
+            action();
+          }}
+        />
       )}
     </div>
   );

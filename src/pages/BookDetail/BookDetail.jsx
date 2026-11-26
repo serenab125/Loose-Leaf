@@ -1,3 +1,4 @@
+import AppDialog from '../../components/Dialog/AppDialog';
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import {
@@ -56,6 +57,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
 
   // Chapter Reaction Modal state (RR-06 + Edit/Delete)
   const [showReactionModal, setShowReactionModal] = useState(false);
+  const [appError, setAppError] = useState('');
   const [editingReaction, setEditingReaction] = useState(null);
   const [deletingReaction, setDeletingReaction] = useState(null);
   const [isDeletingReaction, setIsDeletingReaction] = useState(false);
@@ -763,7 +765,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       setDeletingReaction(null);
     } catch (err) {
       console.error('Failed to delete chapter reaction:', err);
-      alert(err.message || 'Could not delete your reaction. Please try again.');
+      setAppError(err.message || 'Could not delete your reaction. Please try again.');
     } finally {
       setIsDeletingReaction(false);
     }
@@ -974,7 +976,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
                   setEditingReview(null);
                 } catch (error) {
                   console.error('Could not update review:', error);
-                  alert('Could not update your review. Please try again.');
+                  setAppError('Could not update your review. Please try again.');
                 }
               }}
             />
@@ -1003,7 +1005,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
                       setDeletingReview(null);
                     } catch (error) {
                       console.error('Could not delete your review:', error);
-                      alert('Could not delete your review. Please try again.');
+                      setAppError('Could not delete your review. Please try again.');
                     }
                   }}
                 />
@@ -1550,6 +1552,15 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
             </div>
           </div>
         </div>
+      )}
+
+      {appError && (
+        <AppDialog
+          title="Something Went Wrong"
+          message={appError}
+          confirmLabel="OK"
+          onConfirm={() => setAppError('')}
+        />
       )}
     </main>
   );

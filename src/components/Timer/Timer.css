@@ -86,7 +86,7 @@
   }
   
   /* Timer status */
-  .reading-timer > p {
+  .reading-timer > div > p {
     font-family: Arial, sans-serif;
     font-size: 10px;
     letter-spacing: 2px;
@@ -137,7 +137,7 @@
 
 
 /* Timer action buttons */
-.reading-timer > button,
+.reading-timer > div > button,
 .timer-controls button {
   font-family: Arial, sans-serif;
   font-size: 13px;
@@ -149,7 +149,7 @@
 }
 
 /* Start and Start New Session */
-.reading-timer > button {
+.reading-timer > div > button {
   display: block;
   width: calc(100% - 48px);
   max-width: 340px;
@@ -186,7 +186,7 @@
 }
 
 /* Button hover */
-.reading-timer > button:hover,
+.reading-timer > div > button:hover,
 .timer-controls button:first-child:hover {
   background: #754525;
 }
@@ -221,4 +221,67 @@
     margin: 0 auto 16px;
     object-fit: contain;
   }
-  
+
+/* Compact timer layout */
+.reading-timer {
+  padding-top: 18px;
+}
+
+.reading-timer .timer-logo {
+  width: 120px;
+  margin-bottom: 8px;
+}
+
+.reading-timer h1 {
+  margin: 8px 0 14px;
+}
+
+.reading-timer .timer-plant-circle {
+  width: 160px;
+  height: 160px;
+  margin: 12px auto;
+}
+
+.reading-timer .timer-plant-inner {
+  width: 136px;
+  height: 136px;
+}
+
+.reading-timer > div > p {
+  margin: 12px auto;
+}
+
+.reading-timer .timer-setup {
+  margin: 12px auto 6px;
+  padding: 10px 12px;
+}
+
+.reading-timer .timer-instructions {
+  margin-top: 8px;
+}
+
+.reading-timer > div > button,
+.reading-timer .timer-controls {
+  margin: 14px auto;
+  width: calc(100% - 24px);
+}
+
+.reading-timer > div > button,
+.reading-timer .timer-controls button {
+  min-height: 48px;
+  font-size: 16px;
+}
+
+.reading-timer .rh-section:not(.rh-full-screen) {
+  margin-top: 18px;
+  padding-top: 14px;
+}
+
+/* Center plant within the smaller circle */
+.timer-plant-inner > svg {
+  display: block;
+  width: 92px;
+  height: 108px;
+  flex-shrink: 0;
+  transform: translateY(-4px);
+}

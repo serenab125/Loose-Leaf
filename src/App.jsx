@@ -196,7 +196,7 @@ function App() {
             onSelectBook={(book) => setCurrentBook(book)}
           />
         ) : view === 'timer' ? (
-          <ReadingTimer />
+          <ReadingTimer key={user.id} user={user} />
         ) : view === 'reviews-preview' ? (
           <ReviewsPreview />
         ) : (
