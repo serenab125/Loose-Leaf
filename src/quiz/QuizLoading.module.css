@@ -178,3 +178,47 @@
     height: 112px;
   }
 }
+/* Loading screen dark mode */
+:global(:root[data-theme="dark"]) .container {
+  background: #241e1a;
+  color: #f5e9dc;
+}
+
+:global(:root[data-theme="dark"]) .headline {
+  color: #f5e9dc;
+}
+
+:global(:root[data-theme="dark"]) .bodyText,
+:global(:root[data-theme="dark"]) .progressText,
+:global(:root[data-theme="dark"]) .secondaryButton {
+  color: #bca99a;
+}
+
+:global(:root[data-theme="dark"]) .iconCircle,
+:global(:root[data-theme="dark"]) .progressBar {
+  background: #353d2e;
+  border-color: #65734e;
+}
+
+:global(:root[data-theme="dark"]) .icon {
+  color: #dce5b8;
+}
+
+:global(:root[data-theme="dark"]) .dot,
+:global(:root[data-theme="dark"]) .progressFill {
+  background: #a8b58b;
+}
+
+:global(:root[data-theme="dark"]) .primaryButton {
+  background: #a8b58b;
+  color: #241e1a;
+  box-shadow: none;
+}
+
+:global(:root[data-theme="dark"]) .primaryButton:hover {
+  background: #becaa1;
+}
+
+:global(:root[data-theme="dark"]) .secondaryButton:hover {
+  color: #f5e9dc;
+}

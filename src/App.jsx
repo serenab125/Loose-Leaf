@@ -13,7 +13,7 @@ import BookDetail from './pages/BookDetail/BookDetail'
 import ReviewsPreview from './components/Reviews/ReviewsPreview'
 import ReadingTimer from './components/Timer/Timer'
 import { supabase } from './supabaseClient'
-import { PROGRESS_KEY } from './quiz/useQuiz'
+import { getIncompleteQuizProgress } from './services/quizService'
 
 const skippedQuizKey = (userId) => `looseleaf_quiz_skipped_${userId}`
 
@@ -21,26 +21,12 @@ function readSkippedQuiz(userId) {
   return localStorage.getItem(skippedQuizKey(userId)) === 'true'
 }
 
-/**
- * A saved quiz counts as "unfinished" only while it is on a question step.
- * Step 0 is the introduction and step 3 is the loading/complete screen, so
- * neither should yank the user back into the quiz on every sign-in.
- */
-function hasUnfinishedQuiz() {
-  try {
-    const raw = localStorage.getItem(PROGRESS_KEY)
-    if (!raw) return false
-    const step = JSON.parse(raw)?.step
-    return step === 1 || step === 2
-  } catch {
-    return false
-  }
-}
-
 function App() {
   const { user, logout, initializing } = useAuth()
 
   const [currentBook, setCurrentBook] = useState(null)
+  const [isRetakingQuiz, setIsRetakingQuiz] = useState(false)
+  const [savedQuizProgress, setSavedQuizProgress] = useState(null)
 
   const [themePreference, setThemePreference] = useState({
     userId: null,
@@ -125,6 +111,8 @@ function App() {
   if (user?.id !== gateUserId) {
     setGateUserId(user?.id)
     setQuizReady(false)
+    setSavedQuizProgress(null)
+    setIsRetakingQuiz(false)
   }
 
   useEffect(() => {
@@ -153,12 +141,22 @@ function App() {
           Object.keys(data.reading_preferences).length > 0
       )
 
+      const draft = await getIncompleteQuizProgress(user.id, {
+        client: supabase
+      })
+
+      if (cancelled) return
+
+      setSavedQuizProgress(
+        draft
+          ? { step: draft.current_step === 2 ? 2 : 1, answers: draft.answers || {} }
+          : { step: 0, answers: data?.reading_preferences || {} }
+      )
+
       setView(
-        hasUnfinishedQuiz()
-          ? 'quiz'
-          : completedQuiz || readSkippedQuiz(user.id)
-            ? 'home'
-            : 'quiz'
+        draft || completedQuiz || readSkippedQuiz(user.id)
+          ? 'home'
+          : 'quiz'
       )
       setQuizReady(true)
     }
@@ -237,10 +235,7 @@ function App() {
             user={user}
             skippedQuiz={readSkippedQuiz(user.id)}
             onRetakeQuiz={() => {
-              localStorage.setItem(
-                PROGRESS_KEY,
-                JSON.stringify({ step: 0, answers: {} })
-              )
+              setIsRetakingQuiz(true)
               setView('quiz')
             }}
             onNavigateToSearch={() => setView('search')}
@@ -263,15 +258,26 @@ function App() {
           <ReviewsPreview />
         ) : (
           <Quiz
+            key={user.id}
             user={user}
-            onSkip={() => {
-              localStorage.setItem(skippedQuizKey(user.id), 'true')
-              localStorage.removeItem(PROGRESS_KEY)
+            isRetake={isRetakingQuiz}
+            savedProgress={savedQuizProgress}
+            onProgressSaved={(progress) => {
+              setSavedQuizProgress(progress)
+            }}
+            onExit={() => {
+              setIsRetakingQuiz(false)
               setView('home')
             }}
-            onComplete={() => {
+            onSkip={() => {
+              setIsRetakingQuiz(false)
+              localStorage.setItem(skippedQuizKey(user.id), 'true')
+              setView('home')
+            }}
+            onComplete={(answers) => {
+              setSavedQuizProgress({ step: 0, answers })
+              setIsRetakingQuiz(false)
               localStorage.removeItem(skippedQuizKey(user.id))
-              localStorage.removeItem(PROGRESS_KEY)
               setView('home')
             }}
           />

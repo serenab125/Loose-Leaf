@@ -111,3 +111,44 @@
   outline-offset: 3px;
   border-radius: 4px;
 }
+/* Introduction dark mode */
+:global(:root[data-theme="dark"]) .container {
+  background: #241e1a;
+  color: #f5e9dc;
+}
+
+:global(:root[data-theme="dark"]) .headline {
+  color: #f5e9dc;
+}
+
+:global(:root[data-theme="dark"]) .bodyText,
+:global(:root[data-theme="dark"]) .secondaryText,
+:global(:root[data-theme="dark"]) .skipButton {
+  color: #bca99a;
+}
+
+:global(:root[data-theme="dark"]) .iconCircle {
+  background: #353d2e;
+}
+
+:global(:root[data-theme="dark"]) .icon {
+  color: #dce5b8;
+}
+
+:global(:root[data-theme="dark"]) .primaryButton {
+  background: #a8b58b;
+  color: #241e1a;
+  box-shadow: none;
+}
+
+:global(:root[data-theme="dark"]) .primaryButton:hover {
+  background: #becaa1;
+}
+
+:global(:root[data-theme="dark"]) .skipButton:hover {
+  color: #f5e9dc;
+}
+
+:global(:root[data-theme="dark"]) .skipButton:focus-visible {
+  outline-color: #a8b58b;
+}

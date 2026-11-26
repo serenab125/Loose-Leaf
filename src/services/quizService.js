@@ -61,9 +61,10 @@ export async function getIncompleteQuizProgress(userId, { client } = {}) {
       .from('quiz_progress')
       .select('answers, current_step')
       .eq('user_id', userId)
-      .eq('completed_at', null)
+      .is('completed_at', null)
       .order('updated_at', { ascending: false })
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     if (error && error.code !== 'PGRST116') throw error;
     return data || null;

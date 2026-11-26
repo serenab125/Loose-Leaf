@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   TASTE_SECTIONS,
   GOAL_SECTIONS,
@@ -34,27 +34,33 @@ const readSavedProgress = () => {
 
 export { PROGRESS_KEY };
 
-export function useQuiz() {
+export function useQuiz(savedProgress = null) {
   // 0 = introduction
   // 1 = reading taste
   // 2 = reading goals
   // 3 = loading / complete
-  const [initialProgress] = useState(() => readSavedProgress());
+  const [initialProgress] = useState(() => savedProgress);
   const [currentStep, setCurrentStep] = useState(
     initialProgress?.step ?? 0
   );
   const [answers, setAnswers] = useState(initialProgress?.answers ?? {});
 
   // Restored once, on mount, straight from the saved progress.
-  const [restoreMessage] = useState(() =>
-    initialProgress
+  const [restoreMessage, setRestoreMessage] = useState(() =>
+    (initialProgress?.step === 1 || initialProgress?.step === 2)
       ? 'Your quiz progress has been restored — you can continue from where you left off.'
       : ''
   );
 
+  useEffect(() => {
+    if (!restoreMessage) return;
+    const timeout = setTimeout(() => setRestoreMessage(''), 4000);
+    return () => clearTimeout(timeout);
+  }, [restoreMessage]);
+
   const goToIntro = useCallback(() => {
+    setRestoreMessage('');
     setCurrentStep(0);
-    setAnswers({});
   }, []);
 
   const answerQuestion = useCallback((sectionId, selectedIds) => {
