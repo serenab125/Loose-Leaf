@@ -6,7 +6,7 @@
     max-width: 280px;
     margin: 20px auto 8px;
     padding: 18px 12px;
-    background: #f6f0e7;
+    background: var(--ll-background-f6f0e7, #f6f0e7);
     border-radius: 18px;
   }
   
@@ -41,7 +41,7 @@
     padding: 0;
     border: none;
     background: transparent;
-    color: #bfae9e;
+    color: var(--ll-color-bfae9e, #bfae9e);
     font-family: Georgia, serif;
     font-size: 17px;
     cursor: pointer;
@@ -49,14 +49,14 @@
   }
   
   .time-wheel-number.selected {
-    color: #5b3113;
+    color: var(--ll-color-5b3113, #5b3113);
     font-weight: bold;
     font-size: 23px;
   }
   
   .time-wheel-label {
     margin-top: 10px;
-    color: #a99586;
+    color: var(--ll-color-a99586, #a99586);
     font-size: 9px;
     letter-spacing: 1.5px;
   }
@@ -70,8 +70,8 @@
     padding: 28px 20px 110px;
     box-sizing: border-box;
     min-height: 100%;
-    background: #fdf8f3;
-    color: #5b3113;
+    background: var(--ll-background-fdf8f3, #fdf8f3);
+    color: var(--ll-color-5b3113, #5b3113);
     text-align: center;
   }
   
@@ -81,7 +81,7 @@
     font-size: 19px;
     font-weight: 400;
     line-height: 1.4;
-    color: #5b3113;
+    color: var(--ll-color-5b3113, #5b3113);
     margin: 12px 0 24px;
   }
   
@@ -90,7 +90,7 @@
     font-family: Arial, sans-serif;
     font-size: 10px;
     letter-spacing: 2px;
-    color: #c98996;
+    color: var(--ll-color-c98996, #c98996);
     margin: 18px auto;
     text-transform: uppercase;
   }
@@ -100,7 +100,7 @@
     font-family: Georgia, serif;
     font-size: 34px;
     letter-spacing: 2px;
-    color: #5b3113;
+    color: var(--ll-color-5b3113, #5b3113);
     margin: 20px 0 10px;
     font-variant-numeric: tabular-nums;
   }
@@ -110,9 +110,9 @@
     width: 190px;
     height: 190px;
     margin: 20px auto 24px;
-    border: 1px solid #f1d9d0;
+    border: 1px solid var(--ll-border-f1d9d0, #f1d9d0);
     border-radius: 50%;
-    background: #fff3ee;
+    background: var(--ll-background-fff3ee, #fff3ee);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -122,17 +122,17 @@
   .timer-plant-inner {
     width: 158px;
     height: 158px;
-    border: 1px solid #e9d8c8;
+    border: 1px solid var(--ll-border-e9d8c8, #e9d8c8);
     border-radius: 50%;
-    background: #fdf8f3;
+    background: var(--ll-background-fdf8f3, #fdf8f3);
     display: flex;
     align-items: center;
     justify-content: center;
   }
   
   .timer-plant-circle.running {
-    background: #f0efd8;
-    border-color: #deddb4;
+    background: var(--ll-background-f0efd8, #f0efd8);
+    border-color: var(--ll-border-color-deddb4, #deddb4);
   }
 
 
@@ -181,8 +181,8 @@
   min-width: 64px;
   padding: 0 16px;
   background: transparent;
-  color: #80563e;
-  border: 1px solid #e9d8c8;
+  color: var(--ll-color-80563e, #80563e);
+  border: 1px solid var(--ll-border-e9d8c8, #e9d8c8);
 }
 
 /* Button hover */
@@ -194,7 +194,7 @@
 .reading-timer .timer-instructions {
     font-family: Arial, sans-serif;
     font-size: 11px;
-    color: #b49d8e;
+    color: var(--ll-color-b49d8e, #b49d8e);
     text-transform: none;
     letter-spacing: 0;
     margin: 12px auto 0;
@@ -209,7 +209,7 @@
     content: '';
     position: absolute;
     inset: 10px;
-    border: 1.5px dashed #d8d9aa;
+    border: 1.5px dashed var(--ll-border-d8d9aa, #d8d9aa);
     border-radius: 50%;
     pointer-events: none;
   }

@@ -6,8 +6,8 @@
 /* HS-04: Retake Quiz Card */
 
 .retake-quiz-card {
-  background-color: #f5e9dd;
-  border: 1px solid #e8d5c5;
+  background-color: var(--ll-background-color-f5e9dd, #f5e9dd);
+  border: 1px solid var(--ll-border-e8d5c5, #e8d5c5);
   border-radius: 20px;
   padding: 24px;
   min-height: 260px;
@@ -21,7 +21,7 @@
 }
 
 .retake-quiz-label {
-  color: #87923e;
+  color: var(--ll-color-87923e, #87923e);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1.5px;
@@ -29,7 +29,7 @@
 }
 
 .retake-quiz-card h2 {
-  color: #603417;
+  color: var(--ll-color-603417, #603417);
   font-family: Georgia, serif;
   font-size: 27px;
   line-height: 1.2;
@@ -37,7 +37,7 @@
 }
 
 .retake-quiz-card p:not(.retake-quiz-label) {
-  color: #8a7c70;
+  color: var(--ll-color-8a7c70, #8a7c70);
   font-size: 15px;
   line-height: 1.5;
   margin: 0;
@@ -91,7 +91,7 @@
   padding: 0;
   border: none;
   border-radius: 999px;
-  background-color: #d9cec5;
+  background-color: var(--ll-background-color-d9cec5, #d9cec5);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -103,13 +103,13 @@
 
 .home-placeholder {
   min-height: 260px;
-  background-color: #fbf6f1;
-  border: 1px dashed #e8d5c5;
+  background-color: var(--ll-background-color-fbf6f1, #fbf6f1);
+  border: 1px dashed var(--ll-border-e8d5c5, #e8d5c5);
   border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8a7c70;
+  color: var(--ll-color-8a7c70, #8a7c70);
   text-align: center;
   padding: 24px;
 }
@@ -131,8 +131,8 @@
    ======================================== */
 
 .current-read-card {
-  background-color: #fff1ee;
-  border: 1px solid #f5d1cf;
+  background-color: var(--ll-background-color-fff1ee, #fff1ee);
+  border: 1px solid var(--ll-border-f5d1cf, #f5d1cf);
   border-radius: 26px;
   padding: 24px;
   min-height: 260px;
@@ -146,7 +146,7 @@
 }
 
 .current-read-label {
-  color: #ce858d;
+  color: var(--ll-color-ce858d, #ce858d);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 2px;
@@ -164,14 +164,14 @@
   width: 80px;
   height: 120px;
   flex-shrink: 0;
-  border: 1px dashed #dfaeb1;
+  border: 1px dashed var(--ll-border-dfaeb1, #dfaeb1);
   border-radius: 16px;
 
   display: flex;
   justify-content: center;
   align-items: center;
 
-  color: #ce858d;
+  color: var(--ll-color-ce858d, #ce858d);
   font-size: 30px;
 }
 
@@ -189,7 +189,7 @@
 }
 
 .current-read-info h2 {
-  color: #603417;
+  color: var(--ll-color-603417, #603417);
   font-family: Georgia, serif;
   font-size: 23px;
   font-weight: 400;
@@ -198,7 +198,7 @@
 }
 
 .current-read-info p {
-  color: #95867d;
+  color: var(--ll-color-95867d, #95867d);
   font-size: 15px;
   line-height: 1.4;
   margin: 0 0 4px;
@@ -231,8 +231,8 @@
    ======================================== */
 
 .top-recommendation-card {
-  background-color: #f0f1df;
-  border: 1px solid #d8d9b5;
+  background-color: var(--ll-background-color-f0f1df, #f0f1df);
+  border: 1px solid var(--ll-border-d8d9b5, #d8d9b5);
   border-radius: 26px;
   padding: 24px;
   min-height: 260px;
@@ -245,7 +245,7 @@
 }
 
 .top-recommendation-label {
-  color: #818a3d;
+  color: var(--ll-color-818a3d, #818a3d);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1.5px;
@@ -271,7 +271,7 @@
 }
 
 .top-recommendation-placeholder {
-  background: #e3e5c9;
+  background: var(--ll-background-e3e5c9, #e3e5c9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -285,7 +285,7 @@
 
 .top-recommendation-info h2,
 .top-recommendation-empty h2 {
-  color: #603417;
+  color: var(--ll-color-603417, #603417);
   font-family: Georgia, serif;
   font-size: 23px;
   font-weight: 400;
@@ -295,14 +295,14 @@
 
 .top-recommendation-info p,
 .top-recommendation-empty p {
-  color: #95867d;
+  color: var(--ll-color-95867d, #95867d);
   font-size: 15px;
   line-height: 1.4;
   margin: 0 0 6px;
 }
 
 .top-recommendation-info span {
-  color: #818a3d;
+  color: var(--ll-color-818a3d, #818a3d);
   font-size: 12px;
 }
 

@@ -4,8 +4,8 @@
     min-height: 100%;
     box-sizing: border-box;
     padding: 24px 22px 48px;
-    background: #fdf8f3;
-    color: #5b3113;
+    background: var(--ll-background-fdf8f3, #fdf8f3);
+    color: var(--ll-color-5b3113, #5b3113);
     font-family: Arial, sans-serif;
     text-align: center;
   }
@@ -14,7 +14,7 @@
     display: block;
     border: none;
     background: transparent;
-    color: #ad9687;
+    color: var(--ll-color-ad9687, #ad9687);
     font-size: 13px;
     padding: 8px 0;
     margin-bottom: 24px;
@@ -25,7 +25,7 @@
     font-size: 22px;
     font-weight: 600;
     margin: 0 0 24px;
-    color: #5b3113;
+    color: var(--ll-color-5b3113, #5b3113);
     font-family: Georgia, serif;
   }
   
@@ -38,7 +38,7 @@
   
   .edit-review-rating legend {
     font-size: 13px;
-    color: #ad9687;
+    color: var(--ll-color-ad9687, #ad9687);
     margin: 0 auto 12px;
   }
   
@@ -55,7 +55,7 @@
     height: 42px;
     font-size: 38px;
     line-height: 42px;
-    color: #5b3113;
+    color: var(--ll-color-5b3113, #5b3113);
   }
   
   .edit-review-star-base,
@@ -69,7 +69,7 @@
   
   .edit-review-star-fill {
     overflow: hidden;
-    color: #5b3113;
+    color: var(--ll-color-5b3113, #5b3113);
   }
   
   .edit-review-star-half,
@@ -101,14 +101,14 @@
   
   .edit-review-rating p {
     margin: 10px 0 0;
-    color: #ad9687;
+    color: var(--ll-color-ad9687, #ad9687);
     font-size: 12px;
   }
   
   .edit-review-text-label {
     display: block;
     font-size: 13px;
-    color: #ad9687;
+    color: var(--ll-color-ad9687, #ad9687);
     text-align: left;
     margin-bottom: 10px;
   }
@@ -119,10 +119,10 @@
     min-height: 150px;
     box-sizing: border-box;
     padding: 16px;
-    border: 1px solid #e5dfc9;
+    border: 1px solid var(--ll-border-e5dfc9, #e5dfc9);
     border-radius: 18px;
-    background: #f7f5ea;
-    color: #5b3113;
+    background: var(--ll-background-f7f5ea, #f7f5ea);
+    color: var(--ll-color-5b3113, #5b3113);
     font-family: inherit;
     font-size: 16px;
     line-height: 1.5;
@@ -152,14 +152,14 @@
   .edit-review-type > button:not(.edit-review-switch) {
     border: none;
     background: transparent;
-    color: #ad9687;
+    color: var(--ll-color-ad9687, #ad9687);
     font-size: 13px;
     padding: 6px;
     cursor: pointer;
   }
   
   .edit-review-type > button.selected {
-    color: #5b3113;
+    color: var(--ll-color-5b3113, #5b3113);
     font-weight: 600;
   }
   
@@ -168,7 +168,7 @@
     margin-top: 4px;
     font-size: 10px;
     font-weight: 400;
-    color: #ad9687;
+    color: var(--ll-color-ad9687, #ad9687);
   }
   
   .edit-review-switch {
@@ -186,7 +186,7 @@
   
   .edit-review-switch.casual {
     justify-content: flex-end;
-    background: #c98996;
+    background: var(--ll-background-c98996, #c98996);
   }
   .edit-review-type > button:disabled {
   cursor: not-allowed;
@@ -229,7 +229,7 @@
     width: 38px;
     height: 22px;
     border-radius: 20px;
-    background: #d8bca5;
+    background: var(--ll-background-d8bca5, #d8bca5);
     transition: background 0.2s;
   }
   
@@ -246,7 +246,7 @@
   }
   
   .edit-review-spoilers input:checked + .edit-review-spoiler-switch {
-    background: #c98996;
+    background: var(--ll-background-c98996, #c98996);
   }
   
   .edit-review-spoilers input:checked + .edit-review-spoiler-switch::after {

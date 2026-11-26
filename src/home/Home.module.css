@@ -4,7 +4,7 @@
   max-width: 430px;
   margin: 0 auto;
   min-height: 100vh;
-  background-color: #fcf8f4;
+  background-color: var(--ll-background-color-fcf8f4, #fcf8f4);
   display: flex;
   flex-direction: column;
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
@@ -32,14 +32,14 @@
   font-family: 'Lobster', cursive;
   font-size: 32px;
   font-weight: 400;
-  color: #5a321a;
+  color: var(--ll-color-5a321a, #5a321a);
   margin: 0;
   letter-spacing: normal;
 }
 
 .leafIcon {
   font-size: 12px;
-  color: #8c975a;
+  color: var(--ll-color-8c975a, #8c975a);
 }
 
 .bannerSection {
@@ -48,7 +48,7 @@
 }
 
 .card {
-  background: #fdf2ed;
+  background: var(--ll-background-fdf2ed, #fdf2ed);
   border-radius: 20px;
   padding: 22px;
   display: flex;
@@ -57,14 +57,14 @@
 }
 
 .topPickCard {
-  background: #f1f4e6;
+  background: var(--ll-background-f1f4e6, #f1f4e6);
 }
 
 .eyebrow {
   font-size: 11px;
   letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: #b08d79;
+  color: var(--ll-color-b08d79, #b08d79);
   font-weight: 600;
   margin: 0;
 }
@@ -78,20 +78,20 @@
 .placeholderBox {
   width: 68px;
   height: 96px;
-  border: 1.5px dashed #e2c9bc;
+  border: 1.5px dashed var(--ll-border-e2c9bc, #e2c9bc);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  color: #c9af9f;
+  color: var(--ll-color-c9af9f, #c9af9f);
   flex-shrink: 0;
 }
 
 .cardHeader {
   font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 20px;
-  color: #4a2b10;
+  color: var(--ll-color-4a2b10, #4a2b10);
   margin: 0 0 6px 0;
   font-weight: 500;
   line-height: 1.25;
@@ -99,7 +99,7 @@
 
 .cardSubtext {
   font-size: 13px;
-  color: #7c6859;
+  color: var(--ll-color-7c6859, #7c6859);
   margin: 0;
   line-height: 1.4;
 }
@@ -116,7 +116,7 @@
   border-radius: 8px;
   object-fit: cover;
   object-position: center;
-  background-color: #efe4d6;
+  background-color: var(--ll-background-color-efe4d6, #efe4d6);
   border: 1px solid rgba(91, 49, 19, 0.1);
   box-shadow: 0 3px 8px rgba(74, 43, 16, 0.14);
   flex-shrink: 0;
@@ -145,7 +145,7 @@
 .dot {
   width: 8px;
   height: 8px;
-  background-color: #e3d9cd;
+  background-color: var(--ll-background-color-e3d9cd, #e3d9cd);
   border-radius: 50%;
   cursor: pointer;
 }
@@ -166,7 +166,7 @@
   font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 19px;
   margin: 0 0 12px 16px;
-  color: #4a2b10;
+  color: var(--ll-color-4a2b10, #4a2b10);
   font-weight: 500;
 }
 
@@ -189,7 +189,7 @@
   height: 168px;
   border-radius: 10px;
   overflow: hidden;
-  background-color: #efe4d6;
+  background-color: var(--ll-background-color-efe4d6, #efe4d6);
   border: 1px solid rgba(91, 49, 19, 0.1);
   box-shadow: 0 4px 12px rgba(74, 43, 16, 0.12);
   cursor: pointer;
@@ -223,7 +223,7 @@
   height: 100%;
   object-fit: cover;
   object-position: center;
-  background-color: #efe4d6;
+  background-color: var(--ll-background-color-efe4d6, #efe4d6);
 }
 
 .fallbackCover {
@@ -234,8 +234,8 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background: linear-gradient(150deg, #f3e8da 0%, #e1d0bc 100%);
-  color: #5b3113;
+  background: linear-gradient(150deg, var(--ll-background-f3e8da, #f3e8da) 0%, var(--ll-background-e1d0bc, #e1d0bc) 100%);
+  color: var(--ll-color-5b3113, #5b3113);
 }
 
 .fallbackTitle {
@@ -251,7 +251,7 @@
 
 .fallbackAuthor {
   font-size: 10px;
-  color: #7c6252;
+  color: var(--ll-color-7c6252, #7c6252);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -264,11 +264,11 @@
   left: 0;
   right: 0;
   height: 72px;
-  background-color: #fcf8f4;
+  background-color: var(--ll-background-color-fcf8f4, #fcf8f4);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  border-top: 1px solid #f0e6dd;
+  border-top: 1px solid var(--ll-border-top-f0e6dd, #f0e6dd);
   z-index: 10;
 }
 
@@ -279,7 +279,7 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  color: #a0826d;
+  color: var(--ll-color-a0826d, #a0826d);
   cursor: pointer;
   font-size: 11px;
 }
@@ -290,10 +290,10 @@
 }
 
 .activeNavItem {
-  color: #552a0e;
+  color: var(--ll-color-552a0e, #552a0e);
   font-weight: 600;
 }
 
 .activeNavItem .navIcon {
-  stroke: #552a0e;
+  stroke: var(--ll-stroke-552a0e, #552a0e);
 }

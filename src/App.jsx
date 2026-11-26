@@ -41,6 +41,15 @@ function App() {
   const { user, logout, initializing } = useAuth()
 
   const [currentBook, setCurrentBook] = useState(null)
+
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('looseleaf_dark_mode') === 'true'
+  })
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = darkMode ? 'dark' : 'light'
+    localStorage.setItem('looseleaf_dark_mode', String(darkMode))
+  }, [darkMode])
   const [view, setView] = useState(() => {
     if (window.location.pathname === '/reset-password') return 'reset'
     return 'login'
@@ -180,6 +189,8 @@ function App() {
           <Search onSelectBook={(book) => setCurrentBook(book)} />
         ) : view === 'profile' ? (
           <Profile
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
             user={user}
             logout={handleLogout}
             onSelectBook={(book) => setCurrentBook(book)}

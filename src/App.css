@@ -80,3 +80,159 @@ body {
 .app-content {
   padding-bottom: 85px;
 }
+
+/* Dark Mode */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --text: #e8ddd2;
+  --text-h: #f5e9dc;
+  --bg: #241e1a;
+  --border: #493b32;
+}
+
+:root[data-theme="dark"] body {
+  background: #1a1613;
+}
+
+:root[data-theme="dark"] #root > main {
+  background: #241e1a;
+  color: #f5e9dc;
+}
+
+:root[data-theme="dark"] .bottom-nav {
+  background: #302720;
+  border-top-color: #493b32;
+}
+
+:root[data-theme="dark"] .bottom-nav button {
+  color: #bca99a;
+}
+
+:root[data-theme="dark"] .bottom-nav button.active {
+  color: #dce5b8;
+}
+
+/* Shared dark mode palette */
+:root[data-theme="dark"] {
+  --ll-accent-color-5b3113: #a8b58b;
+  --ll-background-c77f91: #45332f;
+  --ll-background-c98996: #45332f;
+  --ll-background-color-d9cec5: #45332f;
+  --ll-background-color-e3d9cd: #45332f;
+  --ll-background-color-eaeed8: #353d2e;
+  --ll-background-color-ebe5d5: #382e27;
+  --ll-background-color-ede0c9: #353d2e;
+  --ll-background-color-efe4d6: #45332f;
+  --ll-background-color-f0f1df: #382e27;
+  --ll-background-color-f4f3e6: #382e27;
+  --ll-background-color-f5e9dd: #45332f;
+  --ll-background-color-f5f3e9: #382e27;
+  --ll-background-color-f6eedf: #45332f;
+  --ll-background-color-f7f1e5: #382e27;
+  --ll-background-color-f7f2e8: #382e27;
+  --ll-background-color-f7f3e9: #241e1a;
+  --ll-background-color-f9f6ed: #241e1a;
+  --ll-background-color-fbf6f1: #241e1a;
+  --ll-background-color-fcece9: #45332f;
+  --ll-background-color-fcf8f4: #241e1a;
+  --ll-background-color-fdf8f3: #241e1a;
+  --ll-background-color-fdf8f4: #241e1a;
+  --ll-background-color-fff1ee: #45332f;
+  --ll-background-d8bca5: #382e27;
+  --ll-background-e1d0bc: #353d2e;
+  --ll-background-e3e5c9: #353d2e;
+  --ll-background-e4c9cd: #45332f;
+  --ll-background-e5e9c9: #353d2e;
+  --ll-background-ebe0cf: #45332f;
+  --ll-background-ebe5d5: #382e27;
+  --ll-background-edf0d9: #353d2e;
+  --ll-background-f0efd8: #353d2e;
+  --ll-background-f0f0e3: #382e27;
+  --ll-background-f1f4e6: #382e27;
+  --ll-background-f3e8da: #45332f;
+  --ll-background-f3e8dc: #45332f;
+  --ll-background-f6f0e7: #382e27;
+  --ll-background-f7f1e5: #382e27;
+  --ll-background-f7f4eb: #241e1a;
+  --ll-background-f7f5ea: #241e1a;
+  --ll-background-fcece9: #45332f;
+  --ll-background-fdeae6: #45332f;
+  --ll-background-fdf2ed: #45332f;
+  --ll-background-fdf8f3: #241e1a;
+  --ll-background-fff2ee: #45332f;
+  --ll-background-fff3ee: #45332f;
+  --ll-background-fffdf8: #241e1a;
+  --ll-border-bottom-color-c98996: #695448;
+  --ll-border-bottom-e9dfd5: #695448;
+  --ll-border-bottom-ebdcc5: #695448;
+  --ll-border-bottom-ebe2d3: #695448;
+  --ll-border-color-5b3113: #695448;
+  --ll-border-color-b88a32: #695448;
+  --ll-border-color-c98996: #695448;
+  --ll-border-color-d8bca5: #695448;
+  --ll-border-color-deddb4: #695448;
+  --ll-border-color-f4cfcc: #695448;
+  --ll-border-color-f6dbd6: #695448;
+  --ll-border-d5d8a7: #695448;
+  --ll-border-d8bca5: #695448;
+  --ll-border-d8d9aa: #695448;
+  --ll-border-d8d9b5: #695448;
+  --ll-border-dfaeb1: #695448;
+  --ll-border-e2c9bc: #695448;
+  --ll-border-e5dfc9: #695448;
+  --ll-border-e7dfd2: #695448;
+  --ll-border-e8d5c5: #695448;
+  --ll-border-e9d8c8: #695448;
+  --ll-border-e9e2cf: #695448;
+  --ll-border-ebdcc5: #695448;
+  --ll-border-ebe5d5: #695448;
+  --ll-border-ebe6d7: #695448;
+  --ll-border-f1d9d0: #695448;
+  --ll-border-f5d1cf: #695448;
+  --ll-border-top-f0e6dd: #695448;
+  --ll-color-2e7d32: #b9c78e;
+  --ll-color-4a2b10: #f5e9dc;
+  --ll-color-552a0e: #f5e9dc;
+  --ll-color-5a321a: #f5e9dc;
+  --ll-color-5b3113: #f5e9dc;
+  --ll-color-603417: #f5e9dc;
+  --ll-color-667a36: #b9c78e;
+  --ll-color-6d5b4f: #e4a5b2;
+  --ll-color-706c3e: #b9c78e;
+  --ll-color-737444: #b9c78e;
+  --ll-color-75685c: #e4a5b2;
+  --ll-color-78835d: #b9c78e;
+  --ll-color-7c6252: #e4a5b2;
+  --ll-color-7c6859: #e4a5b2;
+  --ll-color-80563e: #f5e9dc;
+  --ll-color-818a3d: #b9c78e;
+  --ll-color-87923e: #b9c78e;
+  --ll-color-897363: #e4a5b2;
+  --ll-color-899343: #b9c78e;
+  --ll-color-8a7c70: #e4a5b2;
+  --ll-color-8c7365: #e4a5b2;
+  --ll-color-8c975a: #b9c78e;
+  --ll-color-8f7e70: #e4a5b2;
+  --ll-color-95867d: #e4a5b2;
+  --ll-color-986d58: #e4a5b2;
+  --ll-color-9a8a7c: #e4a5b2;
+  --ll-color-a0826d: #e4a5b2;
+  --ll-color-a28d7c: #e4a5b2;
+  --ll-color-a48d7c: #e4a5b2;
+  --ll-color-a99586: #e4a5b2;
+  --ll-color-aa998c: #e4a5b2;
+  --ll-color-ad9687: #e4a5b2;
+  --ll-color-b08d79: #e4a5b2;
+  --ll-color-b33b3b: #f19b9b;
+  --ll-color-b49d8e: #e4a5b2;
+  --ll-color-b59b88: #e4a5b2;
+  --ll-color-b69b8d: #e4a5b2;
+  --ll-color-b91c1c: #f19b9b;
+  --ll-color-b9a596: #e4a5b2;
+  --ll-color-bfae9e: #e4a5b2;
+  --ll-color-c98996: #e4a5b2;
+  --ll-color-c9af9f: #e4a5b2;
+  --ll-color-ce858d: #e4a5b2;
+  --ll-color-d89b32: #c5b2a3;
+  --ll-stroke-552a0e: #f5e9dc;
+}

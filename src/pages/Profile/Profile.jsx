@@ -22,7 +22,7 @@ const SHELF_NAME_SUGGESTIONS = [
   'Book Club',
 ];
 
-export function Profile({ user, logout, onSelectBook }) {
+export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
   const [view, setView] = useState('main');
   // Shelf whose full page is open (view === 'shelfDetail').
   const [activeShelfId, setActiveShelfId] = useState(null);
@@ -787,6 +787,20 @@ export function Profile({ user, logout, onSelectBook }) {
             <button type="button" className={styles.settingItem}>
               <span>Import Goodreads Library</span> <span>›</span>
             </button>
+          </div>
+
+          <div className={styles.settingsGroup}>
+            <p className={styles.sectionHeader}>APPEARANCE</p>
+            <div className={styles.settingToggleItem}>
+              <span>Dark Mode</span>
+              <input
+                type="checkbox"
+                className={styles.toggleSwitch}
+                aria-label="Dark Mode"
+                checked={darkMode}
+                onChange={(e) => setDarkMode(e.target.checked)}
+              />
+            </div>
           </div>
 
           <div className={styles.settingsGroup}>

@@ -53,7 +53,7 @@
 }
 
 .rating-value {
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   font-size: 13px;
   white-space: nowrap;
   margin-left: 8px;
@@ -96,8 +96,8 @@
 
 .review-form-page {
   min-height: 100vh;
-  background: #fdf8f3;
-  color: #5b3113;
+  background: var(--ll-background-fdf8f3, #fdf8f3);
+  color: var(--ll-color-5b3113, #5b3113);
   padding: 0 20px 50px;
   box-sizing: border-box;
 }
@@ -112,7 +112,7 @@
 .review-back-button {
   background: none;
   border: none;
-  color: #b69b8d;
+  color: var(--ll-color-b69b8d, #b69b8d);
   font-size: 15px;
   cursor: pointer;
   padding: 8px 0;
@@ -140,10 +140,10 @@
   width: 100%;
   min-height: 205px;
   resize: vertical;
-  border: 1px solid #e9e2cf;
+  border: 1px solid var(--ll-border-e9e2cf, #e9e2cf);
   border-radius: 22px;
-  background: #f7f4eb;
-  color: #5b3113;
+  background: var(--ll-background-f7f4eb, #f7f4eb);
+  color: var(--ll-color-5b3113, #5b3113);
   font: 16px Arial, sans-serif;
   padding: 22px;
   box-sizing: border-box;
@@ -151,16 +151,16 @@
 }
 
 .review-textarea::placeholder {
-  color: #b9a596;
+  color: var(--ll-color-b9a596, #b9a596);
 }
 
 .review-textarea:focus {
-  border-color: #b88a32;
+  border-color: var(--ll-border-color-b88a32, #b88a32);
 }
 
 .review-type-heading {
   margin: 52px 0 30px;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   font-family: Georgia, serif;
   font-size: 24px;
   font-weight: 400;
@@ -181,7 +181,7 @@
   gap: 4px;
   border: none;
   background: transparent;
-  color: #a28d7c;
+  color: var(--ll-color-a28d7c, #a28d7c);
   cursor: pointer;
   padding: 4px 0;
   text-align: center;
@@ -197,7 +197,7 @@
 }
 
 .review-type-option.active {
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
 }
 
 .review-type-switch {
@@ -246,7 +246,7 @@
 .review-spoiler-switch {
   width: 55px;
   height: 30px;
-  background: #e4c9cd; /* Muted pink when OFF */
+  background: var(--ll-background-e4c9cd, #e4c9cd); /* Muted pink when OFF */
   border-radius: 20px;
   position: relative;
   flex-shrink: 0;
@@ -255,7 +255,7 @@
 
 /* Brighter pink when ON */
 .review-spoiler-row input:checked + .review-spoiler-switch {
-  background: #c77f91;
+  background: var(--ll-background-c77f91, #c77f91);
 }
 
 .review-spoiler-switch::after {
@@ -305,11 +305,11 @@
 }
 
 .review-error {
-  color: #b33b3b;
+  color: var(--ll-color-b33b3b, #b33b3b);
 }
 
 .review-success {
-  color: #667a36;
+  color: var(--ll-color-667a36, #667a36);
 }
 
 @media (max-width: 400px) {
@@ -333,13 +333,13 @@
 
 /* Spoiler label selected/unselected styling */
 .review-spoiler-label {
-  color: #a28d7c;
+  color: var(--ll-color-a28d7c, #a28d7c);
   font-weight: 500;
   transition: color 0.2s ease;
 }
 
 .review-spoiler-label.active {
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   font-weight: 700;
 }
 

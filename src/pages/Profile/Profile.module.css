@@ -1009,3 +1009,55 @@
   padding: 22px 0;
   margin: 0;
 }
+
+/* Dark Mode */
+:global([data-theme="dark"]) .profileContainer {
+  background-color: #241e1a;
+  color: #f5e9dc;
+}
+
+:global([data-theme="dark"]) .profileTitle,
+:global([data-theme="dark"]) .userName,
+:global([data-theme="dark"]) .backBtn,
+:global([data-theme="dark"]) .iconBtn {
+  color: #f5e9dc;
+}
+
+:global([data-theme="dark"]) .userBio,
+:global([data-theme="dark"]) .sectionHeader,
+:global([data-theme="dark"]) .fieldLabel {
+  color: #bca99a;
+}
+
+:global([data-theme="dark"]) .settingItem,
+:global([data-theme="dark"]) .settingToggleItem,
+:global([data-theme="dark"]) .fieldInput,
+:global([data-theme="dark"]) .countrySelect,
+:global([data-theme="dark"]) .pillTag {
+  background: #382e27;
+  color: #f5e9dc;
+  border-color: #493b32;
+}
+
+:global([data-theme="dark"]) .favoritesBg {
+  background: linear-gradient(180deg, #45332f, #353d2e);
+}
+
+:global([data-theme="dark"]) .currentReadsBg,
+:global([data-theme="dark"]) .avatarCircle {
+  background: #353d2e;
+}
+
+:global([data-theme="dark"]) .toggleSwitch {
+  accent-color: #a8b58b;
+}
+
+:global([data-theme="dark"]) .signOutBtn {
+  background-color: #523333;
+  color: #f5e9dc;
+}
+
+:global([data-theme="dark"]) .saveBtn {
+  background-color: #a8b58b;
+  color: #241e1a;
+}
