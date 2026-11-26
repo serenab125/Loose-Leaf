@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import './Timer.css';
 import TimerPlant from './TimerPlant';
+import AppDialog from '../Dialog/AppDialog';
 import ReadingHistory from './ReadingHistory';
 import { saveReadingSession } from '../../services/readingHistoryService';
 
@@ -91,6 +92,35 @@ const [seconds, setSeconds] = useState(0);
 
 const selectedDuration = hours * 3600 + minutes * 60 + seconds;
   const [status, setStatus] = useState('ready');
+  const [endDialog, setEndDialog] = useState(null);
+
+  function requestEndSession() {
+    setEndDialog(status);
+    setStatus('paused');
+  }
+
+  function cancelEndSession() {
+    setStatus(endDialog || 'paused');
+    setEndDialog(null);
+  }
+
+  function finishEarly(shouldSave) {
+    const elapsed = selectedDuration - secondsRemaining;
+
+    if (shouldSave && elapsed > 0) {
+      recordSession(elapsed, false);
+    } else {
+      setSaveMessage(shouldSave
+        ? 'No reading time to save.'
+        : 'Reading session discarded.');
+    }
+
+    sessionRef.current = null;
+    setEndDialog(null);
+    setStatus('ready');
+    setSecondsRemaining(selectedDuration);
+  }
+
 
   const progress =
   selectedDuration > 0
@@ -229,11 +259,7 @@ const plantStage =
     </button>
     <button
       type="button"
-      onClick={() => {
-        recordSession(selectedDuration - secondsRemaining, false);
-        setStatus('ready');
-        setSecondsRemaining(selectedDuration);
-      }}
+      onClick={requestEndSession}
     >
       End
     </button>
@@ -248,11 +274,7 @@ const plantStage =
     </button>
     <button
       type="button"
-      onClick={() => {
-        recordSession(selectedDuration - secondsRemaining, false);
-        setStatus('ready');
-        setSecondsRemaining(selectedDuration);
-      }}
+      onClick={requestEndSession}
     >
       End
     </button>
@@ -273,6 +295,19 @@ const plantStage =
         <p role="status">{saveMessage}</p>
       )}
       </div>
+      {endDialog && (
+        <AppDialog
+          title="End Reading Session?"
+          message="Would you like to save your reading progress or discard this session?"
+          confirmLabel="End & Save Session"
+          cancelLabel="Continue Reading"
+          discardLabel="Discard Session"
+          onConfirm={() => finishEarly(true)}
+          onDiscard={() => finishEarly(false)}
+          onCancel={cancelEndSession}
+        />
+      )}
+
       <ReadingHistory
         user={user}
         refreshKey={saveMessage}

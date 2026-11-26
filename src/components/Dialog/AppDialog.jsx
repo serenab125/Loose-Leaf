@@ -7,6 +7,9 @@ export default function AppDialog({
   onConfirm,
   onCancel,
   confirmLabel = 'OK',
+  cancelLabel = 'Cancel',
+  onDiscard,
+  discardLabel = 'Discard',
   destructive = false
 }) {
   const dialogRef = useRef(null);
@@ -36,7 +39,7 @@ export default function AppDialog({
       <h2 id={titleId}>{title}</h2>
       <p id={messageId}>{message}</p>
 
-      <div className="ll-dialog-actions">
+      <div className={`ll-dialog-actions ${onDiscard ? "ll-dialog-stacked" : ""}`}>
         {onCancel && (
           <button
             type="button"
@@ -44,7 +47,7 @@ export default function AppDialog({
             onClick={onCancel}
             autoFocus
           >
-            Cancel
+            {cancelLabel}
           </button>
         )}
 
@@ -57,6 +60,16 @@ export default function AppDialog({
         >
           {confirmLabel}
         </button>
+
+        {onDiscard && (
+          <button
+            type="button"
+            className="ll-dialog-delete"
+            onClick={onDiscard}
+          >
+            {discardLabel}
+          </button>
+        )}
       </div>
     </dialog>
   );

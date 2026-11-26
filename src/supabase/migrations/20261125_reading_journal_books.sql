@@ -1,0 +1,4 @@
+ALTER TABLE public.reading_journal
+ADD COLUMN IF NOT EXISTS book_id TEXT,
+ADD COLUMN IF NOT EXISTS book_author TEXT,
+ADD COLUMN IF NOT EXISTS cover_url TEXT;

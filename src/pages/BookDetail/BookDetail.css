@@ -782,3 +782,54 @@
 .book-detail-editing {
   min-height: 100vh;
 }
+/* Compact review and progress update popups */
+.reaction-modal {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 340px;
+}
+
+/* Keep the status dropdown within the visible screen */
+.status-dropdown-menu {
+  max-height: var(--status-menu-max-height, 400px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.status-dropdown-item {
+  flex-shrink: 0;
+}
+
+/* Always open the status menu downward */
+.status-dropdown-menu,
+.status-dropdown-menu.above {
+  position: relative;
+  top: auto;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  margin: 12px auto 0;
+  max-height: none;
+  overflow: visible;
+  width: 280px;
+  max-width: 100%;
+}
+
+.write-review-btn {
+  display: block;
+  margin: 16px auto;
+  padding: 10px 20px;
+  border: 1px solid #d9dfc5;
+  border-radius: 999px;
+  background: #e8ecd8;
+  color: #626b42;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+[data-theme="dark"] .write-review-btn {
+  background: #424b35;
+  color: #e8ecd8;
+  border-color: #596347;
+}

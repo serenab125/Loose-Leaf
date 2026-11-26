@@ -42,14 +42,76 @@ function App() {
 
   const [currentBook, setCurrentBook] = useState(null)
 
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('looseleaf_dark_mode') === 'true'
+  const [themePreference, setThemePreference] = useState({
+    userId: null,
+    enabled: false
   })
+
+  const darkMode = Boolean(
+    user?.id &&
+    themePreference.userId === user.id &&
+    themePreference.enabled
+  )
+
+  useEffect(() => {
+    let cancelled = false
+
+    if (!user?.id || initializing) return
+
+    async function loadTheme() {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('dark_mode')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (cancelled) return
+
+      if (error) {
+        console.error('Could not load theme preference:', error)
+        return
+      }
+
+      setThemePreference({
+        userId: user.id,
+        enabled: data?.dark_mode === true
+      })
+    }
+
+    loadTheme()
+
+    return () => { cancelled = true }
+  }, [user?.id, initializing])
 
   useEffect(() => {
     document.documentElement.dataset.theme = darkMode ? 'dark' : 'light'
-    localStorage.setItem('looseleaf_dark_mode', String(darkMode))
   }, [darkMode])
+
+  const setDarkMode = async (enabled) => {
+    if (!user?.id) return
+
+    const userId = user.id
+    const previous = darkMode
+
+    setThemePreference({ userId, enabled })
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ dark_mode: enabled })
+      .eq('id', userId)
+      .select('id')
+      .single()
+
+    if (error || !data) {
+      console.error('Could not save theme preference:', error)
+      setThemePreference(current =>
+        current.userId === userId && current.enabled === enabled
+          ? { userId, enabled: previous }
+          : current
+      )
+    }
+  }
+
   const [view, setView] = useState(() => {
     if (window.location.pathname === '/reset-password') return 'reset'
     return 'login'

@@ -118,3 +118,20 @@
 :root[data-theme="dark"] .ll-dialog-delete {
   background: #a66f79;
 }
+
+.ll-dialog-actions.ll-dialog-stacked {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ll-dialog-stacked .ll-dialog-confirm {
+  order: 1;
+}
+
+.ll-dialog-stacked .ll-dialog-delete {
+  order: 2;
+}
+
+.ll-dialog-stacked .ll-dialog-cancel {
+  order: 3;
+}

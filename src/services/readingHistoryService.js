@@ -69,3 +69,16 @@ export async function deleteJournalEntry(id, userId) {
 
   if (error) throw error;
 }
+
+export async function deleteReadingSession(id, userId) {
+  const { data, error } = await supabase
+    .from('reading_sessions')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userId)
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data;
+}
