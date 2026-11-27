@@ -1,4 +1,3 @@
-
 // src/quiz/quizData.js
 
 export const QUIZ_SECTIONS = [
@@ -22,6 +21,8 @@ export const QUIZ_SECTIONS = [
     type: 'multi-select',
     instructions: 'Pick as many as you like.',
     style: 'pink',
+    allowOther: true,
+    otherPlaceholder: 'Type a genre or trope (e.g., Found Family, Dystopian)...',
     options: [
       { id: 'romance', label: 'Romance' },
       { id: 'mystery', label: 'Mystery' },
@@ -38,6 +39,7 @@ export const QUIZ_SECTIONS = [
       { id: 'historical', label: 'Historical Fiction' },
       { id: 'coming-of-age', label: 'Coming-of-age' },
       { id: 'nonfiction', label: 'Nonfiction' },
+      { id: 'other', label: 'Other' },
       { id: 'not-sure', label: "I'm not sure" },
     ],
   },
@@ -48,6 +50,8 @@ export const QUIZ_SECTIONS = [
     type: 'multi-select',
     instructions: 'Movies and shows count as taste too — pick as many as you like.',
     style: 'pink',
+    allowOther: true,
+    otherPlaceholder: 'Type another type of show or film (e.g., Anime, K-Dramas)...',
     options: [
       { id: 'romance', label: 'Romance' },
       { id: 'mystery', label: 'Mystery' },
@@ -62,6 +66,7 @@ export const QUIZ_SECTIONS = [
       { id: 'animation', label: 'Animation' },
       { id: 'action', label: 'Action' },
       { id: 'reality', label: 'Reality TV' },
+      { id: 'other', label: 'Other' },
       { id: 'everything', label: 'A bit of everything' },
     ],
   },
@@ -70,9 +75,11 @@ export const QUIZ_SECTIONS = [
     title: 'Any Favorites?',
     question: 'Seen any of these?',
     type: 'multi-select',
-    instructions: 'Tap the ones you liked. No pressure if none look familiar.',
+    instructions: 'Tap the ones you liked, or pick Other to type your own show or movie.',
     style: 'pink',
     initialVisible: 15,
+    allowOther: true,
+    otherPlaceholder: 'Type a show or movie (e.g., Severance, Dune, Avatar)...',
     options: [
       { id: 'walking-dead', label: 'The Walking Dead' },
       { id: 'stranger-things', label: 'Stranger Things' },
@@ -103,6 +110,7 @@ export const QUIZ_SECTIONS = [
       { id: 'good-place', label: 'The Good Place' },
       { id: 'queens-gambit', label: "The Queen's Gambit" },
       { id: 'interstellar', label: 'Interstellar' },
+      { id: 'other', label: 'Other' },
       { id: 'not-sure', label: 'None of These' },
     ],
   },
@@ -113,6 +121,8 @@ export const QUIZ_SECTIONS = [
     type: 'multi-select',
     instructions: 'We can always change it later.',
     style: 'olive',
+    allowOther: true,
+    otherPlaceholder: 'Describe a vibe (e.g., Whimsical, Fast-paced, Bittersweet)...',
     options: [
       { id: 'cozy', label: 'Cozy & Comforting' },
       { id: 'funny', label: 'Funny & Light' },
@@ -121,6 +131,7 @@ export const QUIZ_SECTIONS = [
       { id: 'dark', label: 'Dark & Mysterious' },
       { id: 'exciting', label: 'Exciting' },
       { id: 'thought-provoking', label: 'Thought-provoking' },
+      { id: 'other', label: 'Other' },
       { id: 'surprise', label: 'Surprise me!' },
     ],
   },

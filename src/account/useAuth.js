@@ -49,14 +49,17 @@ export function useAuth() {
       .finally(() => {
         if (!cancelled) setInitializing(false);
       });
+      
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (cancelled) return;
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (cancelled) return;
-      setUser(session?.user ?? null);
-      setInitializing(false);
-    });
+  // Keep the user synchronized with Supabase.
+  // Initialization is completed by restore().finally().
+        setUser(session?.user ?? null);
+      });
+
 
     return () => {
       cancelled = true;

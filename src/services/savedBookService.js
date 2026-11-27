@@ -7,12 +7,25 @@
  */
 
 import { supabase } from '../supabaseClient';
+import {
+  ensureDefaultShelves,
+  fetchUserShelvesWithBooks,
+  addBookToShelf,
+  removeBookFromShelf,
+} from './shelfService';
 
 /** Maps the Book Detail dropdown labels to stored reading_status values. */
 export const READING_STATUSES = {
   'Currently Reading': 'currently_reading',
   Finished: 'finished',
   'Did Not Finish': 'did_not_finish',
+};
+
+/** Maps stored reading_status values to the user's default shelf names. */
+const STATUS_TO_DEFAULT_SHELF = {
+  currently_reading: 'Current Reads',
+  finished: 'Finished',
+  did_not_finish: 'Did Not Finish',
 };
 
 /** Reverse lookup, for rendering a stored row as a dropdown label. */
@@ -25,8 +38,44 @@ export const STATUS_LABELS = Object.entries(READING_STATUSES).reduce(
 );
 
 /**
- * Insert or update the signed-in user's reading status for one book.
- * Uses UPDATE-then-INSERT so it does not depend on a unique constraint.
+ * Syncs a book into the default shelf matching `cleanStatus` and removes it
+ * from the other two default shelves (leaving custom shelves intact).
+ */
+async function syncDefaultShelfForStatus({
+  userId,
+  bookId,
+  title,
+  author,
+  coverUrl,
+  statusValue,
+}) {
+  const targetShelfName = STATUS_TO_DEFAULT_SHELF[statusValue];
+  if (!targetShelfName) return;
+
+  await ensureDefaultShelves(userId);
+  const shelves = await fetchUserShelvesWithBooks(userId);
+
+  const defaultShelfNames = new Set(Object.values(STATUS_TO_DEFAULT_SHELF));
+
+  for (const shelf of shelves) {
+    if (!defaultShelfNames.has(shelf.name)) continue;
+
+    const isOnShelf = (shelf.books || []).some(
+      (b) => (b.book_id || b.id) === bookId
+    );
+
+    if (shelf.name === targetShelfName && !isOnShelf) {
+      await addBookToShelf(userId, shelf.id, bookId, title, author, coverUrl);
+    } else if (shelf.name !== targetShelfName && isOnShelf) {
+      await removeBookFromShelf(userId, shelf.id, bookId);
+    }
+  }
+}
+
+/**
+ * Insert or update the signed-in user's reading status for one book,
+ * and sync the corresponding default shelf ("Current Reads", "Finished",
+ * or "Did Not Finish").
  */
 export async function saveBookStatus({
   userId,
@@ -61,23 +110,37 @@ export async function saveBookStatus({
     .select();
 
   if (updateError) throw updateError;
-  if (updated && updated.length > 0) return updated[0];
 
-  const { data: inserted, error: insertError } = await supabase
-    .from('saved_books')
-    .insert({
-      user_id: cleanUserId,
-      open_library_id: cleanBookId,
-      title: cleanTitle,
-      author: cleanAuthor,
-      cover_url: cleanCover,
-      reading_status: cleanStatus,
-    })
-    .select()
-    .single();
+  let savedRow = updated && updated.length > 0 ? updated[0] : null;
 
-  if (insertError) throw insertError;
-  return inserted;
+  if (!savedRow) {
+    const { data: inserted, error: insertError } = await supabase
+      .from('saved_books')
+      .insert({
+        user_id: cleanUserId,
+        open_library_id: cleanBookId,
+        title: cleanTitle,
+        author: cleanAuthor,
+        cover_url: cleanCover,
+        reading_status: cleanStatus,
+      })
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
+    savedRow = inserted;
+  }
+
+  await syncDefaultShelfForStatus({
+    userId: cleanUserId,
+    bookId: cleanBookId,
+    title: cleanTitle,
+    author: cleanAuthor,
+    coverUrl: cleanCover,
+    statusValue: cleanStatus,
+  });
+
+  return savedRow;
 }
 
 /** Fetch the signed-in user's saved row for one book, if any. */

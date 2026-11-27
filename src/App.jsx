@@ -15,6 +15,27 @@ import ReadingTimer from './components/Timer/Timer'
 import { supabase } from './supabaseClient'
 import { PROGRESS_KEY } from './quiz/useQuiz'
 
+
+
+const PAGE_ROUTES = {
+  home: '/home',
+  search: '/search',
+  profile: '/profile',
+  timer: '/timer',
+}
+
+function getViewFromUrl() {
+  const path = window.location.pathname
+
+  if (path === '/reset-password') return 'reset'
+
+  const match = Object.entries(PAGE_ROUTES).find(
+    ([, route]) => route === path
+  )
+
+  return match?.[0] ?? 'login'
+}
+
 const skippedQuizKey = (userId) => `looseleaf_quiz_skipped_${userId}`
 
 function readSkippedQuiz(userId) {
@@ -37,14 +58,42 @@ function hasUnfinishedQuiz() {
   }
 }
 
+
+const SELECTED_BOOK_KEY = 'looseleaf_selected_book'
+
+function getBookId(book) {
+  return book?.bookId || book?.book_id ||
+    book?.open_library_id || book?.id
+}
+
+function readSavedBook() {
+  try {
+    const saved = sessionStorage.getItem(SELECTED_BOOK_KEY)
+    return saved ? JSON.parse(saved) : null
+  } catch {
+    return null
+  }
+}
+
+
 function App() {
   const { user, logout, initializing } = useAuth()
 
-  const [currentBook, setCurrentBook] = useState(null)
-  const [view, setView] = useState(() => {
-    if (window.location.pathname === '/reset-password') return 'reset'
-    return 'login'
+  const [currentBook, setCurrentBook] = useState(() => {
+  if (window.location.pathname.startsWith('/book/')) {
+    const saved = readSavedBook()
+    const urlId = decodeURIComponent(
+      window.location.pathname.slice('/book/'.length)
+    )
+
+    if (saved && String(getBookId(saved)) === urlId) {
+      return saved
+    }
+  }
+
+  return null
   })
+  const [view, setView] = useState(getViewFromUrl)
   const [quizReady, setQuizReady] = useState(false)
   const [gateUserId, setGateUserId] = useState(null)
 
@@ -82,13 +131,18 @@ function App() {
           Object.keys(data.reading_preferences).length > 0
       )
 
-      setView(
-        hasUnfinishedQuiz()
-          ? 'quiz'
-          : completedQuiz || readSkippedQuiz(user.id)
-            ? 'home'
-            : 'quiz'
-      )
+      const shouldShowQuiz = hasUnfinishedQuiz() || (!completedQuiz && !readSkippedQuiz(user.id))
+
+      const requestedView = getViewFromUrl()
+
+      if (shouldShowQuiz) {
+        setView('quiz')
+      } else if (PAGE_ROUTES[requestedView]) {
+        setView(requestedView)
+      } else {
+        setView('home')
+      }
+
       setQuizReady(true)
     }
 
@@ -101,14 +155,79 @@ function App() {
 
   const handleLogout = async () => {
     await logout()
+    sessionStorage.removeItem(SELECTED_BOOK_KEY)
     setCurrentBook(null)
+    window.history.replaceState({}, '', '/')
     setView('login')
   }
+  
+const goTo = (nextView) => {
+  setCurrentBook(null)
+  setView(nextView)
 
-  const goTo = (nextView) => {
-    setCurrentBook(null)
-    setView(nextView)
+  const route = PAGE_ROUTES[nextView]
+
+  if (route && window.location.pathname !== route) {
+    window.history.pushState({}, '', route)
   }
+}
+
+
+useEffect(() => {
+  const handlePopState = () => {
+    const path = window.location.pathname
+
+    if (path.startsWith('/book/')) {
+      const saved = readSavedBook()
+      const urlId = decodeURIComponent(
+        path.slice('/book/'.length)
+      )
+
+      if (saved && String(getBookId(saved)) === urlId) {
+        setCurrentBook(saved)
+        return
+      }
+
+      // Don't show an unrelated book if the URL is invalid.
+      setCurrentBook(null)
+      setView('home')
+      return
+    }
+
+    setCurrentBook(null)
+    setView(getViewFromUrl())
+  }
+
+  window.addEventListener('popstate', handlePopState)
+
+  return () => {
+    window.removeEventListener('popstate', handlePopState)
+  }
+}, [])
+
+
+const openBook = (book) => {
+  const bookId = getBookId(book)
+
+  if (!book || !bookId) {
+    console.error('Cannot open book without a valid ID.')
+    return
+  }
+
+  sessionStorage.setItem(
+    SELECTED_BOOK_KEY,
+    JSON.stringify(book)
+  )
+
+  window.history.pushState(
+    {},
+    '',
+    `/book/${encodeURIComponent(bookId)}`
+  )
+
+  setCurrentBook(book)
+}
+
 
   if (initializing || (user && !quizReady && view !== 'reset')) {
     return (
@@ -149,7 +268,11 @@ function App() {
         <BookDetail
           book={currentBook}
           user={user}
-          onBack={() => setCurrentBook(null)}
+          onBack={() => {
+            sessionStorage.removeItem(SELECTED_BOOK_KEY)
+            setCurrentBook(null)
+            goTo('home')
+          }}
           onUpdateStatus={(book, status) => {
             console.log(`Updated ${book?.title} to status: ${status}`)
           }}
@@ -174,15 +297,15 @@ function App() {
             }}
             onNavigateToSearch={() => setView('search')}
             onNavigateToTimer={() => setView('timer')}
-            onSelectBook={(book) => setCurrentBook(book)}
+            onSelectBook={openBook}
           />
         ) : view === 'search' ? (
-          <Search onSelectBook={(book) => setCurrentBook(book)} />
+          <Search onSelectBook={openBook} />
         ) : view === 'profile' ? (
           <Profile
             user={user}
             logout={handleLogout}
-            onSelectBook={(book) => setCurrentBook(book)}
+            onSelectBook={openBook}
           />
         ) : view === 'timer' ? (
           <ReadingTimer />
