@@ -396,8 +396,6 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     // Currently Reading / Finished / Did Not Finish
     setStatusSaving(true);
     try {
-      let evicted = [];
-
       // Only one book can hold the "current read" slot. Hand it over first:
       // the previous holder loses its status and leaves the Current Reads
       // shelf, otherwise saving this book as currently reading violates the

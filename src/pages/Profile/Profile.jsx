@@ -13,7 +13,15 @@ import {
   sortShelves,
 } from '../../services/shelfService';
 import { searchBooksByTitle } from '../../services/bookService';
-import { fetchMyBookPageReactions } from '../../services/pageReactionService';
+const PROFILE_PHOTO_BUCKET = 'profile_images';
+
+/**
+ * Build the public URL for a stored profile photo.
+ */
+const photoUrlFor = (path) =>
+  path
+    ? supabase.storage.from(PROFILE_PHOTO_BUCKET).getPublicUrl(path).data.publicUrl || ''
+    : '';
 import { fetchMyBookReviews } from '../../services/reviewService';
 
 
@@ -58,8 +66,15 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
   const [bio, setBio] = useState(
     'Book lover, tea enthusiast, and collector of dog-eared paperbacks. Always chasing a new good read.'
   );
+  const BIO_MAX_LENGTH = 280;
+  const PHOTO_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+  const [photoObject, setPhotoObject] = useState('');
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoUploadError, setPhotoUploadError] = useState('');
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [phone, setPhone] = useState('(555) 123-4567');
   const [isSaving, setIsSaving] = useState(false);
+  const [settingsMessage, setSettingsMessage] = useState('');
   const [saveMessage, setSaveMessage] = useState('');
   const [readingReminders, setReadingReminders] = useState(true);
   const [newRecommendations, setNewRecommendations] = useState(true);
@@ -75,14 +90,13 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState(''); // FIX Bug 4
-  const [lastAddedBook, setLastAddedBook] = useState(null);
   const [addedBookKeys, setAddedBookKeys] = useState(() => new Set());
   const [savedMessage, setSavedMessage] = useState('');
   // Book whose remove request is in flight, so its button can be disabled.
   const [removingBookKey, setRemovingBookKey] = useState(null);
 
   // Chapter reactions shown on the profile (from BookDetail progress updates)
-  const [userReactions, setUserReactions] = useState([]);
+  const [userReactions] = useState([]);
   const [userReviews, setUserReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviewsError, setReviewsError] = useState('');
@@ -118,7 +132,6 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
   // New shelf creation state
   const [showNewShelfModal, setShowNewShelfModal] = useState(false);
   const [newShelfNameValidation, setNewShelfNameValidation] = useState('');
-  const [isCreatingShelf, setIsCreatingShelf] = useState(false);
 
   // Stable loader: returns shelves plus any load error, so callers decide
   // when to apply them (and can render feedback from a promise callback).
@@ -139,30 +152,40 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
     if (!user) return;
     let cancelled = false;
 
+
+
     async function loadProfileData() {
       const { data, error } = await supabase
+
         .from('profiles')
-        .select('full_name, bio, phone')
+
+        .select('full_name, bio, phone, photo_object, reading_reminders, new_recommendations')
+
         .eq('id', user.id)
+
         .single();
+
       if (!error && data) {
+
         if (data.full_name) setFullName(data.full_name);
+
         if (data.bio) setBio(data.bio);
+
         if (data.phone) setPhone(data.phone);
+
+        if (data.photo_object) setPhotoObject(data.photo_object);
+
+        if (data.reading_reminders !== undefined) setReadingReminders(Boolean(data.reading_reminders));
+
+        if (data.new_recommendations !== undefined) setNewRecommendations(Boolean(data.new_recommendations));
+
       }
 
-      try {
-        const reactionsData = await fetchMyBookPageReactions();
-        if (reactionsData && !cancelled) {
-          setUserReactions(reactionsData);
-        }
-      } catch (reactionsError) {
-        console.warn('Could not load chapter reactions:', reactionsError);
-      }
     }
 
-    loadProfileData();
 
+
+    loadProfileData();
     // Every account owns the three default shelves. Seed any that are missing
     // before reading the list, so they appear on the user's very first load.
     ensureDefaultShelves(user.id)
@@ -392,7 +415,6 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
       ));
 
       setAddedBookKeys((prev) => new Set(prev).add(bookKey));
-      setLastAddedBook(book);
 
       const shelfName = shelves.find((s) => s.id === addBookShelfId)?.name;
       setSavedMessage(`Added to "${shelfName || 'shelf'}".`);
@@ -476,11 +498,77 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
     }
   };
 
+  const uploadPhoto = async (file) => {
+    if (!file) return null;
+    if (file.size > PHOTO_MAX_FILE_SIZE) {
+      setPhotoUploadError('The photo must be 5 MB or smaller.');
+      return null;
+    }
+    setPhotoUploadError('');
+    setPhotoUploading(true);
+    try {
+      const ext = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : 'jpg';
+      const mime = file.type || `image/${ext || 'jpg'}`;
+      const path = `profile_${user.id}_${Date.now()}.${ext || 'jpg'}`;
+      const { data, error: uploadError } = await supabase.storage
+        .from(PROFILE_PHOTO_BUCKET)
+        .upload(path, file, { cacheControl: '3600', contentType: mime });
+      if (uploadError) throw uploadError;
+      if (!data || !data.path) throw new Error('Upload did not return a path.');
+      const url = supabase.storage
+        .from(PROFILE_PHOTO_BUCKET)
+        .getPublicUrl(data.path)
+        .data.publicUrl;
+      if (!url) throw new Error('Upload did not return a URL.');
+      return data.path;
+    } catch (err) {
+      console.error('Photo upload error:', err);
+      setPhotoUploadError(err?.message || 'Could not upload the photo.');
+      return null;
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  const saveSetting = async (key, value, revert) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ [key]: value })
+        .eq('id', user.id);
+      if (error) throw error;
+      setSettingsMessage('');
+    } catch (err) {
+      console.error('Could not save setting:', err);
+      setSettingsMessage('Could not save that setting. Your change was not applied.');
+      if (revert) revert();
+    }
+  };
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
+    if (bio.length > BIO_MAX_LENGTH) {
+      setSaveMessage(`Bio must be ${BIO_MAX_LENGTH} characters or fewer.`);
+      return;
+    }
     setIsSaving(true);
     setSaveMessage('');
     try {
+      const currentPhotoObject = photoObject;
+      let newPhotoObject = currentPhotoObject;
+      if (photoFile) {
+        newPhotoObject = await uploadPhoto(photoFile);
+        if (!newPhotoObject) {
+          setSaveMessage('Could not upload the photo. Please use an image 5 MB or smaller.');
+          return;
+        }
+      }
+      if (newPhotoObject && newPhotoObject !== currentPhotoObject) {
+        if (currentPhotoObject) {
+          await supabase.storage.from(PROFILE_PHOTO_BUCKET).remove([currentPhotoObject]);
+        }
+      }
       const { error } = await supabase.from('profiles').upsert(
         {
           id: user.id,
@@ -488,11 +576,16 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
           full_name: fullName,
           bio: bio,
           phone: phone,
+          photo_object: newPhotoObject,
+          reading_reminders: readingReminders,
+          new_recommendations: newRecommendations,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'id' }
       );
       if (error) throw error;
+      setPhotoFile(null);
+      setPhotoUploadError('');
       setSaveMessage('Profile saved successfully!');
       setTimeout(() => {
         setSaveMessage('');
@@ -500,12 +593,16 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
       }, 1000);
     } catch (err) {
       console.error('Save profile error:', err);
-      setSaveMessage('Error saving profile changes.');
+      const isInternal = /internal|timeout|ECONNREFUSED/i.test(err?.message || '');
+      setSaveMessage(
+        isInternal
+          ? 'Your changes did not apply due to an internal issue.'
+          : 'Error saving profile changes.'
+      );
     } finally {
       setIsSaving(false);
     }
   };
-
   const openShelfDetail = (shelfId) => {
     setActiveShelfId(shelfId);
     setShelfDetailFrom(view);
@@ -599,52 +696,6 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
   };
 
   // Create a brand-new shelf and drop the book the user just tapped onto it.
-  const handleCreateShelfFromAddBook = async () => {
-    if (!user || !lastAddedBook) return;
-
-    const name = newShelfName.trim();
-    if (!name) {
-      setNewShelfNameValidation('Shelf name is required.');
-      return;
-    }
-
-    setIsCreatingShelf(true);
-    setNewShelfNameValidation('');
-    try {
-      const created = await createShelf(user.id, name);
-      if (!created) throw new Error('Could not create the shelf.');
-
-      await addBookToShelf(
-        user.id,
-        created.id,
-        lastAddedBook.bookId || lastAddedBook.id,
-        lastAddedBook.title,
-        lastAddedBook.author,
-        lastAddedBook.coverUrl || lastAddedBook.cover
-      );
-
-      const refreshed = await loadShelves();
-      if (refreshed.error) {
-        setSavedMessage(refreshed.error);
-      } else if (refreshed.shelves.length > 0) {
-        setShelves(refreshed.shelves);
-      }
-
-      setShowAddBookModal(false);
-      setLastAddedBook(null);
-      setAddedBookKeys(new Set());
-      setSearchQuery('');
-      setSearchResults([]);
-      setNewShelfName('');
-      setSavedMessage(`Added to "${created.name}".`);
-      setTimeout(() => setSavedMessage(''), 2000);
-    } catch (err) {
-      console.error('Create shelf from add-book error:', err);
-      setNewShelfNameValidation(err.message || 'Could not create the shelf.');
-    } finally {
-      setIsCreatingShelf(false);
-    }
-  };
 
   const renderShelfPreview = (shelf) => {
     const books = shelf.books || [];
@@ -878,7 +929,17 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
 
           <div className={styles.userInfoCard}>
             <div className={styles.avatarWrapper}>
-              <div className={styles.avatarCircle}>👤</div>
+              {photoObject ? (
+                <div className={styles.avatarImageWrap}>
+                  <img
+                    src={photoUrlFor(photoObject)}
+                    alt="Profile"
+                    className={styles.avatarImage}
+                  />
+                </div>
+              ) : (
+                <div className={styles.avatarCircle}>👤</div>
+              )}
               <button
                 type="button"
                 className={styles.editBadge}
@@ -1129,8 +1190,40 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
             ← Edit Profile
           </button>
           <div className={styles.avatarWrapperCenter}>
-            <div className={styles.avatarCircle}>👤</div>
-            <div className={styles.editBadgeCenter}>✎</div>
+            {photoObject ? (
+              <div className={styles.avatarImageWrap}>
+                <img
+                  src={photoUrlFor(photoObject)}
+                  alt="Profile"
+                  className={styles.avatarImage}
+                />
+              </div>
+            ) : (
+              <div className={styles.avatarCircle}>👤</div>
+            )}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              capture="user"
+              style={{ display: 'none' }}
+              id="photo-input"
+              onChange={(e) => {
+                setPhotoFile(e.target.files?.[0] || null);
+                setPhotoUploadError('');
+              }}
+            />
+            <button
+              type="button"
+              className={styles.editBadgeCenter}
+              onClick={() => document.getElementById('photo-input').click()}
+              disabled={photoUploading}
+              title={photoUploading ? 'Uploading…' : 'Change photo'}
+            >
+              {photoUploading ? '⏳' : '✎'}
+            </button>
+            {photoUploadError && (
+              <p className={styles.saveFeedback} style={{ textAlign: 'center' }}>{photoUploadError}</p>
+            )}
           </div>
           <form onSubmit={handleSaveProfile} className={styles.editForm}>
             <div className={styles.fieldGroup}>
@@ -1231,7 +1324,11 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
                 type="checkbox"
                 className={styles.toggleSwitch}
                 checked={readingReminders}
-                onChange={(e) => setReadingReminders(e.target.checked)}
+                onChange={(e) => {
+                  const v = e.target.checked;
+                  setReadingReminders(v);
+                  saveSetting('reading_reminders', v, () => setReadingReminders(!v));
+                }}
               />
             </div>
             <div className={styles.settingToggleItem}>
@@ -1240,7 +1337,11 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
                 type="checkbox"
                 className={styles.toggleSwitch}
                 checked={newRecommendations}
-                onChange={(e) => setNewRecommendations(e.target.checked)}
+                onChange={(e) => {
+                  const v = e.target.checked;
+                  setNewRecommendations(v);
+                  saveSetting('new_recommendations', v, () => setNewRecommendations(!v));
+                }}
               />
             </div>
           </div>
@@ -1251,6 +1352,8 @@ export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
               <span>Help Center &amp; Contact</span> <span>›</span>
             </button>
           </div>
+
+            {settingsMessage && <p className={styles.saveFeedback}>{settingsMessage}</p>}
 
           <button type="button" className={styles.signOutBtn} onClick={logout}>
             Sign Out
