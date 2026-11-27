@@ -352,3 +352,114 @@
   outline-offset: 3px;
   border-radius: 6px;
 }
+/* Question dark mode */
+:global(:root[data-theme="dark"]) .section,
+:global(:root[data-theme="dark"]) .questionText,
+:global(:root[data-theme="dark"]) .optionTitle,
+:global(:root[data-theme="dark"]) .pill .optionTitle {
+  color: #f5e9dc;
+}
+
+:global(:root[data-theme="dark"]) .instructions,
+:global(:root[data-theme="dark"]) .optionSubtitle {
+  color: #bca99a;
+}
+
+:global(:root[data-theme="dark"]) .sectionTitle {
+  color: #dce5b8;
+}
+
+:global(:root[data-theme="dark"]) .greenNumber {
+  background: #353d2e;
+  color: #dce5b8;
+}
+
+:global(:root[data-theme="dark"]) .pinkNumber,
+:global(:root[data-theme="dark"]) .multiBadge {
+  background: #45332f;
+  color: #edc1c4;
+}
+
+:global(:root[data-theme="dark"]) .optionRow {
+  background: #302720;
+  border-color: #65734e;
+}
+
+:global(:root[data-theme="dark"]) .optionRow:hover {
+  background: #353d2e;
+  border-color: #a8b58b;
+}
+
+:global(:root[data-theme="dark"]) .optionCheck {
+  border-color: #8d8073;
+}
+
+:global(:root[data-theme="dark"]) .optionRow:has(input:checked) .optionCheck {
+  background: #a8b58b;
+  border-color: #a8b58b;
+}
+
+:global(:root[data-theme="dark"]) .optionRow:has(input:checked) .optionCheck::after {
+  background: #241e1a;
+}
+
+:global(:root[data-theme="dark"]) .pill {
+  background: #302720;
+  border-color: #654b45;
+}
+
+:global(:root[data-theme="dark"]) .pill:hover {
+  background: #45332f;
+}
+
+:global(:root[data-theme="dark"]) .pill.selectedPink,
+:global(:root[data-theme="dark"]) .optionRow.selectedPink {
+  background: #59403c;
+  border-color: #d49ba5;
+}
+
+:global(:root[data-theme="dark"]) .pill.selectedOlive,
+:global(:root[data-theme="dark"]) .optionRow.selectedOlive {
+  background: #353d2e;
+  border-color: #a8b58b;
+}
+
+:global(:root[data-theme="dark"]) .otherBox,
+:global(:root[data-theme="dark"]) .otherInput {
+  background: #302720;
+  border-color: #493b32;
+  color: #f5e9dc;
+}
+
+:global(:root[data-theme="dark"]) .otherInput::placeholder {
+  color: #bca99a;
+}
+
+:global(:root[data-theme="dark"]) .otherAddButton {
+  background: #a8b58b;
+  color: #241e1a;
+}
+
+:global(:root[data-theme="dark"]) .customTag {
+  background: #45332f;
+  color: #edc1c4;
+}
+
+:global(:root[data-theme="dark"]) .customTagRemove {
+  color: #edc1c4;
+}
+
+:global(:root[data-theme="dark"]) .showMoreButton {
+  color: #dce5b8;
+}
+
+:global(:root[data-theme="dark"]) .showMoreButton:hover {
+  color: #f5e9dc;
+}
+
+:global(:root[data-theme="dark"]) .optionRow:has(input:focus-visible),
+:global(:root[data-theme="dark"]) .pill:has(input:focus-visible),
+:global(:root[data-theme="dark"]) .otherInput:focus,
+:global(:root[data-theme="dark"]) .showMoreButton:focus-visible {
+  outline-color: #a8b58b;
+}

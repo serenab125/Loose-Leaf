@@ -2,9 +2,9 @@
 
 .search-page {
     min-height: 100vh;
-    background-color: #fdf8f4;
+    background-color: var(--ll-background-color-fdf8f4, #fdf8f4);
     padding: 48px 20px 100px;
-    color: #5a321a;
+    color: var(--ll-color-5a321a, #5a321a);
     box-sizing: border-box;
 }
 
@@ -14,15 +14,15 @@
     font-weight: 400;
     text-align: center;
     margin: 0 0 24px;
-    color: #5a321a;
+    color: var(--ll-color-5a321a, #5a321a);
 }
 
 .search-placeholder {
-    background-color: #f5f3e9;
-    border: 1px solid #ebe5d5;
+    background-color: var(--ll-background-color-f5f3e9, #f5f3e9);
+    border: 1px solid var(--ll-border-ebe5d5, #ebe5d5);
     border-radius: 18px;
     padding: 16px;
-    color: #b59b88;
+    color: var(--ll-color-b59b88, #b59b88);
     font-size: 14px;
     margin-bottom: 36px;
 }
@@ -36,18 +36,18 @@
 .search-category-button {
     min-height: 70px;
     padding: 12px 8px;
-    border: 1px solid #ebe6d7;
+    border: 1px solid var(--ll-border-ebe6d7, #ebe6d7);
     border-radius: 20px;
-    background-color: #f5f3e9;
-    color: #5a321a;
+    background-color: var(--ll-background-color-f5f3e9, #f5f3e9);
+    color: var(--ll-color-5a321a, #5a321a);
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
 }
 
 .search-category-button:nth-child(even) {
-    background-color: #fcece9;
-    border-color: #f6dbd6;
+    background-color: var(--ll-background-color-fcece9, #fcece9);
+    border-color: var(--ll-border-color-f6dbd6, #f6dbd6);
 }
 
 .search-category-button:hover {
@@ -70,7 +70,7 @@
 .search-back-button {
     background: none;
     border: none;
-    color: #b59b88;
+    color: var(--ll-color-b59b88, #b59b88);
     font-size: 14px;
     padding: 8px 0;
     margin-bottom: 18px;
@@ -81,12 +81,12 @@
     font-family: Georgia, serif;
     font-size: 28px;
     font-style: italic;
-    color: #5a321a;
+    color: var(--ll-color-5a321a, #5a321a);
     margin: 0 0 24px;
 }
 
 .search-results-message {
-    color: #a48d7c;
+    color: var(--ll-color-a48d7c, #a48d7c);
     font-size: 14px;
 }
 
@@ -99,7 +99,7 @@
     font-family: Georgia, serif;
     font-size: 19px;
     font-weight: normal;
-    color: #5a321a;
+    color: var(--ll-color-5a321a, #5a321a);
     margin: 0 0 14px;
 }
 
@@ -121,7 +121,7 @@
     height: 155px;
     border-radius: 14px;
     overflow: hidden;
-    background-color: #f5f3e9;
+    background-color: var(--ll-background-color-f5f3e9, #f5f3e9);
     box-shadow: 0 3px 6px rgba(60, 35, 20, 0.12);
 }
 
@@ -161,7 +161,7 @@ button.search-book-item:focus-visible {
     box-sizing: border-box;
     text-align: center;
     font-size: 12px;
-    color: #5a321a;
+    color: var(--ll-color-5a321a, #5a321a);
 }
 
 
@@ -201,8 +201,8 @@ button.search-book-item:focus-visible {
     position: relative;
     display: flex;
     align-items: center;
-    background-color: #f7f3e9;
-    border: 1px solid #ebe5d5;
+    background-color: var(--ll-background-color-f7f3e9, #f7f3e9);
+    border: 1px solid var(--ll-border-ebe5d5, #ebe5d5);
     border-radius: 24px;
     padding: 0 16px;
     height: 48px;
@@ -211,7 +211,7 @@ button.search-book-item:focus-visible {
 
 .search-icon {
     font-size: 16px;
-    color: #b59b88;
+    color: var(--ll-color-b59b88, #b59b88);
     margin-right: 10px;
 }
 
@@ -221,18 +221,18 @@ button.search-book-item:focus-visible {
     border: none;
     background: transparent;
     font-size: 14px;
-    color: #5a321a;
+    color: var(--ll-color-5a321a, #5a321a);
     outline: none;
 }
 
 .search-input::placeholder {
-    color: #b59b88;
+    color: var(--ll-color-b59b88, #b59b88);
 }
 
 .search-clear-btn {
     background: transparent;
     border: none;
-    color: #b59b88;
+    color: var(--ll-color-b59b88, #b59b88);
     font-size: 14px;
     cursor: pointer;
     padding: 0 4px;
@@ -243,7 +243,7 @@ button.search-book-item:focus-visible {
     font-family: Georgia, serif;
     font-size: 20px;
     font-weight: 400;
-    color: #5a321a;
+    color: var(--ll-color-5a321a, #5a321a);
     margin: 0 0 16px;
 }
 
@@ -272,7 +272,7 @@ button.search-book-item:focus-visible {
     cursor: pointer;
     padding: 0;
     border: 0;
-    background: #ebe5d5;
+    background: var(--ll-background-ebe5d5, #ebe5d5);
 }
 
 .top-search-cover {
@@ -289,8 +289,8 @@ button.search-book-item:focus-visible {
     justify-content: center;
     box-sizing: border-box;
     padding: 8px;
-    background-color: #ebe5d5;
-    color: #5a321a;
+    background-color: var(--ll-background-color-ebe5d5, #ebe5d5);
+    color: var(--ll-color-5a321a, #5a321a);
     font-size: 11px;
     text-align: center;
 }
@@ -303,7 +303,7 @@ button.search-book-item:focus-visible {
 
 .search-status-msg {
     font-size: 14px;
-    color: #8c7365;
+    color: var(--ll-color-8c7365, #8c7365);
     margin-bottom: 16px;
 }
 
@@ -317,8 +317,8 @@ button.search-book-item:focus-visible {
     display: flex;
     align-items: center;
     gap: 16px;
-    background-color: #f7f3e9;
-    border: 1px solid #ebe5d5;
+    background-color: var(--ll-background-color-f7f3e9, #f7f3e9);
+    border: 1px solid var(--ll-border-ebe5d5, #ebe5d5);
     border-radius: 20px;
     padding: 12px 16px;
     cursor: pointer;
@@ -349,8 +349,8 @@ button.search-book-item:focus-visible {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #ebe5d5;
-    color: #5a321a;
+    background-color: var(--ll-background-color-ebe5d5, #ebe5d5);
+    color: var(--ll-color-5a321a, #5a321a);
     font-size: 11px;
     text-align: center;
     padding: 4px;
@@ -368,20 +368,20 @@ button.search-book-item:focus-visible {
     font-family: Georgia, serif;
     font-size: 16px;
     font-weight: 500;
-    color: #5a321a;
+    color: var(--ll-color-5a321a, #5a321a);
     margin-bottom: 4px;
 }
 
 .suggested-author {
     font-size: 13px;
-    color: #8c7365;
+    color: var(--ll-color-8c7365, #8c7365);
 }
 
 .search-error button {
-    border: 1px solid #ebe5d5;
+    border: 1px solid var(--ll-border-ebe5d5, #ebe5d5);
     border-radius: 12px;
-    background: #fcece9;
-    color: #5a321a;
+    background: var(--ll-background-fcece9, #fcece9);
+    color: var(--ll-color-5a321a, #5a321a);
     padding: 8px 16px;
     cursor: pointer;
 }

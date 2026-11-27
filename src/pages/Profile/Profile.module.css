@@ -1009,3 +1009,650 @@
   padding: 22px 0;
   margin: 0;
 }
+
+/* Dark Mode */
+:global([data-theme="dark"]) .profileContainer {
+  background-color: #241e1a;
+  color: #f5e9dc;
+}
+
+:global([data-theme="dark"]) .profileTitle,
+:global([data-theme="dark"]) .userName,
+:global([data-theme="dark"]) .backBtn,
+:global([data-theme="dark"]) .iconBtn {
+  color: #f5e9dc;
+}
+
+:global([data-theme="dark"]) .userBio,
+:global([data-theme="dark"]) .sectionHeader,
+:global([data-theme="dark"]) .fieldLabel {
+  color: #bca99a;
+}
+
+:global([data-theme="dark"]) .settingItem,
+:global([data-theme="dark"]) .settingToggleItem,
+:global([data-theme="dark"]) .fieldInput,
+:global([data-theme="dark"]) .countrySelect,
+:global([data-theme="dark"]) .pillTag {
+  background: #382e27;
+  color: #f5e9dc;
+  border-color: #493b32;
+}
+
+:global([data-theme="dark"]) .favoritesBg {
+  background: linear-gradient(180deg, #45332f, #353d2e);
+}
+
+:global([data-theme="dark"]) .currentReadsBg,
+:global([data-theme="dark"]) .avatarCircle {
+  background: #353d2e;
+}
+
+:global([data-theme="dark"]) .toggleSwitch {
+  accent-color: #a8b58b;
+}
+
+:global([data-theme="dark"]) .signOutBtn {
+  background-color: #523333;
+  color: #f5e9dc;
+}
+
+:global([data-theme="dark"]) .saveBtn {
+  background-color: #a8b58b;
+  color: #241e1a;
+}
+
+/* Compact Figma-inspired shelf previews */
+.shelfPreview {
+  min-width: 0;
+  margin-bottom: 8px;
+}
+
+.previewHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 10px;
+  border: none;
+  background: transparent;
+  color: #5b3113;
+  cursor: pointer;
+  text-align: left;
+}
+
+.previewName {
+  font-family: Georgia, serif;
+  font-size: 14px;
+  padding: 7px 14px;
+  border: 1px solid #e8dbcd;
+  border-radius: 999px;
+}
+
+.previewFlower {
+  color: #a7ad77;
+  font-size: 16px;
+}
+
+.previewCount {
+  margin-left: auto;
+  font-size: 11px;
+  color: #8c7365;
+  white-space: nowrap;
+}
+
+.previewBooks {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 18px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #d5d7bf transparent;
+  box-sizing: border-box;
+}
+
+.previewBook {
+  position: relative;
+  flex: 0 0 72px;
+  height: 106px;
+  border: none;
+  padding: 5px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e7e4d5;
+  color: #5b3113;
+  font-family: Georgia, serif;
+  font-size: 11px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px #00000015;
+}
+
+.previewBook img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.previewEmpty {
+  width: 100%;
+  padding: 15px 8px;
+  background: transparent;
+  border: none;
+  color: #8c7365;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.addShelfBar {
+  justify-content: center;
+  margin: 8px 0 24px;
+}
+
+.addShelfBtn {
+  background: transparent;
+  border: 1px solid #dfcdbb;
+  color: #5b3113;
+  padding: 10px 22px;
+  font-size: 13px;
+  box-shadow: none;
+}
+
+:global([data-theme="dark"]) .previewHeader,
+:global([data-theme="dark"]) .previewName,
+:global([data-theme="dark"]) .addShelfBtn {
+  color: #f5e9dc;
+  border-color: #685548;
+}
+
+:global([data-theme="dark"]) .previewCount,
+:global([data-theme="dark"]) .previewEmpty {
+  color: #bca99a;
+}
+
+:global([data-theme="dark"]) .previewBook {
+  background: #493b32;
+  color: #f5e9dc;
+}
+
+
+/* Compact Figma shelf detail styling */
+
+.shelfDetailView {
+  gap: 14px;
+  padding: 12px 4px 30px;
+}
+
+.shelfDetailNavBar {
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.shelfDetailNavTitle {
+  font-size: 21px;
+  color: #5b3113;
+}
+
+.shelfDetailBackBtn {
+  color: #b39a87;
+}
+
+.shelfSummaryCard {
+  padding: 22px 20px;
+  border-radius: 22px;
+  background: linear-gradient(
+    135deg, #fcebe7, #faf6f0 55%, #f0f1e3
+  );
+  border: 1px solid #eaded2;
+  box-shadow: none;
+}
+
+.shelfSummaryTitle {
+  font-size: 21px;
+  color: #5b3113;
+}
+
+.shelfSummaryLabel {
+  font-size: 13px;
+  color: #a0826d;
+}
+
+.shelfDetailDescription {
+  font-size: 12px;
+  color: #a0826d;
+  margin: 0;
+}
+
+.shelfBookList {
+  gap: 12px;
+}
+
+.shelfBookRow {
+  width: 88%;
+  padding: 12px;
+  gap: 14px;
+  border-radius: 18px;
+  background: #faf6f1;
+  border: 1px solid #eaded2;
+  box-shadow: 0 2px 4px rgba(91,49,19,.06);
+}
+
+.shelfBookCoverWrap {
+  flex: 0 0 50px;
+  width: 50px;
+  height: 74px;
+}
+
+.shelfBookTitle {
+  font-size: 15px;
+  font-weight: 500;
+  color: #5b3113;
+}
+
+.shelfBookAuthor {
+  font-size: 12px;
+  color: #a0826d;
+}
+
+.shelfDetailView .addBookBtn {
+  width: 88%;
+}
+
+.modalContent {
+  max-height: calc(100dvh - 120px);
+  overflow-y: auto;
+}
+
+/* Dark mode shelf details */
+
+:global([data-theme="dark"]) .shelfSummaryCard {
+  background: linear-gradient(
+    135deg, #493331, #382e27, #353d2e
+  );
+  border-color: #514439;
+}
+
+:global([data-theme="dark"]) .shelfBookRow {
+  background: #382e27;
+  border-color: #514439;
+}
+
+:global([data-theme="dark"]) .shelfSummaryTitle,
+:global([data-theme="dark"]) .shelfDetailNavTitle,
+:global([data-theme="dark"]) .shelfBookTitle {
+  color: #f5e9dc;
+}
+
+:global([data-theme="dark"]) .shelfSummaryLabel,
+:global([data-theme="dark"]) .shelfBookAuthor,
+:global([data-theme="dark"]) .shelfDetailDescription {
+  color: #bca99a;
+}
+
+
+/* Compact shelf dialogs */
+.compactModal {
+  width: calc(100% - 32px);
+  max-width: 340px;
+  max-height: 76dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px;
+  box-sizing: border-box;
+  border-radius: 24px;
+}
+
+.modalFlower {
+  display: block;
+  text-align: center;
+  color: #969d68;
+  font-size: 24px;
+  margin-bottom: 6px;
+}
+
+.compactModal .modalTitle {
+  font-size: 22px;
+  margin-bottom: 16px;
+}
+
+.compactModal .fieldGroup {
+  margin-bottom: 12px;
+}
+
+.compactModal .chipRow {
+  margin-top: 8px;
+  margin-bottom: 20px;
+}
+
+.compactModal .modalActions {
+  margin-top: 18px;
+}
+
+.compactModal .cancelBtn {
+  background: #e8ecd8;
+  color: #626b42;
+  border: 1px solid #d9dfc5;
+  border-radius: 999px;
+}
+
+.compactModal .saveBtn {
+  border-radius: 999px;
+}
+
+.compactModal .addBookResults {
+  max-height: 230px;
+  overflow-y: auto;
+}
+
+:global([data-theme="dark"]) .compactModal .cancelBtn {
+  background: #424b35;
+  color: #e8ecd8;
+  border-color: #596347;
+}
+
+/* Simplified Add Books popup */
+.addBookIndicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e5ead5;
+  color: #626b42;
+  font-size: 18px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.addBookResultSelected .addBookIndicator {
+  font-size: 11px;
+}
+
+.compactModal:has(.addBookResults) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.compactModal:has(.addBookResults) > * {
+  flex-shrink: 0;
+}
+
+.compactModal .addBookResults {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+:global([data-theme="dark"]) .addBookIndicator {
+  background: #424b35;
+  color: #e8ecd8;
+}
+
+
+/* Individual shelf editing */
+.detailEditBtn {
+  margin-left: auto;
+  padding: 7px 18px;
+  border: 1px solid #d9dfc5;
+  border-radius: 999px;
+  background: #e8ecd8;
+  color: #626b42;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.detailRemoveBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  margin-left: auto;
+  border-radius: 50%;
+  background: #f3dce0;
+  color: #a65e69;
+  font-size: 21px;
+  font-weight: 600;
+}
+
+:global([data-theme="dark"]) .detailEditBtn {
+  background: #424b35;
+  color: #e8ecd8;
+  border-color: #596347;
+}
+
+:global([data-theme="dark"]) .detailRemoveBtn {
+  background: #69454d;
+  color: #f5dce0;
+}
+
+
+/* Center favorite book covers */
+.previewBooks.favoritesBg {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.detailDeleteShelfBtn {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  border: none;
+  border-radius: 999px;
+  background: #f3dce0;
+  color: #a65e69;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+:global([data-theme="dark"]) .detailDeleteShelfBtn {
+  background: #69454d;
+  color: #f5dce0;
+}
+
+.detailDeleteShelfBtn {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+/* Dark mode for compact shelf popups */
+:global([data-theme="dark"]) .modalContent.compactModal {
+  background: #302720;
+  color: #f3e8dc;
+}
+
+:global([data-theme="dark"]) .compactModal .modalTitle {
+  color: #f3e8dc;
+}
+
+:global([data-theme="dark"]) .compactModal .modalFlower {
+  color: #b2bc8b;
+}
+
+:global([data-theme="dark"]) .compactModal .addBookResults {
+  background: transparent;
+  color: #f3e8dc;
+}
+
+/* Dark mode for Add Books search results */
+:global([data-theme="dark"]) .addBookResultRow {
+  background: #40352c;
+  border-color: #59483b;
+  color: #f3e8dc;
+}
+
+:global([data-theme="dark"]) .addBookResultSelected,
+:global([data-theme="dark"]) .addBookResultRow:hover {
+  background: #454b36;
+  border-color: #78845b;
+}
+
+:global([data-theme="dark"]) .addBookResultTitle {
+  color: #f3e8dc;
+}
+
+:global([data-theme="dark"]) .addBookResultCoverWrap {
+  background: #514337;
+}
+
+:global([data-theme="dark"]) .addBookResultCoverFallback {
+  color: #e8d8c8;
+}
+
+.detailRenameShelfBtn {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid #d9dfc5;
+  border-radius: 999px;
+  background: #e8ecd8;
+  color: #626b42;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.renameOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:global([data-theme="dark"]) .detailRenameShelfBtn {
+  background: #424b35;
+  color: #e8ecd8;
+  border-color: #596347;
+}
+
+.detailShelfActions {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 4px;
+}
+
+.detailShelfActions .detailRenameShelfBtn,
+.detailShelfActions .detailDeleteShelfBtn {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  margin: 0;
+  padding: 9px 10px;
+  font-size: 12px;
+}
+
+.myReviewsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.myReviewCard {
+  background: #fdf8f3;
+  color: #6d5b4f;
+  padding: 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.myReviewTitle {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #5b3113;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.myReviewRating {
+  color: #a58b48;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.myReviewMeta {
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.myReviewCard p {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+}
+
+:global([data-theme="dark"]) .myReviewCard {
+  background: #40352c;
+  color: #e8d8c8;
+}
+
+:global([data-theme="dark"]) .myReviewTitle {
+  color: #f3e8dc;
+}
+
+:global([data-theme="dark"]) .myReviewRating {
+  color: #d4b66d;
+}
+
+.myReviewCard {
+  padding: 9px 12px;
+  line-height: 1.4;
+}
+
+.myReviewTitle {
+  display: block;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.myReviewRating {
+  display: inline-block;
+  margin-top: 4px;
+  margin-right: 10px;
+  font-size: 12px;
+}
+
+.myReviewMeta {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+.myReviewCard p {
+  margin: 4px 0 0;
+  line-height: 1.4;
+  font-size: 12px;
+}
+
+.historySeeMore {
+  display: block;
+  margin: 10px auto 0;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: #626b42;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+:global([data-theme="dark"]) .historySeeMore {
+  color: #d9dfbd;
+}

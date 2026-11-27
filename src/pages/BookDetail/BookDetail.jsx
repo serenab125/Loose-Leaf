@@ -1,3 +1,4 @@
+import AppDialog from '../../components/Dialog/AppDialog';
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import {
@@ -56,6 +57,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
 
   // Chapter Reaction Modal state (RR-06 + Edit/Delete)
   const [showReactionModal, setShowReactionModal] = useState(false);
+  const [appError, setAppError] = useState('');
   const [editingReaction, setEditingReaction] = useState(null);
   const [deletingReaction, setDeletingReaction] = useState(null);
   const [isDeletingReaction, setIsDeletingReaction] = useState(false);
@@ -300,7 +302,20 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       );
       const rect = trigger?.getBoundingClientRect();
       if (rect) {
-        setMenuAbove(window.innerHeight - rect.bottom < STATUS_MENU_HEIGHT);
+        const gap = 16;
+        const spaceAbove = Math.max(0, rect.top - gap);
+        const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - gap);
+
+        const openAbove =
+          spaceBelow < STATUS_MENU_HEIGHT &&
+          spaceAbove > spaceBelow;
+
+        setMenuAbove(openAbove);
+
+        statusMenuRef.current.style.setProperty(
+          '--status-menu-max-height',
+          `${openAbove ? spaceAbove : spaceBelow}px`
+        );
       }
     }
     setShowDropdown((prev) => !prev);
@@ -548,8 +563,13 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
     (shelf.books || []).some((b) => (b.book_id || b.id) === resolvedBookId)
   );
 
+  const isFavoritesFull = (shelf) =>
+    /^top\s*4\s*favorites$/i.test((shelf.name || '').trim()) &&
+    Math.max(shelf.bookCount ?? 0, (shelf.books || []).length) >= 4;
+
   const shelvesWithoutBook = userShelves.filter(
     (shelf) =>
+      !isFavoritesFull(shelf) &&
       !(shelf.books || []).some((b) => (b.book_id || b.id) === resolvedBookId)
   );
 
@@ -614,6 +634,16 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
 
   const handleConfirmAddToShelves = async () => {
     if (!user?.id || selectedShelves.size === 0) return;
+
+    if (statusSaving) return;
+
+    if (userShelves.some(shelf =>
+      selectedShelves.has(shelf.id) && isFavoritesFull(shelf)
+    )) {
+      setStatusError('You can only have 4 favorites. Remove a book first.');
+      return;
+    }
+
 
     setStatusSaving(true);
     setStatusError('');
@@ -764,7 +794,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       setDeletingReaction(null);
     } catch (err) {
       console.error('Failed to delete chapter reaction:', err);
-      alert(err.message || 'Could not delete your reaction. Please try again.');
+      setAppError(err.message || 'Could not delete your reaction. Please try again.');
     } finally {
       setIsDeletingReaction(false);
     }
@@ -975,12 +1005,27 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
                   setEditingReview(null);
                 } catch (error) {
                   console.error('Could not update review:', error);
-                  alert('Could not update your review. Please try again.');
+                  setAppError('Could not update your review. Please try again.');
                 }
               }}
             />
           ) : (
             <>
+              {user?.id &&
+                currentStatus === 'Finished' &&
+                !reviewsList.some(review => review.userId === user.id) && (
+                  <button
+                    type="button"
+                    className="write-review-btn"
+                    onClick={() => {
+                      setEditingReview(null);
+                      setCreatingReview(true);
+                    }}
+                  >
+                    + Write a Review
+                  </button>
+                )}
+
               <BookReviews
                 reviews={reviewsList}
                 currentUserId={user?.id}
@@ -1004,7 +1049,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
                       setDeletingReview(null);
                     } catch (error) {
                       console.error('Could not delete your review:', error);
-                      alert('Could not delete your review. Please try again.');
+                      setAppError('Could not delete your review. Please try again.');
                     }
                   }}
                 />
@@ -1432,7 +1477,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
                 <p className="shelf-picker-empty">
                   {userShelves.length === 0
                     ? 'You don’t have any shelves yet. Create one first.'
-                    : 'This book is already on all of your shelves.'}
+                    : 'No additional shelves are available for this book.'}
                 </p>
               ) : (
                 shelvesWithoutBook.map((shelf) => (
@@ -1551,6 +1596,15 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
             </div>
           </div>
         </div>
+      )}
+
+      {appError && (
+        <AppDialog
+          title="Something Went Wrong"
+          message={appError}
+          confirmLabel="OK"
+          onConfirm={() => setAppError('')}
+        />
       )}
     </main>
   );

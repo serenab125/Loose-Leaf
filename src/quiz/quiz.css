@@ -334,3 +334,104 @@
   margin: 16px 0 0 20px;
   text-align: left;
 }
+/* Save and resume text link */
+.quiz-save-resume {
+  display: block;
+  width: fit-content;
+  margin: 8px auto 0;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: #737444;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+:root[data-theme="dark"] .quiz-save-resume {
+  color: #dce5b8;
+}
+
+.quiz-save-resume:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Quiz dark mode */
+:root[data-theme="dark"] .quiz-container,
+:root[data-theme="dark"] .quiz-scroll-page,
+:root[data-theme="dark"] .quiz-content {
+  background: #241e1a;
+  color: #f5e9dc;
+}
+
+:root[data-theme="dark"] .quiz-container h1,
+:root[data-theme="dark"] .quiz-container h2 {
+  color: #f5e9dc;
+}
+
+:root[data-theme="dark"] .quiz-description,
+:root[data-theme="dark"] .quiz-goals-message p {
+  color: #bca99a;
+}
+
+:root[data-theme="dark"] .quiz-goals-message {
+  background: #45332f;
+  border-color: #654b45;
+}
+
+:root[data-theme="dark"] .quiz-finish-button,
+:root[data-theme="dark"] .skip-confirm-button {
+  background: #a8b58b;
+  color: #241e1a;
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .quiz-finish-button:hover,
+:root[data-theme="dark"] .skip-confirm-button:hover {
+  background: #becaa1;
+}
+
+:root[data-theme="dark"] .quiz-back,
+:root[data-theme="dark"] .quiz-top-actions .quiz-back,
+:root[data-theme="dark"] .quiz-skip-button {
+  color: #bca99a;
+}
+
+:root[data-theme="dark"] .quiz-answer-count,
+:root[data-theme="dark"] .quiz-save-resume {
+  color: #dce5b8;
+}
+
+:root[data-theme="dark"] .skip-popup {
+  background: #302720;
+  color: #f5e9dc;
+  box-sizing: border-box;
+}
+
+:root[data-theme="dark"] .skip-popup p {
+  color: #bca99a;
+}
+
+:root[data-theme="dark"] .skip-cancel-button,
+:root[data-theme="dark"] .quiz-start-over-button {
+  background: #45332f;
+  color: #edc1c4;
+  border-color: #654b45;
+}
+
+:root[data-theme="dark"] .skip-cancel-button:hover,
+:root[data-theme="dark"] .quiz-start-over-button:hover {
+  background: #59403c;
+}
+
+:root[data-theme="dark"] .quiz-save-button,
+:root[data-theme="dark"] .quiz-saved-message {
+  background: #353d2e;
+  color: #dce5b8;
+  border-color: #65734e;
+}

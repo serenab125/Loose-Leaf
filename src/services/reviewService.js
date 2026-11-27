@@ -64,3 +64,23 @@ export async function deleteBookReview(bookId) {
 
   return true;
 }
+
+/** Fetch the signed-in user's own reviews. */
+export async function fetchMyBookReviews() {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError) throw authError;
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('book_reviews')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
+}

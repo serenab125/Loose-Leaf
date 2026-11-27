@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import styles from './Profile.module.css';
+import AppDialog from '../../components/Dialog/AppDialog';
 import { supabase } from '../../supabaseClient';
 import {
   fetchUserShelvesWithBooks,
@@ -13,6 +14,8 @@ import {
 } from '../../services/shelfService';
 import { searchBooksByTitle } from '../../services/bookService';
 import { fetchMyBookPageReactions } from '../../services/pageReactionService';
+import { fetchMyBookReviews } from '../../services/reviewService';
+
 
 const SHELF_NAME_SUGGESTIONS = [
   'Comfort Reads',
@@ -22,10 +25,29 @@ const SHELF_NAME_SUGGESTIONS = [
   'Book Club',
 ];
 
-export function Profile({ user, logout, onSelectBook }) {
+export function Profile({ user, logout, onSelectBook, darkMode, setDarkMode }) {
   const [view, setView] = useState('main');
+  const [appDialog, setAppDialog] = useState(null);
   // Shelf whose full page is open (view === 'shelfDetail').
   const [activeShelfId, setActiveShelfId] = useState(null);
+  const shelfTopRef = useRef(null);
+
+  useEffect(() => {
+    if (shelfTopRef.current) {
+      shelfTopRef.current.scrollIntoView({
+        behavior: 'instant',
+        block: 'start'
+      });
+    }
+  }, [activeShelfId, view]);
+
+  const [detailEditing, setDetailEditing] = useState(false);
+  const [showRenameShelf, setShowRenameShelf] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
+  const [renameError, setRenameError] = useState('');
+  const [renameSaving, setRenameSaving] = useState(false);
+
+
   // Where "back" from the shelf page should return to.
   const [shelfDetailFrom, setShelfDetailFrom] = useState('main');
   // Initialize from the auth user; the effect below only patches in the
@@ -61,6 +83,37 @@ export function Profile({ user, logout, onSelectBook }) {
 
   // Chapter reactions shown on the profile (from BookDetail progress updates)
   const [userReactions, setUserReactions] = useState([]);
+  const [userReviews, setUserReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewsError, setReviewsError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    setUserReviews([]);
+    setReviewsError('');
+    setReviewsLoading(true);
+
+    if (!user?.id) {
+      setReviewsLoading(false);
+      return;
+    }
+
+    fetchMyBookReviews()
+      .then(data => {
+        if (!cancelled) {
+          setUserReviews(data.filter(item => item.user_id === user.id));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setReviewsError('Could not load your reviews.');
+      })
+      .finally(() => {
+        if (!cancelled) setReviewsLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
 
   // New shelf creation state
   const [showNewShelfModal, setShowNewShelfModal] = useState(false);
@@ -130,6 +183,65 @@ export function Profile({ user, logout, onSelectBook }) {
     };
   }, [user, loadShelves]);
 
+
+  const isProtectedShelf = (shelf) =>
+    Boolean(shelf && (
+      shelf.is_default ||
+      /^(current reads|finished|did not finish|top\s*4\s*favorites)$/i
+        .test((shelf.name || '').trim())
+    ));
+
+  const canRenameShelf = (shelf) =>
+    Boolean(shelf && !isProtectedShelf(shelf));
+
+  const handleRenameShelf = async () => {
+    if (!user || !canRenameShelf(activeShelf) || renameSaving) return;
+
+    const name = renameValue.trim();
+
+    if (!name) {
+      setRenameError('Shelf name is required.');
+      return;
+    }
+
+    if (/^top\s*4\s*favorites$/i.test(name) ||
+        shelves.some(shelf =>
+          shelf.id !== activeShelf.id &&
+          (shelf.name || '').trim().toLowerCase() === name.toLowerCase()
+        )) {
+      setRenameError('This shelf name is already reserved or in use.');
+      return;
+    }
+
+    setRenameSaving(true);
+    setRenameError('');
+
+    try {
+      const updated = await updateShelf(
+        user.id,
+        activeShelf.id,
+        name,
+        activeShelf.description || ''
+      );
+
+      if (!updated) throw new Error('Could not rename shelf.');
+
+      setShelves(prev => prev.map(shelf =>
+        shelf.id === activeShelf.id
+          ? { ...shelf, ...updated, name, books: shelf.books }
+          : shelf
+      ));
+
+      setShowRenameShelf(false);
+      setSavedMessage('Shelf renamed.');
+      setTimeout(() => setSavedMessage(''), 2000);
+    } catch (err) {
+      setRenameError(err.message || 'Could not rename shelf.');
+    } finally {
+      setRenameSaving(false);
+    }
+  };
+
   const handleSaveShelf = async (shelfId) => {
     if (!user || !shelfId) return;
     try {
@@ -137,7 +249,7 @@ export function Profile({ user, logout, onSelectBook }) {
       // the pinned order), so their name is never rewritten even if a caller
       // sends one.
       const shelf = shelves.find((s) => s.id === shelfId);
-      const nextName = shelf?.is_default ? shelf.name : newShelfName.trim();
+      const nextName = isProtectedShelf(shelf) ? shelf.name : newShelfName.trim();
 
       const updated = await updateShelf(
         user.id,
@@ -183,20 +295,28 @@ export function Profile({ user, logout, onSelectBook }) {
     }
   };
 
-  const handleDeleteShelf = async (shelfId) => {
+  const handleDeleteShelf = async (shelfId, confirmed = false) => {
     if (!user) return;
 
     const shelf = shelves.find((s) => s.id === shelfId);
 
     // Guard here as well as in the UI and the RPC: the default shelves are
     // part of the product, not user data.
-    if (shelf?.is_default) {
+    if (isProtectedShelf(shelf)) {
       setSavedMessage('Default shelves cannot be deleted.');
       setTimeout(() => setSavedMessage(''), 2500);
       return;
     }
 
-    if (!confirm('Delete this shelf? Books will remain in the database.')) return;
+    if (!confirmed) {
+      setAppDialog({
+        title: 'Delete Shelf?',
+        message: 'Are you sure you want to delete this shelf? Your books will remain in the database.',
+        confirmLabel: 'Delete Shelf',
+        action: () => handleDeleteShelf(shelfId, true)
+      });
+      return;
+    }
     try {
       // deleteShelf resolves false when the RPC refused the delete.
       const deleted = await deleteShelf(user.id, shelfId);
@@ -208,6 +328,10 @@ export function Profile({ user, logout, onSelectBook }) {
       }
 
       setShelves((prev) => prev.filter((s) => s.id !== shelfId));
+      setDetailEditing(false);
+      setActiveShelfId(null);
+      setView('main');
+
       setSavedMessage('Shelf deleted.');
       setTimeout(() => setSavedMessage(''), 2000);
     } catch (err) {
@@ -217,11 +341,31 @@ export function Profile({ user, logout, onSelectBook }) {
   };
 
   // Tapping a search result drops that book straight onto the shelf.
+  const addingShelfBookRef = useRef(false);
+
   const handleTapBookToAdd = async (book) => {
     if (!user || !addBookShelfId) return;
 
     const bookKey = book.bookId || book.id;
     if (addedBookKeys.has(bookKey)) return;
+
+    if (addingShelfBookRef.current) return;
+
+    const targetShelf = shelves.find(s => s.id === addBookShelfId);
+    const isTopFour = /^top\s*4\s*favorites$/i.test(
+      (targetShelf?.name || '').trim()
+    );
+
+    if (isTopFour && (targetShelf.books || []).length >= 4) {
+      setSearchError(
+        'You can only have 4 favorites. Remove a book before adding another.'
+      );
+      return;
+    }
+
+    addingShelfBookRef.current = true;
+    setSearchError('');
+
 
     try {
       await addBookToShelf(
@@ -232,6 +376,20 @@ export function Profile({ user, logout, onSelectBook }) {
         book.author,
         book.coverUrl || book.cover
       );
+
+      setShelves(prev => prev.map(shelf =>
+        shelf.id === addBookShelfId
+          ? {
+              ...shelf,
+              books: [...(shelf.books || []), {
+                book_id: bookKey,
+                title: book.title,
+                author: book.author,
+                cover_url: book.coverUrl || book.cover
+              }]
+            }
+          : shelf
+      ));
 
       setAddedBookKeys((prev) => new Set(prev).add(bookKey));
       setLastAddedBook(book);
@@ -250,18 +408,28 @@ export function Profile({ user, logout, onSelectBook }) {
       console.error('Add book error:', err);
       setSavedMessage('Error adding book to shelf.');
       setTimeout(() => setSavedMessage(''), 2500);
+    } finally {
+      addingShelfBookRef.current = false;
     }
   };
 
   // Remove a single book from a shelf. Kept inline on the shelf card so the
   // user can prune a shelf without opening the book detail page.
-  const handleRemoveBookFromShelf = async (shelfId, book) => {
+  const handleRemoveBookFromShelf = async (shelfId, book, confirmed = false) => {
     if (!user || !shelfId || !book) return;
 
     const bookKey = book.book_id || book.id;
     if (!bookKey) return;
 
-    if (!confirm(`Remove "${book.title}" from this shelf?`)) return;
+    if (!confirmed) {
+      setAppDialog({
+        title: 'Remove Book?',
+        message: `Are you sure you want to remove "${book.title}" from this shelf?`,
+        confirmLabel: 'Remove Book',
+        action: () => handleRemoveBookFromShelf(shelfId, book, true)
+      });
+      return;
+    }
 
     setRemovingBookKey(bookKey);
     try {
@@ -357,6 +525,36 @@ export function Profile({ user, logout, onSelectBook }) {
     });
   };
 
+  const handleSelectHistoryBook = async (item) => {
+    const bookId = item.book_id;
+    const normalizeId = id => String(id || '').replace(/^\/works\//, '');
+
+    const matchesId = book =>
+      normalizeId(book.book_id || book.bookId || book.id) === normalizeId(bookId);
+
+    let matched = shelves
+      .flatMap(shelf => shelf.books || [])
+      .find(book => matchesId(book) && book.author &&
+        (book.cover_url || book.coverUrl || book.cover));
+
+    if (!matched) {
+      try {
+        const results = await searchBooksByTitle(item.book_title);
+        matched = results.find(matchesId);
+      } catch (error) {
+        console.warn('Could not retrieve book details:', error);
+      }
+    }
+
+    handleSelectBook({
+      ...matched,
+      book_id: bookId,
+      title: matched?.title || item.book_title,
+      author: matched?.author,
+      cover_url: matched?.cover_url || matched?.coverUrl || matched?.cover,
+    });
+  };
+
   const beginEditShelf = (shelf) => {
     setEditingShelfId(shelf.id);
     setNewShelfName(shelf.name || '');
@@ -448,13 +646,68 @@ export function Profile({ user, logout, onSelectBook }) {
     }
   };
 
+  const renderShelfPreview = (shelf) => {
+    const books = shelf.books || [];
+    const isFavorite = /favorite/i.test(shelf.name || '');
+
+    return (
+      <section key={shelf.id} className={styles.shelfPreview}>
+        <button
+          type="button"
+          className={styles.previewHeader}
+          onClick={() => openShelfDetail(shelf.id)}
+        >
+          <span className={styles.previewName}>
+            {shelf.name || 'Untitled Shelf'}
+          </span>
+          <span className={styles.previewFlower}>❀</span>
+          <span className={styles.previewCount}>
+            {books.length} {books.length === 1 ? 'book' : 'books'} ›
+          </span>
+        </button>
+
+        <div className={`${styles.previewBooks} ${
+          isFavorite ? styles.favoritesBg : styles.currentReadsBg
+        }`}>
+          {books.length ? books.map(book => (
+            <button
+              type="button"
+              key={book.book_id || book.id}
+              className={styles.previewBook}
+              onClick={() => handleSelectBook(book)}
+              aria-label={`Open ${book.title}`}
+            >
+              <span>{book.title}</span>
+              {(book.cover_url || book.cover) && (
+                <img
+                  src={book.cover_url || book.cover}
+                  alt={book.title}
+                  loading="lazy"
+                  onError={e => { e.currentTarget.style.display = 'none'; }}
+                />
+              )}
+            </button>
+          )) : (
+            <button
+              type="button"
+              className={styles.previewEmpty}
+              onClick={() => openAddBookModal(shelf.id)}
+            >
+              + Add your first book
+            </button>
+          )}
+        </div>
+      </section>
+    );
+  };
+
   const renderShelfCard = (shelf) => {
     const isEditing = editingShelfId === shelf.id;
     return (
       <div key={shelf.id} className={styles.shelfCard}>
         <div className={styles.shelfHeader}>
           {isEditing ? (
-            shelf.is_default ? (
+            isProtectedShelf(shelf) ? (
               <div className={styles.shelfNameLocked}>
                 <span className={styles.shelfNameLockedText}>{shelf.name}</span>
                 <span className={styles.shelfNameLockedHint}>
@@ -495,7 +748,7 @@ export function Profile({ user, logout, onSelectBook }) {
                   type="button"
                   className={styles.shelfActionBtn}
                   onClick={() => handleSaveShelf(shelf.id)} // FIX Bug 2
-                  disabled={!shelf.is_default && !newShelfName.trim()}
+                  disabled={!isProtectedShelf(shelf) && !newShelfName.trim()}
                 >
                   Save
                 </button>
@@ -510,7 +763,7 @@ export function Profile({ user, logout, onSelectBook }) {
                 >
                   ✎
                 </button>
-                {!shelf.is_default && (
+                {!isProtectedShelf(shelf) && (
                   <button
                     type="button"
                     className={styles.shelfActionBtn}
@@ -525,7 +778,7 @@ export function Profile({ user, logout, onSelectBook }) {
           </div>
         </div>
 
-        {shelf.is_default && (
+        {isProtectedShelf(shelf) && (
           <span className={styles.defaultTag}>Default</span>
         )}
 
@@ -651,7 +904,7 @@ export function Profile({ user, logout, onSelectBook }) {
                 </button>
               </div>
             ) : (
-              <div className={styles.shelvesList}>{shelves.map(renderShelfCard)}</div>
+              <div className={styles.shelvesList}>{shelves.map(renderShelfPreview)}</div>
             )}
           </section>
 
@@ -665,6 +918,176 @@ export function Profile({ user, logout, onSelectBook }) {
             </button>
           </div>
 
+
+          <section className={styles.shelfSection}>
+            <div className={styles.pillTag}>
+              <span>My Reviews</span>
+            </div>
+
+            <div className={`${styles.shelfCard} ${styles.currentReadsBg}`}>
+              {reviewsLoading ? (
+                <p className={styles.shelfDescription}>Loading reviews...</p>
+              ) : reviewsError ? (
+                <p role="alert">{reviewsError}</p>
+              ) : userReviews.length === 0 ? (
+                <p className={styles.shelfDescription}>
+                  No reviews yet. Finish a book and share your thoughts!
+                </p>
+              ) : (
+                <div className={styles.myReviewsList}>
+                  {userReviews.slice(0, 2).map(item => (
+                    <article key={item.id} className={styles.myReviewCard}>
+                      <button
+                        type="button"
+                        className={styles.myReviewTitle}
+                        onClick={() => handleSelectHistoryBook(item)}
+                      >
+                        {item.book_title} ›
+                      </button>
+
+                      <div className={styles.myReviewRating}>
+                        ★ {item.rating_out_of_10 / 2}/5
+                      </div>
+
+                      <div className={styles.myReviewMeta}>
+                        {item.review_type}
+                        {item.includes_spoilers ? ' · Contains spoilers' : ''}
+                      </div>
+
+                      {item.review_text && <p>{item.review_text}</p>}
+                    </article>
+                  ))}
+                </div>
+              )}
+
+              {userReviews.length > 2 && (
+                <button
+                  type="button"
+                  className={styles.historySeeMore}
+                  onClick={() => setView('allReviews')}
+                >
+                  See More ›
+                </button>
+              )}
+            </div>
+          </section>
+
+          <section className={styles.shelfSection}>
+            <div className={styles.pillTag}>
+              <span>Chapter Reactions</span>
+            </div>
+            <div className={`${styles.shelfCard} ${styles.currentReadsBg}`}>
+              {userReactions.length === 0 ? (
+                <p className={styles.shelfDescription}>
+                  No chapter reactions yet. Open a book and select Progress Update!
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {userReactions.slice(0, 2).map((item) => (
+                    <div
+                      key={item.id}
+                      className={styles.myReviewCard}
+                    >
+                      <button
+                        type="button"
+                        className={styles.myReviewTitle}
+                        onClick={() => handleSelectHistoryBook(item)}
+                      >
+                        {item.book_title} · Chapter {item.page_number} ›
+                      </button>
+                      <p>
+                        &ldquo;{item.reaction}&rdquo;
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {userReactions.length > 2 && (
+                <button
+                  type="button"
+                  className={styles.historySeeMore}
+                  onClick={() => setView('allReactions')}
+                >
+                  See More ›
+                </button>
+              )}
+            </div>
+          </section>
+
+          {savedMessage && <p className={styles.saveFeedback}>{savedMessage}</p>}
+        </div>
+      )}
+
+
+      {view === 'allReviews' && (
+        <div className={styles.subView}>
+          <div ref={shelfTopRef} className={styles.shelfDetailNavBar}>
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={() => setView('main')}
+            >
+              ← My Reviews
+            </button>
+          </div>
+          <section className={styles.shelfSection}>
+            <div className={styles.pillTag}>
+              <span>My Reviews</span>
+            </div>
+
+            <div className={`${styles.shelfCard} ${styles.currentReadsBg}`}>
+              {reviewsLoading ? (
+                <p className={styles.shelfDescription}>Loading reviews...</p>
+              ) : reviewsError ? (
+                <p role="alert">{reviewsError}</p>
+              ) : userReviews.length === 0 ? (
+                <p className={styles.shelfDescription}>
+                  No reviews yet. Finish a book and share your thoughts!
+                </p>
+              ) : (
+                <div className={styles.myReviewsList}>
+                  {userReviews.map(item => (
+                    <article key={item.id} className={styles.myReviewCard}>
+                      <button
+                        type="button"
+                        className={styles.myReviewTitle}
+                        onClick={() => handleSelectHistoryBook(item)}
+                      >
+                        {item.book_title} ›
+                      </button>
+
+                      <div className={styles.myReviewRating}>
+                        ★ {item.rating_out_of_10 / 2}/5
+                      </div>
+
+                      <div className={styles.myReviewMeta}>
+                        {item.review_type}
+                        {item.includes_spoilers ? ' · Contains spoilers' : ''}
+                      </div>
+
+                      {item.review_text && <p>{item.review_text}</p>}
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
+
+
+      {view === 'allReactions' && (
+        <div className={styles.subView}>
+          <div ref={shelfTopRef} className={styles.shelfDetailNavBar}>
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={() => setView('main')}
+            >
+              ← Chapter Reactions
+            </button>
+          </div>
           <section className={styles.shelfSection}>
             <div className={styles.pillTag}>
               <span>Chapter Reactions</span>
@@ -679,17 +1102,16 @@ export function Profile({ user, logout, onSelectBook }) {
                   {userReactions.map((item) => (
                     <div
                       key={item.id}
-                      style={{
-                        background: '#fdf8f3',
-                        padding: '10px 12px',
-                        borderRadius: '12px',
-                        fontSize: '13px',
-                      }}
+                      className={styles.myReviewCard}
                     >
-                      <strong style={{ color: '#5b3113' }}>
-                        {item.book_title} · Chapter {item.page_number}
-                      </strong>
-                      <p style={{ margin: '4px 0 0', color: '#6d5b4f' }}>
+                      <button
+                        type="button"
+                        className={styles.myReviewTitle}
+                        onClick={() => handleSelectHistoryBook(item)}
+                      >
+                        {item.book_title} · Chapter {item.page_number} ›
+                      </button>
+                      <p>
                         &ldquo;{item.reaction}&rdquo;
                       </p>
                     </div>
@@ -698,8 +1120,6 @@ export function Profile({ user, logout, onSelectBook }) {
               )}
             </div>
           </section>
-
-          {savedMessage && <p className={styles.saveFeedback}>{savedMessage}</p>}
         </div>
       )}
 
@@ -790,6 +1210,20 @@ export function Profile({ user, logout, onSelectBook }) {
           </div>
 
           <div className={styles.settingsGroup}>
+            <p className={styles.sectionHeader}>APPEARANCE</p>
+            <div className={styles.settingToggleItem}>
+              <span>Dark Mode</span>
+              <input
+                type="checkbox"
+                className={styles.toggleSwitch}
+                aria-label="Dark Mode"
+                checked={darkMode}
+                onChange={(e) => setDarkMode(e.target.checked)}
+              />
+            </div>
+          </div>
+
+          <div className={styles.settingsGroup}>
             <p className={styles.sectionHeader}>NOTIFICATIONS</p>
             <div className={styles.settingToggleItem}>
               <span>Reading Reminders</span>
@@ -855,30 +1289,31 @@ export function Profile({ user, logout, onSelectBook }) {
       {/* Full shelf page */}
       {view === 'shelfDetail' && (
         <div className={styles.shelfDetailView}>
-          <button
-            type="button"
-            className={styles.backBtn}
-            onClick={() => setView('main')}
-          >
-            ← Back to Profile
-          </button>
+
 
           {activeShelf ? (
             <>
-              <div className={styles.shelfDetailNavBar}>
+              <div ref={shelfTopRef} className={styles.shelfDetailNavBar}>
                 <button
                   type="button"
                   className={styles.shelfDetailBackBtn}
-                  onClick={() =>
-                    setView(shelfDetailFrom === 'shelves' ? 'shelves' : 'main')
-                  }
+                  onClick={() => {
+                    setDetailEditing(false);
+                    setView(shelfDetailFrom === 'shelves' ? 'shelves' : 'main');
+                  }}
                   aria-label="Back"
                 >
                   ‹
                 </button>
-                <h1 className={styles.shelfDetailNavTitle}>
-                  {activeShelf.name || 'Untitled Shelf'}
-                </h1>
+                <button
+                  type="button"
+                  className={styles.detailEditBtn}
+                  onClick={() => setDetailEditing(value => !value)}
+                >
+                  {detailEditing ? 'Done' : 'Edit'}
+                </button>
+
+
               </div>
 
               <div className={styles.shelfSummaryCard}>
@@ -891,11 +1326,89 @@ export function Profile({ user, logout, onSelectBook }) {
                 </span>
               </div>
 
-              {activeShelf.description ? (
-                <p className={styles.shelfDetailDescription}>
-                  {activeShelf.description}
-                </p>
-              ) : null}
+
+
+
+
+              {detailEditing && !isProtectedShelf(activeShelf) && (
+                <div className={styles.detailShelfActions}>
+              {detailEditing && canRenameShelf(activeShelf) && (
+                <button
+                  type="button"
+                  className={styles.detailRenameShelfBtn}
+                  onClick={() => {
+                    setRenameValue(activeShelf.name || '');
+                    setRenameError('');
+                    setShowRenameShelf(true);
+                  }}
+                >
+                  Rename Shelf
+                </button>
+              )}
+
+              {showRenameShelf && (
+                <div className={styles.renameOverlay}>
+                  <div
+                    className={`${styles.modalContent} ${styles.compactModal}`}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Rename Shelf"
+                  >
+                    <span className={styles.modalFlower}>❀</span>
+                    <h2 className={styles.modalTitle}>Rename Shelf</h2>
+
+                    <input
+                      className={styles.fieldInput}
+                      value={renameValue}
+                      onChange={e => {
+                        setRenameValue(e.target.value);
+                        setRenameError('');
+                      }}
+                      aria-label="Shelf name"
+                      autoFocus
+                    />
+
+                    {renameError && (
+                      <p role="alert" style={{color: '#c97882'}}>
+                        {renameError}
+                      </p>
+                    )}
+
+                    <div className={styles.modalActions}>
+                      <button
+                        type="button"
+                        className={styles.cancelBtn}
+                        disabled={renameSaving}
+                        onClick={() => setShowRenameShelf(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.saveBtn}
+                        disabled={!renameValue.trim() || renameSaving}
+                        onClick={handleRenameShelf}
+                      >
+                        {renameSaving ? 'Saving…' : 'Save'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {detailEditing && !isProtectedShelf(activeShelf) && (
+                <button
+                  type="button"
+                  className={styles.detailDeleteShelfBtn}
+                  onClick={() => handleDeleteShelf(activeShelf.id)}
+                >
+                  Delete Shelf
+                </button>
+              )}
+
+
+                </div>
+              )}
 
               {(activeShelf.books || []).length > 0 ? (
                 <div className={styles.shelfBookList}>
@@ -906,7 +1419,12 @@ export function Profile({ user, logout, onSelectBook }) {
                         type="button"
                         key={bookKey}
                         className={styles.shelfBookRow}
-                        onClick={() => handleSelectBook(book)}
+                        onClick={() => detailEditing
+                          ? handleRemoveBookFromShelf(activeShelf.id, book)
+                          : handleSelectBook(book)}
+                        aria-label={detailEditing
+                          ? `Remove ${book.title}`
+                          : `Open ${book.title}`}
                       >
                         <span className={styles.shelfBookCoverWrap}>
                           <span
@@ -936,10 +1454,12 @@ export function Profile({ user, logout, onSelectBook }) {
                         </span>
 
                         <span
-                          className={styles.shelfBookChevron}
+                          className={detailEditing
+                            ? styles.detailRemoveBtn
+                            : styles.shelfBookChevron}
                           aria-hidden="true"
                         >
-                          ›
+                          {detailEditing ? '−' : '›'}
                         </span>
                       </button>
                     );
@@ -951,13 +1471,20 @@ export function Profile({ user, logout, onSelectBook }) {
                 </p>
               )}
 
-              <button
-                type="button"
-                className={styles.addBookBtn}
-                onClick={() => openAddBookModal(activeShelf.id)}
-              >
-                + Add Books
-              </button>
+              {!detailEditing && (
+                !/^top\s*4\s*favorites$/i.test((activeShelf.name || '').trim()) ||
+                (activeShelf.books || []).length < 4
+              ) && (
+                <button
+                  type="button"
+                  className={styles.addBookBtn}
+                  onClick={() => openAddBookModal(activeShelf.id)}
+                >
+                  + Add Books
+                </button>
+              )}
+
+
             </>
           ) : (
             <p className={styles.shelfDetailEmpty}>
@@ -970,18 +1497,17 @@ export function Profile({ user, logout, onSelectBook }) {
       {showNewShelfModal && (
         <div className={styles.modalOverlay} onClick={() => setShowNewShelfModal(false)}>
           <div
-            className={styles.modalContent}
+            className={`${styles.modalContent} ${styles.compactModal}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="profile-create-shelf-title"
             onClick={(e) => e.stopPropagation()}
           >
+            <span className={styles.modalFlower} aria-hidden="true">❀</span>
             <h2 className={styles.modalTitle} id="profile-create-shelf-title">
-              Create a new shelf
+              New Shelf
             </h2>
-            <p className={styles.modalSubtitle}>
-              Make your own shelf to organize your books however you like.
-            </p>
+
             <form onSubmit={handleCreateShelf}>
               <div className={styles.fieldGroup}>
                 <label className={styles.fieldLabel} htmlFor="profile-shelf-name">
@@ -1017,19 +1543,7 @@ export function Profile({ user, logout, onSelectBook }) {
                 ))}
               </div>
 
-              <div className={styles.fieldGroup}>
-                <label className={styles.fieldLabel} htmlFor="profile-shelf-description">
-                  Description (optional)
-                </label>
-                <textarea
-                  id="profile-shelf-description"
-                  className={`${styles.fieldInput} ${styles.textArea}`}
-                  value={newShelfDescription}
-                  onChange={(e) => setNewShelfDescription(e.target.value)}
-                  placeholder="A short description of this shelf"
-                  rows={3}
-                />
-              </div>
+
 
               <div className={styles.modalActions}>
                 <button
@@ -1051,17 +1565,18 @@ export function Profile({ user, logout, onSelectBook }) {
       {showAddBookModal && (
         <div className={styles.modalOverlay} onClick={() => setShowAddBookModal(false)}>
           <div
-            className={styles.modalContent}
+            className={`${styles.modalContent} ${styles.compactModal}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="profile-add-books-title"
             onClick={(e) => e.stopPropagation()}
           >
+            <span className={styles.modalFlower} aria-hidden="true">❀</span>
             <h2 className={styles.modalTitle} id="profile-add-books-title">
-              Add books
+              Add Books
             </h2>
             <p className={styles.modalSubtitle}>
-              Search for a book, then tap it to add it to{' '}
+              Search and add books to{' '}
               {shelves.find((s) => s.id === addBookShelfId)?.name || 'this shelf'}.
             </p>
 
@@ -1140,57 +1655,40 @@ export function Profile({ user, logout, onSelectBook }) {
                       {book.title}
                     </span>
                   </span>
-                  <span>{isAdded ? '✓ Added' : '›'}</span>
+                  <span className={styles.addBookIndicator}>
+                    {isAdded ? '✓ Added' : '+'}
+                  </span>
                   </div>
                 );
               })}
-            </div>
-
-            <div className={styles.modalDivider} />
-
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel} htmlFor="profile-new-shelf-name">
-                Or create a new shelf with the last book you added
-              </label>
-              <input
-                id="profile-new-shelf-name"
-                type="text"
-                className={styles.fieldInput}
-                value={newShelfName}
-                onChange={(e) => {
-                  setNewShelfName(e.target.value);
-                  if (newShelfNameValidation) setNewShelfNameValidation('');
-                }}
-                placeholder="e.g. Cozy Autumn Reads"
-              />
-              {newShelfNameValidation && (
-                <p className={styles.errorText}>{newShelfNameValidation}</p>
-              )}
             </div>
 
             <div className={styles.modalActions}>
               <button
                 type="button"
                 className={styles.cancelBtn}
+                style={{ width: '100%', flex: 1 }}
                 onClick={() => setShowAddBookModal(false)}
               >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={styles.saveBtn}
-                disabled={
-                  !lastAddedBook || isCreatingShelf || !newShelfName.trim()
-                }
-                onClick={handleCreateShelfFromAddBook}
-              >
-                {isCreatingShelf
-                  ? 'Creating…'
-                  : 'Create New Shelf & Add Book'}
+                Done
               </button>
             </div>
           </div>
         </div>
+      )}
+      {appDialog && (
+        <AppDialog
+          title={appDialog.title}
+          message={appDialog.message}
+          confirmLabel={appDialog.confirmLabel}
+          destructive
+          onCancel={() => setAppDialog(null)}
+          onConfirm={() => {
+            const action = appDialog.action;
+            setAppDialog(null);
+            action();
+          }}
+        />
       )}
     </div>
   );

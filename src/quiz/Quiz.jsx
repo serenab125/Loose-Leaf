@@ -1,6 +1,7 @@
 
 import { TASTE_SECTIONS, GOAL_SECTIONS } from './quizData';
-import { useQuiz, PROGRESS_KEY } from './useQuiz';
+import { useQuiz } from './useQuiz';
+import { saveQuizProgress } from '../services/quizService';
 import { QuizIntroduction } from './QuizIntroduction';
 import { QuizQuestion } from './QuizQuestion';
 import { QuizLoading } from './QuizLoading';
@@ -8,7 +9,7 @@ import './quiz.css';
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 
-export function Quiz({ onSkip, onComplete, user }) {
+export function Quiz({ onSkip, onComplete, user, isRetake, onExit, savedProgress, onProgressSaved }) {
 
   //setting the pop up for skip quiz as false
   const [showSkipPopup, setShowSkipPopup] = useState(false);
@@ -30,10 +31,10 @@ export function Quiz({ onSkip, onComplete, user }) {
     tasteAnsweredCount,
     remainingAnswers,
     restoreMessage,
-  } = useQuiz();
+  } = useQuiz(savedProgress);
 
   const [saveError, setSaveError] = useState('');
-  const [saveStatus, setSaveStatus] = useState('');
+  const [showSavedPopup, setShowSavedPopup] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleComplete = async () => {
@@ -64,7 +65,12 @@ export function Quiz({ onSkip, onComplete, user }) {
 
       console.log('Quiz answers saved successfully!', answers);
       // Notify parent that quiz is complete
-      onComplete?.();
+      await saveQuizProgress(user.id, answers, 3, {
+        client: supabase,
+        completed: true,
+      });
+
+      onComplete?.(answers);
     } catch (error) {
       console.error('Error saving quiz answers:', error);
       setSaveError(error.message || 'Unable to save quiz answers.');
@@ -73,29 +79,46 @@ export function Quiz({ onSkip, onComplete, user }) {
     }
   };
 
-  const saveProgress = () => {
+  const saveProgress = async () => {
     if (isSaving) return;
+
     setIsSaving(true);
-    setSaveStatus('');
     setSaveError('');
+
     try {
-      const progress = {
+      if (!user?.id) {
+        throw new Error('You must be signed in to save your quiz.');
+      }
+
+      await saveQuizProgress(user.id, answers, currentStep, {
+        client: supabase,
+        completed: false,
+      });
+
+      onProgressSaved?.({
         step: currentStep,
         answers: { ...answers },
-      };
-      localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
-      setSaveStatus('Progress saved — you can close and come back later.');
-      setTimeout(() => setSaveStatus(''), 3000);
-    } catch (err) {
-      setSaveStatus(err.message || 'Unable to save progress.');
+      });
+
+      setShowSavedPopup(true);
+    } catch (error) {
+      setSaveError(error.message || 'Unable to save progress.');
     } finally {
       setIsSaving(false);
     }
   };
 
-
   return (
     <div className="quiz-container">
+      {isRetake && isIntro && !isSaving && (
+        <button
+          type="button"
+          className="quiz-back"
+          onClick={onExit}
+        >
+          ← Back to Home
+        </button>
+      )}
       {saveError && (
         <p role="alert" style={{ color: '#b91c1c', padding: '12px' }}>
           {saveError}
@@ -104,11 +127,6 @@ export function Quiz({ onSkip, onComplete, user }) {
       {restoreMessage && (
         <p role="alert" style={{ color: '#603417', padding: '12px' }}>
           {restoreMessage}
-        </p>
-      )}
-      {saveStatus && (
-        <p role="status" style={{ color: '#2e7d32', padding: '12px' }}>
-          {saveStatus}
         </p>
       )}
       {isIntro ? (
@@ -204,7 +222,7 @@ export function Quiz({ onSkip, onComplete, user }) {
                     onClick={saveProgress}
                     disabled={isSaving}
                   >
-                    Save &amp; Resume
+                    Save &amp; Finish Later
                   </button>
                 </div>
               </>
@@ -259,13 +277,53 @@ export function Quiz({ onSkip, onComplete, user }) {
                     onClick={saveProgress}
                     disabled={isSaving}
                   >
-                    Save &amp; Resume
+                    Save &amp; Finish Later
                   </button>
                 </div>
               </>
             )}
           </div>
         </main>
+      )}
+
+      {showSavedPopup && (
+        <div className="skip-popup-overlay">
+          <div
+            className="skip-popup"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="saved-popup-title"
+          >
+            <h2 id="saved-popup-title">Progress Saved!</h2>
+
+            <p>
+              Your answers have been saved to your account.
+              You can head home and finish your quiz whenever
+              you're ready.
+            </p>
+
+            <div className="skip-popup-buttons">
+              <button
+                type="button"
+                className="skip-confirm-button"
+                onClick={() => {
+                  setShowSavedPopup(false);
+                  onExit?.();
+                }}
+              >
+                Go to Home
+              </button>
+
+              <button
+                type="button"
+                className="skip-cancel-button"
+                onClick={() => setShowSavedPopup(false)}
+              >
+                Continue Quiz
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Pop-up for skipping the quiz */}
@@ -280,9 +338,9 @@ export function Quiz({ onSkip, onComplete, user }) {
             <h2 id="skip-popup-title">Skip the Quiz?</h2>
 
             <p>
-              Skipping the quiz means your book recommendations
-              will be more general instead of personalized to
-              your interests.
+              {isRetake
+                ? 'Your previously saved reading preferences will remain unchanged.'
+                : 'Skipping the quiz means your book recommendations will be more general instead of personalized to your interests.'}
             </p>
 
             <p>Would you like to continue?</p>
@@ -293,7 +351,11 @@ export function Quiz({ onSkip, onComplete, user }) {
                 className="skip-confirm-button"
                 onClick={() => {
                   setShowSkipPopup(false);
-                  onSkip?.({ status: 'skipped' });
+                  if (isRetake) {
+                    onExit?.();
+                  } else {
+                    onSkip?.({ status: 'skipped' });
+                  }
                 }}
               >
                 Yes, Skip Quiz

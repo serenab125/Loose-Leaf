@@ -13,28 +13,7 @@ import BookDetail from './pages/BookDetail/BookDetail'
 import ReviewsPreview from './components/Reviews/ReviewsPreview'
 import ReadingTimer from './components/Timer/Timer'
 import { supabase } from './supabaseClient'
-import { PROGRESS_KEY } from './quiz/useQuiz'
-
-
-
-const PAGE_ROUTES = {
-  home: '/home',
-  search: '/search',
-  profile: '/profile',
-  timer: '/timer',
-}
-
-function getViewFromUrl() {
-  const path = window.location.pathname
-
-  if (path === '/reset-password') return 'reset'
-
-  const match = Object.entries(PAGE_ROUTES).find(
-    ([, route]) => route === path
-  )
-
-  return match?.[0] ?? 'login'
-}
+import { getIncompleteQuizProgress } from './services/quizService'
 
 const skippedQuizKey = (userId) => `looseleaf_quiz_skipped_${userId}`
 
@@ -42,58 +21,87 @@ function readSkippedQuiz(userId) {
   return localStorage.getItem(skippedQuizKey(userId)) === 'true'
 }
 
-/**
- * A saved quiz counts as "unfinished" only while it is on a question step.
- * Step 0 is the introduction and step 3 is the loading/complete screen, so
- * neither should yank the user back into the quiz on every sign-in.
- */
-function hasUnfinishedQuiz() {
-  try {
-    const raw = localStorage.getItem(PROGRESS_KEY)
-    if (!raw) return false
-    const step = JSON.parse(raw)?.step
-    return step === 1 || step === 2
-  } catch {
-    return false
-  }
-}
-
-
-const SELECTED_BOOK_KEY = 'looseleaf_selected_book'
-
-function getBookId(book) {
-  return book?.bookId || book?.book_id ||
-    book?.open_library_id || book?.id
-}
-
-function readSavedBook() {
-  try {
-    const saved = sessionStorage.getItem(SELECTED_BOOK_KEY)
-    return saved ? JSON.parse(saved) : null
-  } catch {
-    return null
-  }
-}
-
-
 function App() {
   const { user, logout, initializing } = useAuth()
 
-  const [currentBook, setCurrentBook] = useState(() => {
-  if (window.location.pathname.startsWith('/book/')) {
-    const saved = readSavedBook()
-    const urlId = decodeURIComponent(
-      window.location.pathname.slice('/book/'.length)
-    )
+  const [currentBook, setCurrentBook] = useState(null)
+  const [isRetakingQuiz, setIsRetakingQuiz] = useState(false)
+  const [savedQuizProgress, setSavedQuizProgress] = useState(null)
 
-    if (saved && String(getBookId(saved)) === urlId) {
-      return saved
+  const [themePreference, setThemePreference] = useState({
+    userId: null,
+    enabled: false
+  })
+
+  const darkMode = Boolean(
+    user?.id &&
+    themePreference.userId === user.id &&
+    themePreference.enabled
+  )
+
+  useEffect(() => {
+    let cancelled = false
+
+    if (!user?.id || initializing) return
+
+    async function loadTheme() {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('dark_mode')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (cancelled) return
+
+      if (error) {
+        console.error('Could not load theme preference:', error)
+        return
+      }
+
+      setThemePreference({
+        userId: user.id,
+        enabled: data?.dark_mode === true
+      })
+    }
+
+    loadTheme()
+
+    return () => { cancelled = true }
+  }, [user?.id, initializing])
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = darkMode ? 'dark' : 'light'
+  }, [darkMode])
+
+  const setDarkMode = async (enabled) => {
+    if (!user?.id) return
+
+    const userId = user.id
+    const previous = darkMode
+
+    setThemePreference({ userId, enabled })
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ dark_mode: enabled })
+      .eq('id', userId)
+      .select('id')
+      .single()
+
+    if (error || !data) {
+      console.error('Could not save theme preference:', error)
+      setThemePreference(current =>
+        current.userId === userId && current.enabled === enabled
+          ? { userId, enabled: previous }
+          : current
+      )
     }
   }
 
-  return null
+  const [view, setView] = useState(() => {
+    if (window.location.pathname === '/reset-password') return 'reset'
+    return 'login'
   })
-  const [view, setView] = useState(getViewFromUrl)
   const [quizReady, setQuizReady] = useState(false)
   const [gateUserId, setGateUserId] = useState(null)
 
@@ -103,6 +111,8 @@ function App() {
   if (user?.id !== gateUserId) {
     setGateUserId(user?.id)
     setQuizReady(false)
+    setSavedQuizProgress(null)
+    setIsRetakingQuiz(false)
   }
 
   useEffect(() => {
@@ -131,18 +141,23 @@ function App() {
           Object.keys(data.reading_preferences).length > 0
       )
 
-      const shouldShowQuiz = hasUnfinishedQuiz() || (!completedQuiz && !readSkippedQuiz(user.id))
+      const draft = await getIncompleteQuizProgress(user.id, {
+        client: supabase
+      })
 
-      const requestedView = getViewFromUrl()
+      if (cancelled) return
 
-      if (shouldShowQuiz) {
-        setView('quiz')
-      } else if (PAGE_ROUTES[requestedView]) {
-        setView(requestedView)
-      } else {
-        setView('home')
-      }
+      setSavedQuizProgress(
+        draft
+          ? { step: draft.current_step === 2 ? 2 : 1, answers: draft.answers || {} }
+          : { step: 0, answers: data?.reading_preferences || {} }
+      )
 
+      setView(
+        draft || completedQuiz || readSkippedQuiz(user.id)
+          ? 'home'
+          : 'quiz'
+      )
       setQuizReady(true)
     }
 
@@ -155,79 +170,14 @@ function App() {
 
   const handleLogout = async () => {
     await logout()
-    sessionStorage.removeItem(SELECTED_BOOK_KEY)
     setCurrentBook(null)
-    window.history.replaceState({}, '', '/')
     setView('login')
   }
-  
-const goTo = (nextView) => {
-  setCurrentBook(null)
-  setView(nextView)
 
-  const route = PAGE_ROUTES[nextView]
-
-  if (route && window.location.pathname !== route) {
-    window.history.pushState({}, '', route)
-  }
-}
-
-
-useEffect(() => {
-  const handlePopState = () => {
-    const path = window.location.pathname
-
-    if (path.startsWith('/book/')) {
-      const saved = readSavedBook()
-      const urlId = decodeURIComponent(
-        path.slice('/book/'.length)
-      )
-
-      if (saved && String(getBookId(saved)) === urlId) {
-        setCurrentBook(saved)
-        return
-      }
-
-      // Don't show an unrelated book if the URL is invalid.
-      setCurrentBook(null)
-      setView('home')
-      return
-    }
-
+  const goTo = (nextView) => {
     setCurrentBook(null)
-    setView(getViewFromUrl())
+    setView(nextView)
   }
-
-  window.addEventListener('popstate', handlePopState)
-
-  return () => {
-    window.removeEventListener('popstate', handlePopState)
-  }
-}, [])
-
-
-const openBook = (book) => {
-  const bookId = getBookId(book)
-
-  if (!book || !bookId) {
-    console.error('Cannot open book without a valid ID.')
-    return
-  }
-
-  sessionStorage.setItem(
-    SELECTED_BOOK_KEY,
-    JSON.stringify(book)
-  )
-
-  window.history.pushState(
-    {},
-    '',
-    `/book/${encodeURIComponent(bookId)}`
-  )
-
-  setCurrentBook(book)
-}
-
 
   if (initializing || (user && !quizReady && view !== 'reset')) {
     return (
@@ -268,11 +218,7 @@ const openBook = (book) => {
         <BookDetail
           book={currentBook}
           user={user}
-          onBack={() => {
-            sessionStorage.removeItem(SELECTED_BOOK_KEY)
-            setCurrentBook(null)
-            goTo('home')
-          }}
+          onBack={() => setCurrentBook(null)}
           onUpdateStatus={(book, status) => {
             console.log(`Updated ${book?.title} to status: ${status}`)
           }}
@@ -289,39 +235,49 @@ const openBook = (book) => {
             user={user}
             skippedQuiz={readSkippedQuiz(user.id)}
             onRetakeQuiz={() => {
-              localStorage.setItem(
-                PROGRESS_KEY,
-                JSON.stringify({ step: 0, answers: {} })
-              )
+              setIsRetakingQuiz(true)
               setView('quiz')
             }}
             onNavigateToSearch={() => setView('search')}
             onNavigateToTimer={() => setView('timer')}
-            onSelectBook={openBook}
+            onSelectBook={(book) => setCurrentBook(book)}
           />
         ) : view === 'search' ? (
-          <Search onSelectBook={openBook} />
+          <Search onSelectBook={(book) => setCurrentBook(book)} />
         ) : view === 'profile' ? (
           <Profile
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
             user={user}
             logout={handleLogout}
-            onSelectBook={openBook}
+            onSelectBook={(book) => setCurrentBook(book)}
           />
         ) : view === 'timer' ? (
-          <ReadingTimer />
+          <ReadingTimer key={user.id} user={user} />
         ) : view === 'reviews-preview' ? (
           <ReviewsPreview />
         ) : (
           <Quiz
+            key={user.id}
             user={user}
-            onSkip={() => {
-              localStorage.setItem(skippedQuizKey(user.id), 'true')
-              localStorage.removeItem(PROGRESS_KEY)
+            isRetake={isRetakingQuiz}
+            savedProgress={savedQuizProgress}
+            onProgressSaved={(progress) => {
+              setSavedQuizProgress(progress)
+            }}
+            onExit={() => {
+              setIsRetakingQuiz(false)
               setView('home')
             }}
-            onComplete={() => {
+            onSkip={() => {
+              setIsRetakingQuiz(false)
+              localStorage.setItem(skippedQuizKey(user.id), 'true')
+              setView('home')
+            }}
+            onComplete={(answers) => {
+              setSavedQuizProgress({ step: 0, answers })
+              setIsRetakingQuiz(false)
               localStorage.removeItem(skippedQuizKey(user.id))
-              localStorage.removeItem(PROGRESS_KEY)
               setView('home')
             }}
           />

@@ -28,6 +28,10 @@ const firstRow = (data) => {
  */
 export const DEFAULT_SHELVES = [
   {
+    name: 'Top 4 Favorites',
+    description: 'Your four favorite books.',
+  },
+  {
     name: 'Current Reads',
     description: 'Books you are reading right now.',
   },

@@ -2,9 +2,9 @@
 
 .book-detail-page {
   min-height: 100vh;
-  background-color: #fdf8f3;
+  background-color: var(--ll-background-color-fdf8f3, #fdf8f3);
   padding: 20px 20px 80px;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   font-family: 'Inter', sans-serif;
   max-width: 393px;
   margin: 0 auto;
@@ -23,7 +23,7 @@
   background: transparent;
   border: none;
   font-size: 16px;
-  color: #8c7365;
+  color: var(--ll-color-8c7365, #8c7365);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -48,7 +48,7 @@
   overflow: hidden;
   box-shadow: 0 8px 24px rgba(91, 49, 19, 0.15);
   margin-bottom: 18px;
-  background-color: #ebe5d5;
+  background-color: var(--ll-background-color-ebe5d5, #ebe5d5);
 }
 
 .book-detail-cover {
@@ -66,7 +66,7 @@
   padding: 12px;
   box-sizing: border-box;
   font-size: 13px;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   font-family: Georgia, serif;
 }
 
@@ -74,14 +74,14 @@
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 26px;
   font-weight: 500;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   margin: 0 0 6px 0;
   line-height: 1.2;
 }
 
 .book-detail-author {
   font-size: 15px;
-  color: #8c7365;
+  color: var(--ll-color-8c7365, #8c7365);
   margin: 0 0 16px 0;
 }
 
@@ -94,9 +94,9 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background-color: #f6eedf;
-  border: 1px solid #ebdcc5;
-  color: #5b3113;
+  background-color: var(--ll-background-color-f6eedf, #f6eedf);
+  border: 1px solid var(--ll-border-ebdcc5, #ebdcc5);
+  color: var(--ll-color-5b3113, #5b3113);
   padding: 10px 20px;
   border-radius: 20px;
   font-size: 14px;
@@ -106,7 +106,7 @@
 }
 
 .status-dropdown-btn:hover {
-  background-color: #ede0c9;
+  background-color: var(--ll-background-color-ede0c9, #ede0c9);
 }
 
 .status-dropdown-menu {
@@ -116,7 +116,7 @@
   transform: translateX(-50%);
   width: 300px;
   padding: 10px;
-  background-color: #fdf8f3;
+  background-color: var(--ll-background-color-fdf8f3, #fdf8f3);
   border: 1px solid rgba(91, 49, 19, 0.1);
   border-radius: 18px;
   box-shadow:
@@ -144,7 +144,7 @@
   border: none;
   border-radius: 17px;
   background-color: rgba(234, 238, 216, 0.5);
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   font-size: 15px;
   font-weight: 500;
   text-align: left;
@@ -159,20 +159,20 @@
 
 /* "Create a New Shelf" — muted olive-green text, same pale-green row */
 .status-dropdown-item.shelf {
-  color: #706c3e;
+  color: var(--ll-color-706c3e, #706c3e);
 }
 
 /* "Remove Book From Shelf" — destructive, taller pale-pink row */
 .status-dropdown-item.danger {
   background-color: rgba(255, 222, 221, 0.5);
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   height: 74px;
 }
 
 /* Overview Section */
 .book-overview-section {
   margin-bottom: 32px;
-  border-bottom: 1px solid #ebe2d3;
+  border-bottom: 1px solid var(--ll-border-bottom-ebe2d3, #ebe2d3);
   padding-bottom: 24px;
 }
 
@@ -180,21 +180,21 @@
   font-family: Georgia, serif;
   font-size: 20px;
   font-weight: 500;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   margin: 0 0 12px 0;
 }
 
 .book-overview-text {
   font-size: 14px;
   line-height: 1.6;
-  color: #6d5b4f;
+  color: var(--ll-color-6d5b4f, #6d5b4f);
   margin: 0;
 }
 
 /* Tabs: Reviews & Reactions */
 .book-community-tabs {
   display: flex;
-  border-bottom: 2px solid #ebdcc5;
+  border-bottom: 2px solid var(--ll-border-bottom-ebdcc5, #ebdcc5);
   margin-bottom: 20px;
 }
 
@@ -205,14 +205,14 @@
   border: none;
   font-size: 16px;
   font-family: Georgia, serif;
-  color: #9a8a7c;
+  color: var(--ll-color-9a8a7c, #9a8a7c);
   cursor: pointer;
   position: relative;
   transition: color 0.15s ease;
 }
 
 .book-tab-btn.active {
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   font-weight: 600;
 }
 
@@ -233,7 +233,7 @@
   flex-direction: column;
   gap: 14px;
   margin-bottom: 20px;
-  background: #f7f1e5;
+  background: var(--ll-background-f7f1e5, #f7f1e5);
   padding: 14px;
   border-radius: 18px;
 }
@@ -247,12 +247,12 @@
 .mode-toggle-label {
   font-size: 13px;
   font-weight: 600;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
 }
 
 .toggle-switch-pill {
   display: inline-flex;
-  background: #ebe0cf;
+  background: var(--ll-background-ebe0cf, #ebe0cf);
   border-radius: 20px;
   padding: 3px;
   cursor: pointer;
@@ -265,7 +265,7 @@
   font-weight: 600;
   border: none;
   background: transparent;
-  color: #8c7365;
+  color: var(--ll-color-8c7365, #8c7365);
   cursor: pointer;
 }
 
@@ -282,9 +282,9 @@
 .sort-pill-btn {
   padding: 6px 12px;
   border-radius: 14px;
-  border: 1px solid #ebdcc5;
-  background: #fdf8f3;
-  color: #8c7365;
+  border: 1px solid var(--ll-border-ebdcc5, #ebdcc5);
+  background: var(--ll-background-fdf8f3, #fdf8f3);
+  color: var(--ll-color-8c7365, #8c7365);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -293,7 +293,7 @@
 .sort-pill-btn.active {
   background: #5b3113;
   color: #ffffff;
-  border-color: #5b3113;
+  border-color: var(--ll-border-color-5b3113, #5b3113);
 }
 
 /* Cards (Reviews & Reactions) */
@@ -304,7 +304,7 @@
 }
 
 .review-card {
-  background-color: #f7f2e8;
+  background-color: var(--ll-background-color-f7f2e8, #f7f2e8);
   border-radius: 18px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(91, 49, 19, 0.04);
@@ -327,8 +327,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: #eaeed8;
-  color: #5b3113;
+  background-color: var(--ll-background-color-eaeed8, #eaeed8);
+  color: var(--ll-color-5b3113, #5b3113);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -339,32 +339,32 @@
 .reviewer-name {
   font-size: 14px;
   font-weight: 600;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   margin: 0;
 }
 
 .reviewer-match {
   font-size: 11px;
-  color: #737444;
+  color: var(--ll-color-737444, #737444);
   font-weight: 500;
 }
 
 .star-rating {
-  color: #d89b32;
+  color: var(--ll-color-d89b32, #d89b32);
   font-size: 13px;
 }
 
 .review-text {
   font-size: 13px;
   line-height: 1.5;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   margin: 0;
 }
 
 .reaction-chapter-badge {
   display: inline-block;
-  background-color: #eaeed8;
-  color: #5b3113;
+  background-color: var(--ll-background-color-eaeed8, #eaeed8);
+  color: var(--ll-color-5b3113, #5b3113);
   font-size: 11px;
   font-weight: 600;
   padding: 4px 10px;
@@ -387,7 +387,7 @@
 .reaction-modal {
   width: 100%;
   max-width: 350px;
-  background-color: #fdf8f3;
+  background-color: var(--ll-background-color-fdf8f3, #fdf8f3);
   border-radius: 24px;
   padding: 24px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
@@ -396,7 +396,7 @@
 .modal-back-btn {
   background: transparent;
   border: none;
-  color: #8c7365;
+  color: var(--ll-color-8c7365, #8c7365);
   font-size: 13px;
   cursor: pointer;
   padding: 0;
@@ -406,7 +406,7 @@
 .modal-title {
   font-family: Georgia, serif;
   font-size: 20px;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   margin: 0 0 16px 0;
   text-align: center;
 }
@@ -421,18 +421,18 @@
   width: 80px;
   height: 48px;
   border-radius: 14px;
-  border: 1px solid #ebdcc5;
-  background-color: #f6eedf;
+  border: 1px solid var(--ll-border-ebdcc5, #ebdcc5);
+  background-color: var(--ll-background-color-f6eedf, #f6eedf);
   text-align: center;
   font-size: 18px;
   font-weight: 600;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   outline: none;
 }
 
 .chapter-input:focus,
 .reaction-textarea:focus {
-  border-color: #5b3113;
+  border-color: var(--ll-border-color-5b3113, #5b3113);
   box-shadow: 0 0 0 2px rgba(91, 49, 19, 0.25);
 }
 
@@ -440,12 +440,12 @@
   width: 100%;
   height: 100px;
   border-radius: 16px;
-  border: 1px solid #ebdcc5;
-  background-color: #f6eedf;
+  border: 1px solid var(--ll-border-ebdcc5, #ebdcc5);
+  background-color: var(--ll-background-color-f6eedf, #f6eedf);
   padding: 12px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   outline: none;
   resize: none;
   box-sizing: border-box;
@@ -465,8 +465,8 @@
 }
 
 .reactions-locked-card {
-  background-color: #f7f2e8;
-  border: 1px solid #ebdcc5;
+  background-color: var(--ll-background-color-f7f2e8, #f7f2e8);
+  border: 1px solid var(--ll-border-ebdcc5, #ebdcc5);
   border-radius: 20px;
   padding: 28px 20px;
   text-align: center;
@@ -480,7 +480,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background-color: #eaeed8;
+  background-color: var(--ll-background-color-eaeed8, #eaeed8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -492,14 +492,14 @@
   font-family: Georgia, serif;
   font-size: 18px;
   font-weight: 500;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   margin: 0;
 }
 
 .reactions-locked-text {
   font-size: 13px;
   line-height: 1.5;
-  color: #8c7365;
+  color: var(--ll-color-8c7365, #8c7365);
   margin: 0 0 8px 0;
   max-width: 260px;
 }
@@ -521,13 +521,13 @@
 
 .reaction-char-count {
   font-size: 12px;
-  color: #8c7365;
+  color: var(--ll-color-8c7365, #8c7365);
   text-align: right;
   margin: -12px 0 12px;
 }
 
 .reaction-error-msg {
-  color: #b91c1c;
+  color: var(--ll-color-b91c1c, #b91c1c);
   font-size: 13px;
   margin: 0 0 12px;
   text-align: center;
@@ -535,14 +535,14 @@
 
 /* Status feedback + Figma bottom sheets */
 .status-error-msg {
-  color: #b91c1c;
+  color: var(--ll-color-b91c1c, #b91c1c);
   font-size: 13px;
   text-align: center;
   margin: 10px 0 0;
 }
 
 .status-ok-msg {
-  color: #2e7d32;
+  color: var(--ll-color-2e7d32, #2e7d32);
   font-size: 13px;
   text-align: center;
   margin: 10px 0 0;
@@ -564,7 +564,7 @@
 .sheet {
   width: 100%;
   max-width: 361px;
-  background-color: #fdf8f3;
+  background-color: var(--ll-background-color-fdf8f3, #fdf8f3);
   border-radius: 24px;
   padding: 24px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
@@ -577,7 +577,7 @@
   font-family: Georgia, serif;
   font-size: 22px;
   font-weight: 500;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   margin: 0 0 8px 0;
   text-align: center;
 }
@@ -585,7 +585,7 @@
 .sheet-subtitle {
   font-size: 13px;
   line-height: 1.5;
-  color: #8c7365;
+  color: var(--ll-color-8c7365, #8c7365);
   margin: 0 0 20px 0;
   text-align: center;
 }
@@ -596,7 +596,7 @@
   font-weight: 600;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: #a0826d;
+  color: var(--ll-color-a0826d, #a0826d);
   margin: 0 0 8px 0;
 }
 
@@ -604,18 +604,18 @@
   width: 100%;
   padding: 13px 14px;
   border-radius: 16px;
-  border: 1px solid #ebdcc5;
-  background-color: #f9f6ed;
+  border: 1px solid var(--ll-border-ebdcc5, #ebdcc5);
+  background-color: var(--ll-background-color-f9f6ed, #f9f6ed);
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   outline: none;
   box-sizing: border-box;
   margin-bottom: 14px;
 }
 
 .sheet-input:focus {
-  border-color: #5b3113;
+  border-color: var(--ll-border-color-5b3113, #5b3113);
   box-shadow: 0 0 0 2px rgba(91, 49, 19, 0.25);
 }
 
@@ -629,9 +629,9 @@
 .chip {
   padding: 8px 14px;
   border-radius: 20px;
-  border: 1px solid #ebdcc5;
-  background-color: #f9f6ed;
-  color: #5b3113;
+  border: 1px solid var(--ll-border-ebdcc5, #ebdcc5);
+  background-color: var(--ll-background-color-f9f6ed, #f9f6ed);
+  color: var(--ll-color-5b3113, #5b3113);
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 500;
@@ -639,7 +639,7 @@
 }
 
 .chip:hover {
-  background-color: #f4f3e6;
+  background-color: var(--ll-background-color-f4f3e6, #f4f3e6);
 }
 
 .toggle-row {
@@ -647,7 +647,7 @@
   align-items: center;
   gap: 10px;
   font-size: 14px;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   margin-bottom: 18px;
   cursor: pointer;
 }
@@ -655,12 +655,12 @@
 .toggle-row input[type='checkbox'] {
   width: 18px;
   height: 18px;
-  accent-color: #5b3113;
+  accent-color: var(--ll-accent-color-5b3113, #5b3113);
   cursor: pointer;
 }
 
 .sheet-error {
-  color: #b91c1c;
+  color: var(--ll-color-b91c1c, #b91c1c);
   font-size: 13px;
   margin: 0 0 12px;
   text-align: center;
@@ -669,7 +669,7 @@
 .sheet-footnote {
   font-size: 12px;
   line-height: 1.5;
-  color: #8c7365;
+  color: var(--ll-color-8c7365, #8c7365);
   text-align: center;
   margin: 16px 0 0 0;
 }
@@ -684,9 +684,9 @@
   flex: 1;
   padding: 13px;
   border-radius: 22px;
-  border: 1px solid #ebdcc5;
+  border: 1px solid var(--ll-border-ebdcc5, #ebdcc5);
   background-color: transparent;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
   font-family: 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 600;
@@ -694,7 +694,7 @@
 }
 
 .btn-outline:hover {
-  background-color: #f7f1e5;
+  background-color: var(--ll-background-color-f7f1e5, #f7f1e5);
 }
 
 .btn-primary {
@@ -733,15 +733,15 @@
   gap: 12px;
   padding: 13px 16px;
   border-radius: 16px;
-  border: 1px solid #ebdcc5;
-  background-color: #f9f6ed;
+  border: 1px solid var(--ll-border-ebdcc5, #ebdcc5);
+  background-color: var(--ll-background-color-f9f6ed, #f9f6ed);
   cursor: pointer;
 }
 
 .shelf-picker-row input[type='checkbox'] {
   width: 18px;
   height: 18px;
-  accent-color: #5b3113;
+  accent-color: var(--ll-accent-color-5b3113, #5b3113);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -750,17 +750,17 @@
   flex: 1;
   font-size: 14px;
   font-weight: 600;
-  color: #5b3113;
+  color: var(--ll-color-5b3113, #5b3113);
 }
 
 .shelf-picker-count {
   font-size: 12px;
-  color: #8c7365;
+  color: var(--ll-color-8c7365, #8c7365);
 }
 
 .shelf-picker-empty {
   font-size: 13px;
-  color: #8c7365;
+  color: var(--ll-color-8c7365, #8c7365);
   text-align: center;
   padding: 16px 0;
   margin: 0;
@@ -781,4 +781,55 @@
 
 .book-detail-editing {
   min-height: 100vh;
+}
+/* Compact review and progress update popups */
+.reaction-modal {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 340px;
+}
+
+/* Keep the status dropdown within the visible screen */
+.status-dropdown-menu {
+  max-height: var(--status-menu-max-height, 400px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.status-dropdown-item {
+  flex-shrink: 0;
+}
+
+/* Always open the status menu downward */
+.status-dropdown-menu,
+.status-dropdown-menu.above {
+  position: relative;
+  top: auto;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  margin: 12px auto 0;
+  max-height: none;
+  overflow: visible;
+  width: 280px;
+  max-width: 100%;
+}
+
+.write-review-btn {
+  display: block;
+  margin: 16px auto;
+  padding: 10px 20px;
+  border: 1px solid #d9dfc5;
+  border-radius: 999px;
+  background: #e8ecd8;
+  color: #626b42;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+[data-theme="dark"] .write-review-btn {
+  background: #424b35;
+  color: #e8ecd8;
+  border-color: #596347;
 }
