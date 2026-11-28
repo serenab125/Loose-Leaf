@@ -34,7 +34,37 @@ import EditReview from '../../components/Reviews/EditReview';
 import ReviewModal from '../../components/Reviews/ReviewModal';
 import ReviewForm from '../../reviews/ReviewForm';
 
+import CompatibilityLabel from '../../components/Reviews/CompatibilityLabel';
 import './BookDetail.css';
+
+
+
+// RR-10: Retrieve compatibility scores for visible reviewers
+async function loadCompatibilityScores(bookId, authorIds, currentUserId) {
+  const uniqueIds = [...new Set(authorIds.filter(Boolean))]
+    .filter((id) => id !== currentUserId);
+
+  const results = await Promise.all(
+    uniqueIds.map(async (reviewerId) => {
+      const { data, error } = await supabase.rpc(
+        'get_review_compatibility',
+        {
+          p_book_id: bookId,
+          p_reviewer_id: reviewerId,
+        }
+      );
+
+      if (error) {
+        console.warn('Compatibility unavailable:', error.message);
+        return [reviewerId, null];
+      }
+
+      return [reviewerId, data];
+    })
+  );
+
+  return new Map(results);
+}
 
 const SHELF_NAME_SUGGESTIONS = [
   'Comfort Reads',
@@ -72,6 +102,7 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
 
   // Reviews state (populated strictly from Supabase)
   const [reviewsList, setReviewsList] = useState([]);
+  const [compatibilityScores, setCompatibilityScores] = useState({});
   const [editingReview, setEditingReview] = useState(null);
   const [deletingReview, setDeletingReview] = useState(null);
   const [creatingReview, setCreatingReview] = useState(false);
@@ -261,6 +292,56 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
       cancelled = true;
     };
   }, [resolvedBookId, user?.id]);
+
+const compatibilityAuthorIds = [
+  ...new Set([
+    ...reviewsList.map((review) => review.userId),
+    ...allBookReactions.map((reaction) => reaction.userId),
+  ]),
+]
+  .filter((id) => id && id !== user?.id)
+  .sort()
+  .join(',');
+
+
+
+useEffect(() => {
+  let cancelled = false;
+
+  // Clear old scores when the book, user, or authors change.
+  setCompatibilityScores({});
+
+  if (!resolvedBookId || !user?.id || !compatibilityAuthorIds) {
+    return () => {
+      cancelled = true;
+    };
+  }
+
+  const authorIds = compatibilityAuthorIds.split(',');
+
+  async function fetchScores() {
+    try {
+      const scores = await loadCompatibilityScores(
+        resolvedBookId,
+        authorIds,
+        user.id
+      );
+
+      if (!cancelled) {
+        setCompatibilityScores(Object.fromEntries(scores));
+      }
+    } catch (error) {
+      console.warn('Could not load compatibility scores:', error);
+    }
+  }
+
+  fetchScores();
+
+  return () => {
+    cancelled = true;
+  };
+}, [resolvedBookId, user?.id, compatibilityAuthorIds]);
+
 
   // Load the saved reading status and the user's shelves for this book.
   useEffect(() => {
@@ -981,7 +1062,10 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
           ) : (
             <>
               <BookReviews
-                reviews={reviewsList}
+                reviews={reviewsList.map((review) => ({
+                  ...review,
+                  compatibilityScore: compatibilityScores[review.userId] ?? null,
+                }))}
                 currentUserId={user?.id}
                 onEdit={(review) => setEditingReview(review)}
                 onDelete={(review) => setDeletingReview(review)}
@@ -1147,8 +1231,13 @@ export default function BookDetail({ book, user, onBack, onUpdateStatus }) {
                           <div className="reviewer-avatar">
                             {react.reviewer.charAt(0)}
                           </div>
+
                           <div>
                             <h4 className="reviewer-name">{react.reviewer}</h4>
+
+                            {!isOwnReaction && (
+                              <CompatibilityLabel score={compatibilityScores[react.userId] ?? null}/>
+                            )}
                           </div>
                         </div>
                       </div>

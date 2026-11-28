@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import './BookReviews.css';
+import CompatibilityLabel from './CompatibilityLabel';
 
 export default function BookReviews({
   reviews = [],
@@ -69,10 +70,12 @@ export default function BookReviews({
                 'Anonymous Reader'}
             </strong>
 
-            {isOwner && (
+            {isOwner ? (
               <span className="your-review-label">
                 YOUR REVIEW
               </span>
+            ) : (
+              <CompatibilityLabel score={review.compatibilityScore} />
             )}
           </div>
 
