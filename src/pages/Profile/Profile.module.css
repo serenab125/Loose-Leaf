@@ -273,6 +273,7 @@
   font-weight: 600;
   color: #5b3113;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .toggleSwitch {
@@ -298,6 +299,7 @@
   letter-spacing: -0.312px;
   text-align: center;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 /* Shelf Management Styles — centered dialogs */
